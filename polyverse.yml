@@ -1,0 +1,138 @@
+polyverse/config/vfi: |
+  {
+    "etcd": {
+      "type": "dockerImage",
+      "address": "quay.io/coreos/etcd:v3.0.12"
+    },
+    "nsq": {
+      "type": "dockerImage",
+      "address": "nsqio/nsq:v0.3.8"
+    },
+    "supervisor": {
+      "type": "dockerImage",
+      "address": "polyverse/supervisor:3e11e266c5d0c7aeed32f826da53eaece5f9411f"
+    },
+    "router": {
+      "type": "dockerImage",
+      "address": "polyverse/router:99b61de3d4a2aca291105e2caedbfe5bcc6f7f29"
+    },
+    "containerManager": {
+      "type": "dockerImage",
+      "address": "polyverse/container-manager:9c279e40a4482a1d62cb7aa7f567538dad46e2d7"
+    }
+  }
+polyverse/config/docker/config_json: |
+  {
+    "auths": {
+      "https://index.docker.io/v1/": {
+        "auth": "cHZyZWFkb25seTpnd2JLcjd4Vm5CRzlZeQ=="
+      }
+    }
+  }
+polyverse/config/monitoring/docker_log_driver: "json-file"
+polyverse/config/monitoring/log_source_line: "false"
+polyverse/config/monitoring/log_container_changes: "true"
+polyverse/config/monitoring/log_metrics: "false"
+polyverse/config/monitoring/statsd_endpoint: "127.0.0.1:8125"
+polyverse/config/monitoring/statter_cluster_name: "chris_test_cluster"
+polyverse-apps/website: |
+  app = function() {
+    function getCookieValue(r, c, key) {
+      //c.Log.Infof("getCookieValue() key = %v", key);
+      if (r.Header["Cookie"]) {
+        cookies = r.Header["Cookie"][0].split(";");
+        for (var i = 0; i < cookies.length; i++) {
+          cookie = cookies[i].trim().split("=");
+          k = cookie[0];
+          if (cookie.length > 1) {
+            v = cookie[1];
+          } else {
+            v = "";
+          }
+          //c.Log.Infof("getCookieValue() k = %v, v = %v", k, v);
+          if (key == k) {
+            //c.Log.Infof("getCookieValue() key == k; k = %v", k);
+            return v;
+          }
+        } 
+      }
+      //c.Log.Infof("getCookieValue() Returning null.");
+      return "";
+    }
+
+    function getCookieJar(r, c, obj) {
+      if (r.Header["Cookie"]) {
+        cookies = r.Header["Cookie"][0].split(";");
+        for (var i = 0; i < cookies.length; i++) {
+          cookie = cookies[i].split("=");
+          k = cookie[0];
+          if (cookie.length > 1) {
+            v = cookie[1];
+          } else {
+            v = "";
+          }
+          c.Log.Infof("getCookieJar() k = %s, v = %s", k, v);
+          obj[k] = v;
+        }
+      }
+
+      c.Log.Infof("getCookieJar() = %v", obj);
+    }
+    return {
+      Name: function() {
+        return "pv";
+      },
+      IsRequestSupported: function(r, c) {
+        return true ;
+      },
+      Route: function(r, c) {
+        var appName = getCookieValue(r, c, "appName");
+        var routeType = getCookieValue(r, c, "routeType");
+        var routeTypeVal = getCookieValue(r, c, "routeTypeVal");
+        var routerAddr = getCookieValue(r, c, "routerAddr");
+        var routeBindingPort = getCookieValue(r, c, "routeBindingPort");
+        c.Log.Infof("getCookieValue(): routeType = %s, routeTypeVal = %s, routerAddr = %s, routeBindingPort = %s", routeType, routeTypeVal, routerAddr, routeBindingPort);
+        if ((routeType == "ManagedContainer") && (routeTypeVal != "") && (routeBindingPort != "") && (appName != "")) {
+          return {
+            ID: getCookieValue(r, c, "appName"),
+            Timeout: 365 * 24 * 60 * 60 * 1000000000,
+            ManagedContainer: {
+              BaseImage: getCookieValue(r, c, "routeTypeVal"),
+              PerInstanceTimeout: 5 * 1000000000,
+              DesiredInstances: 5,
+              IsStateless: true,
+              HealthCheckURLPath: "/",
+              LaunchGracePeriod: 60 * 1000000000,
+              ConnectionDrainGracePeriod: 3 * 1000000000,
+              Cmd: [''],
+              BindingPort: parseInt(getCookieValue(r, c, "routeBindingPort"))
+            }
+          };
+        } else {
+          return {
+            ID: "polysploit",
+            Timeout: 365 * 24 * 60 * 60 * 1000000000,
+            ManagedContainer: {
+              BaseImage: "polyverse/polysploit",
+              PerInstanceTimeout: 5 * 1000000000,
+              DesiredInstances: 5,
+              IsStateless: true,
+              HealthCheckURLPath: "/",
+              LaunchGracePeriod: 60 * 1000000000,
+              ConnectionDrainGracePeriod: 3 * 1000000000,
+              Cmd: [''],
+              BindingPort: 80
+            }
+          };
+        }
+
+        return null;
+      },
+      ValidationInfo: function() {
+        return {
+          PositiveRequests: [],
+          NegativeRequests: []
+        }
+      }
+    };
+  }();
