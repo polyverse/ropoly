@@ -8,19 +8,16 @@
   var activeTab = "home";
 
   $(document).ready(function() {
-    $('#homeDiv').load('/home.md');
-    console.log("Loaded /home.md.");
-  });
-
-  function init() {
     // clear cookies
     for (i = 0; i < kv.length; i++) {
       createCookie(kv[i],"",-1);
     }
-    console.log("Cleared cookies.");
+    $("#homeDiv").load("/home.md"); // load the contents of the home div
 
-    //clickTab(document.getElementById(activeTab));
-  }
+    clickTab(document.getElementById("settings"));
+
+    console.log("Initialization complete.");
+  });
 
   function createCookie(name,value,days) {
     var date = new Date();
@@ -33,7 +30,6 @@
 
   var urlsToLoad = [];
   var urlsIndex = 0;
-
 
   function goToNextURL() {
     if (urlsIndex < urlsToLoad.length) {
@@ -75,55 +71,79 @@
 
   function stopRequests() {
     urlsToLoad = [];
-    //document.getElementById("startButton").value = "Start";
-    //document.getElementById("startButton").onclick = "startRequests();";
   }
 
   function clickTab(obj) {
+    console.log(obj.id + " click detected.");
     if (activeTab != obj.id) {
+      console.log("New tab \"" + obj.id + "\" selected.");
       activeTab = obj.id;
 
-      for (i = 0; i < tabs.length; i++) {
-        divName = tabs[i] + "Div";
-        if (tabs[i] == activeTab) {
-          dispVal = "inline";
-	} else {
-          dispVal = "none";
-	}
-        document.getElementById(divName).style.display = dispVal;
-      }
+      $('#headerRow').children('td').each(function () {
+        if (this.id != "") {
+          console.log("this.id = " + this.id);
+          divName = this.id + "Div";
+          if (this.id == activeTab) {
+            this.className = "selected";
+            document.getElementById(divName).style.display = "inline";
+	  } else {
+            this.className = "notSelected";
+            document.getElementById(divName).style.display = "none";
+          }
+        }
+      });
     }
   }
 </script>
 <style>
   body {
     font-family: "Arial", sans-serif;
+    margin: 0px;
   }
   input, select {
     font-size: 14pt;
   }
+  .selected {
+    border: 1px solid black;
+    border-bottom: none;
+    cursor: default;
+    padding: 10px;
+  }
+  .notSelected {
+    border: 1px solid black;
+    cursor: pointer;
+    padding: 10px;
+  }
 </style>
 </head>
-<body onload="init();">
+<body>
 
 <!-- HEADER -->
-<img height=40 src="/img/logo.png"/>
-<p/><p/>
-<div name=header>
-  <span id=home onclick="clickTab(this);" onmouseover="" style="cursor: pointer;">Home</span>&nbsp;|&nbsp;
-  <span id=settings onclick="clickTab(this);" onmouseover="" style="cursor: pointer;">Settings</span>&nbsp;|&nbsp;
-  <span id=dashboard onclick="clickTab(this);" onmouseover="" style="cursor: pointer;">Dashboard</span>&nbsp;|&nbsp;
-  <span id=input onclick="clickTab(this);" onmouseover="" style="cursor: pointer;">Input</span>
+<img height=40 style="margin:10px;" src="/img/logo.png"/>
+<div id=headerDiv>
+<table width="100%" style="margin:0px;padding:0px;border-spacing:0px;">
+<tr id=headerRow>
+  <td style="border-bottom: 1px solid black;">&nbsp;</td>
+  <td id=home onclick="clickTab(this);"><spa>Home</span></td>
+  <td style="border-bottom: 1px solid black;"><img src="/img/1x1.png"/></td>
+  <td id=settings onclick="clickTab(this);"><span>Settings</span></td>
+  <td style="border-bottom: 1px solid black;"><img src="/img/1x1.png"/></td>
+  <td id=dashboard onclick="clickTab(this);"><span>Dashboard</span></td>
+  <td style="border-bottom: 1px solid black;"><img src="/img/1x1.png"/></td>
+  <td id=input onclick="clickTab(this);"><span>Input</span></td>
+  <td width="100%" style="border-bottom: 1px solid black;"></td>
+</tr>
+</table>
 </div>
-<p/><p/>
 
 <!-- HOME TAB -->
-<div id=homeDiv style="display:inline;">
+<div style="margin:10px;">
+<div id=homeDiv>
 </div>
 
 <!-- SETTINGS TAB -->
-<div id=settingsDiv style="display:none;">
-<table border=0 cellpadding=5 cellspacing=4>
+<div id=settingsDiv>
+<table border=1 cellpadding=5 cellspacing=4>
 <tr><td>Router Address:</td><td><input id=routerAddr type=text value="http://localhost:8080"/></td></tr>
 <tr><td>App Name:</td><td><input id=appName type=text value="demo"/></td></tr>
 <tr><td>Route Type:</td><td><select id=routeType><option value="ManagedContainer">Managed Container</option><option value="URL">URL</option>></td></tr>
@@ -139,7 +159,7 @@
 </div>
 
 <!-- DASHBOARD TAB -->
-<div id=dashboardDiv style="display:none;">
+<div id=dashboardDiv>
 <input type=button id=startButton onclick="startRequests();" value="Start"/>
 <input type=button id=stopButton onclick="stopRequests();" value="Stop"/>
 <br/>
@@ -152,5 +172,6 @@
 <div id=outputDiv style="display:none;">
 </div>
 
+</div>
 </body>
 </html>
