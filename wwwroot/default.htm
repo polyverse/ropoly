@@ -55,6 +55,14 @@
     }
   }
 </script>
+<style>
+  body {
+    font-family: "Arial", sans-serif;
+  }
+  input, select {
+    font-size: 12pt;
+  }
+</style>
 </head>
 <body onload="init();">
 
@@ -83,13 +91,14 @@
 <tr><td>Route Binding Port:</td><td><input id=routeBindingPort type=text value="8080"/></td></tr>
 </table>
 <input type=button onclick="saveChanges();" value="Save Changes"/>
-<iframe id=win1 width=100 height=100></iframe>
+<p/>
+<iframe id=win1 width=800 height=600></iframe>
 </div>
 
 <!-- INPUT TAB -->
 <div id=inputDiv style="display:none;">
 <textarea id=inputTextarea rows=4 cols=50>
-/infect
+/
 </textarea>
 </div>
 
@@ -97,6 +106,7 @@
 <div id=dashboardDiv style="display:none;">
 Chart 1<p/>
 Chart 2<p/>
+<iframe src="http://192.168.84.130:5601/app/kibana#/visualize/edit/all-logs?embed=true&_g=(refreshInterval:(display:'10%20seconds',pause:!f,section:1,value:10000),time:(from:now-15m,mode:quick,to:now))&_a=(filters:!(),linked:!f,query:(query_string:(analyze_wildcard:!t,query:'*')),uiState:(),vis:(aggs:!((id:'1',params:(),schema:metric,type:count),(id:'2',params:(customInterval:'2h',extended_bounds:(),field:'@timestamp',interval:auto,min_doc_count:1),schema:segment,type:date_histogram)),listeners:(),params:(addLegend:!t,addTimeMarker:!f,addTooltip:!t,defaultYExtents:!f,mode:stacked,scale:linear,setYExtents:!f,shareYAxis:!t,times:!(),yAxis:()),title:'all%20logs',type:histogram))" height="600" width="800"></iframe>
 </div>
 
 <div id=outputDiv style="display:none;">

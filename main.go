@@ -36,7 +36,11 @@ func pseudo_uuid() (uuid string) {
     return
 }
 
-func infect(w http.ResponseWriter, r *http.Request) {
+func logRequest(r *http.Request) {
+	log.WithFields(log.Fields{"Cookies":r.Cookies()}).Infof("r.URL.Path = %s", r.URL.Path)
+}
+
+func infectHandler(w http.ResponseWriter, r *http.Request) {
 	f1, _ := ioutil.ReadDir("/tmp")
 	d1 := []byte("foo")
 	err := ioutil.WriteFile(fmt.Sprintf("/tmp/data%03d", len(f1) + 1), d1, 0644)
@@ -50,6 +54,7 @@ func infect(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(f.Name())
 		io.WriteString(w, fmt.Sprintf("%s\n", f.Name()))
 	}  
+	logRequest(r)
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +69,7 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.WithFields(log.Fields{"r.URL.Path":r.URL.Path,"p":p}).Infof("defaultHandler()")
+	logRequest(r)
 	http.ServeFile(w, r, "/wwwroot/" + p)
 }
 
@@ -73,7 +79,7 @@ func main() {
 
 	http.HandleFunc("/", defaultHandler)
 
-	http.HandleFunc("/infect", infect)
+	http.HandleFunc("/infect", infectHandler)
 
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
