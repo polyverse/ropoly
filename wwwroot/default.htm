@@ -3,7 +3,7 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script>
   var kv = ["routerAddr","routeType","routeTypeVal","routeBindingPort","appName"];
-  var tabs = ["home","settings","dashboard","input"];
+  var tabs = ["home","settings","dashboard"];
 
   var activeTab = "home";
 
@@ -129,8 +129,6 @@
   <td id=settings onclick="clickTab(this);"><span>Settings</span></td>
   <td style="border-bottom: 1px solid black;"><img src="/img/1x1.png"/></td>
   <td id=dashboard onclick="clickTab(this);"><span>Dashboard</span></td>
-  <td style="border-bottom: 1px solid black;"><img src="/img/1x1.png"/></td>
-  <td id=input onclick="clickTab(this);"><span>Input</span></td>
   <td width="100%" style="border-bottom: 1px solid black;"></td>
 </tr>
 </table>
@@ -151,11 +149,8 @@
 <tr><td>Route Binding Port:</td><td><input id=routeBindingPort type=text value="8080"/></td></tr>
 </table>
 <input type=button onclick="saveChanges();" value="Save Changes"/>
-</div>
-
-<!-- INPUT TAB -->
-<div id=inputDiv style="display:none;">
-<textarea id=inputTextarea rows=4 cols=50>/helloworld.htm</textarea>
+<p/>
+<textarea id=inputTextarea rows=4 cols=50>/</textarea>
 </div>
 
 <!-- DASHBOARD TAB -->

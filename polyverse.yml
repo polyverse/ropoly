@@ -93,6 +93,8 @@ polyverse-apps/website: |
         var baseImage = getCookieValue(r, c, "routeTypeVal");
         var proxyPass = getCookieValue(r, c, "routeTypeVal");
 
+        c.Log.Infof("Route() routeInfoType:" + routeInfoType + ", appName:" + appName + ", baseImage:" + baseImage + "proxyPass:" + proxyPass);
+
         if ((routeInfoType == "URL") && (proxyPass == "")) {
           c.Log.Errorf("routeInfoType == URL but proxyPass is empty.");
           return null;
@@ -112,6 +114,8 @@ polyverse-apps/website: |
             bindingPort = "8080";
           }
 
+          c.Log.Infof("Launching with BindingPort=" + parseInt(bindingPort) + ", BaseImage=" + baseImage);
+
           return {
             ID: appName,
             Timeout: 5 * 60 * 1000000000,
@@ -124,7 +128,7 @@ polyverse-apps/website: |
               LaunchGracePeriod: 60 * 1000000000,
               ConnectionDrainGracePeriod: 3 * 1000000000,
               Cmd: [''],
-              BindingPort: parseInt("bindingPort")
+              BindingPort: parseInt(bindingPort)
             }
           };
         }
