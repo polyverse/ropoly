@@ -27,8 +27,16 @@ if [ $EXIT_CODE -ne 0 ]; then
   exit $EXIT_CODE
 fi
 
+docker tag $IMAGE_NAME "polyverse/$IMAGE_NAME_BASE:latest"
+
 echo "$(date) Pushing the new docker image to hub."
 docker push $IMAGE_NAME
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ] ; then
+  exit $EXIT_CODE
+fi
+
+docker push "polyverse/$IMAGE_NAME_BASE:latest"
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ] ; then
   exit $EXIT_CODE
