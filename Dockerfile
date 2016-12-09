@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM busybox
 
 COPY ./polysploit /
 COPY ./wwwroot/ /wwwroot
