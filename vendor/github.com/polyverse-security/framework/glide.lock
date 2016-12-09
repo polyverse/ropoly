@@ -1,0 +1,120 @@
+hash: a572ee257f968e9529d756666e1aa44c84986a0c7710390329e83469700af91e
+updated: 2016-12-08T16:13:15.937663935-08:00
+imports:
+- name: github.com/cactus/go-statsd-client
+  version: d8eabe07bc70ff9ba6a56836cde99d1ea3d005f7
+  subpackages:
+  - statsd
+- name: github.com/coreos/etcd
+  version: 2d1e2e8e646e65f73ca0d9ee905a5343d6135a50
+  subpackages:
+  - auth/authpb
+  - client
+  - clientv3
+  - etcdserver/api/v3rpc/rpctypes
+  - etcdserver/etcdserverpb
+  - mvcc/mvccpb
+  - pkg/tlsutil
+- name: github.com/docker/distribution
+  version: 844b92879f179f16a26ce441631880aa3079b7f4
+  subpackages:
+  - digest
+  - reference
+- name: github.com/docker/docker
+  version: 4d92237de1b34c8bf99e549db27b83fd087cd765
+  subpackages:
+  - api/types
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/events
+  - api/types/filters
+  - api/types/mount
+  - api/types/network
+  - api/types/reference
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
+  - api/types/volume
+  - cliconfig/configfile
+  - client
+  - pkg/tlsconfig
+- name: github.com/docker/engine-api
+  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
+  subpackages:
+  - types
+  - types/blkiodev
+  - types/container
+  - types/filters
+  - types/network
+  - types/registry
+  - types/strslice
+  - types/swarm
+  - types/versions
+- name: github.com/docker/go-connections
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
+  subpackages:
+  - nat
+  - sockets
+  - tlsconfig
+- name: github.com/docker/go-units
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- name: github.com/ghodss/yaml
+  version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
+- name: github.com/golang/protobuf
+  version: 98fa357170587e470c5f27d3c3ea0947b71eb455
+  subpackages:
+  - jsonpb
+  - proto
+- name: github.com/grpc-ecosystem/grpc-gateway
+  version: 199c40a060d1e55508b3b85182ce6f3895ae6302
+  subpackages:
+  - runtime
+  - runtime/internal
+  - utilities
+- name: github.com/Microsoft/go-winio
+  version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
+- name: github.com/opencontainers/runc
+  version: 34f23cb99c30040e2ca82442eeb22d15a757f78d
+  subpackages:
+  - libcontainer/user
+- name: github.com/pkg/errors
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+- name: github.com/polyverse-security/statter
+  version: e8172e0c34963b4f7c0a0018825597ce135eeb87
+- name: github.com/Sirupsen/logrus
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: golang.org/x/net
+  version: e31bd588d1077ee66a958c0ad3a235f2084b4195
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - proxy
+  - trace
+- name: golang.org/x/sys
+  version: 478fcf54317e52ab69f40bb4c7a1520288d7f7ea
+  subpackages:
+  - unix
+  - windows
+- name: google.golang.org/grpc
+  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - transport
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+testImports:
+- name: gopkg.in/check.v1
+  version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec

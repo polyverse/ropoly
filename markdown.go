@@ -18,5 +18,5 @@ func markdownHandler(w http.ResponseWriter, r *http.Request) {
 
   io.WriteString(w, body)
 
-  logRequest(r)
+  //logRequest(r)
 }
