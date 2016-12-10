@@ -1,19 +1,89 @@
 <html>
 <head>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<script src="js/pvlib.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
-
   $(document).ready(function() {
-    var b = NewRequestBatch();
-
-    console.log(showProps(b));
-    console.log("foo");
-    console.log(b.Dump(b));
+    console.log("document ready.");
+    google.charts.load('current', {packages: ['corechard', 'line']});
+    google.charts.setOnLoadCallback(draw);
   });
+
+  function draw() {
+    console.log("draw()");
+
+    var data = new google.visualization.DataTable();
+    data.addColumn("number", "x");
+    data.addColumn("number", "y");
+
+    data.addRows([
+      [0,1], [1,5], [2,2], [3,9], [4,0], [5,0], [6,0], [7,0], [8,0], [9,0],
+      [10,0], [11,0], [12,0], [13,0], [14,0], [15,0], [16,0], [17,0], [18,0], [19,0]
+    ]);
+
+    var options = {
+      hAxis: {
+        title: 'Time'
+      },
+      vAxis: {
+        title: 'Count'
+      },
+      backgroundColor: '#f1f8e9'
+    };
+
+    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+
+  }
+
+  var timer, flush;
+
+  var r1 = new Object();
+  r1.ImageName = "polyverse/polyverse.io";
+  r1.PerInstanceTimeout = "1000000000";
+
+  function looper(s) {
+    var url = "http://localhost:8080/infect";
+    var post = $.post( url, r1 );
+
+    post.done(function(data, status, xhr) {
+      console.log("s: " + s + ", status: " + xhr.status + ", xhr.getAllResponseHeaders(): " + xhr.getAllResponseHeaders());
+    });
+  }
+
+  var i1 = 0;
+  function incrementHttpStatusCodes(url, obj) {
+    var post = $.post( url, obj );
+
+    post.done(function(data, status, xhr) {
+      console.log("[" + i1 + "] status = " + xhr.status);
+      i1 = i1 + 1;
+    });
+  }
+
+  function flush() {
+    console.log("{200," + i1 + "}");
+    i1 = 0;
+  }
+
+  function startTimer() {
+    i1 = 0
+    timer = setInterval('incrementHttpStatusCodes("http://localhost:8080/reflect", r1)', 700);
+    flush = setInterval(flush, 6000);
+  }
+
+  function stopTimer() {
+    clearInterval(timer);
+    clearInterval(flush);
+    console.log("Timer stopped.");
+  }
+
 
 </script>
 </head>
 <body>
+<input type=button value="Start" onclick="startTimer();"/><input type=button value="Stop" onclick="stopTimer();"/>
+<p/>
+<div id="chart_div"></div>
 </body>
 </html>
