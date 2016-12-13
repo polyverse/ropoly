@@ -35,7 +35,7 @@ func ReflectHandler(w http.ResponseWriter, r *http.Request) {
 		log.WithFields(log.Fields{"err":err}).Errorf("Encountered error marshaling to JSON.")
 		io.WriteString(w, fmt.Sprintf("Error: %s\n", err))
 	} else {
-		fmt.Printf("%s", string(b))
+		log.Infof("%s", string(b))
 		io.WriteString(w, fmt.Sprintf("%s\n", string(b)))
 	}
 }
