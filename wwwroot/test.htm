@@ -4,99 +4,99 @@
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript" src="js/pvlib.js"></script>
 <script>
-  var myStatter = new statter();
-  myStatter.init(10);
-  myStatter._cols.push("Time");
-  myStatter._cols.push("200");
-
-  var counter = 0;
-
-  $(document).ready(function() {
-    console.log("document ready.");
-    google.charts.load('current', {packages: ['corechart', 'line']});
-    google.charts.setOnLoadCallback(draw);
-  });
-
-  function draw() {
-    console.log("draw()");
-
-    var data = new google.visualization.arrayToDataTable(myStatter.dump(),false);
-
-    var options = {
-      hAxis: {
-        title: 'Time'
-      },
-      vAxis: {
-        title: 'Count'
-      },
-      backgroundColor: '#f1f8e9'
-    };
-
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-
+var NUM_ROWS = 10;
+var FLUSH_INTERVAL = 5000;
+var chartOptions = {
+  height: 500,
+  hAxis: {
+    title: "Time",
+  },
+  vAxis: {
+    title: "Requests"
   }
+};
 
-  var timer, flush;
+var requestNotRouted = new AppInfo("http://localhost:8080/reflect");
 
-  var r1 = new Object();
-  r1.ImageName = "polyverse/polyverse.io";
-  r1.PerInstanceTimeout = "1000000000";
+var requestRouted = new AppInfo("http://localhost:8080/reflect");
+requestRouted.ID = "requestRouted";
 
-  function looper(s) {
-    var url = "http://localhost:8080/infect";
-    var post = $.post( url, r1 );
+var requestInfectNoCycling = new AppInfo("http://localhost:8080/infect");
+requestInfectNoCycling.ID = "infectNoCycling";
+requestInfectNoCycling.IsStateless = false;
 
-    post.done(function(data, status, xhr) {
-      console.log("s: " + s + ", status: " + xhr.status + ", xhr.getAllResponseHeaders(): " + xhr.getAllResponseHeaders());
-    });
+var requestInfectCycled = new AppInfo("http://localhost:8080/infect");
+requestInfectCycled.ID = "infectCycled";
+requestInfectCycled.PerInstanceTimeout = 5000000000;
+
+var myStatter = new Statter(NUM_ROWS);
+google.charts.load('current', {packages: ['corechart', 'line']});
+google.charts.setOnLoadCallback(init);
+
+function init() {
+  for (var i = 0; i < NUM_ROWS; i++) {
+    var d = new Date();
+    myStatter.Gauge("Index",d.toLocaleTimeString());
+    myStatter.Flush();
   }
+  //myStatter.Gauge("200",0);
+  //myStatter.Flush();
+  refresh();
+}
 
-  var i1 = 0;
-  function incrementHttpStatusCodes(url, obj) {
-    var post = $.post( url, obj );
+function refresh() {
+  var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+  var data = new google.visualization.arrayToDataTable(myStatter.ToArray(),false);
+  chart.draw(data, chartOptions);
+}
 
-    post.done(function(data, status, xhr) {
-      console.log("inc() = " + xhr.status);
-      myStatter.inc(xhr.status,1);
-    });
+var counter = 0;
+function flush() {
+  counter++;
+  var d = new Date();
+  myStatter.Gauge("Index",d.toLocaleTimeString());
+  //console.log(d.toLocaleTimeString());
+  //myStatter.Gauge("400",Math.random() * 100);
+  myStatter.Flush();
+  refresh();
+}
+
+function myCallbackFunction(data, status, xhr) {
+  status = "000";
+  if (xhr.status != undefined) {
+    status = xhr.status.toString();
   }
-
-  function flush() {
-    console.log("flushing...");
-    counter++;
-    myStatter.gauge("Time", counter);
-    myStatter.flush();
-
-    var data = new google.visualization.arrayToDataTable(myStatter.dump(),false);
-    
-    var options = {
-      hAxis: { 
-        title: 'Time'
-      },
-      vAxis: { 
-        title: 'Count'
-      },
-      backgroundColor: '#f1f8e9'
-    };
-    
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-    console.log("chart re-drawn."); 
+  if (data.status != undefined) {
+    status = data.status.toString();
   }
+  myStatter.Inc(status, 1);
+}
 
-  function startTimer() {
-    i1 = 0
-    timer = setInterval('incrementHttpStatusCodes("http://localhost:8080/reflect", r1)', 700);
-    flush = setInterval(flush, 6000);
+function gaugeInfectCycling(data, status, xhr) {
+  console.log("InfectCycling: data = " + data);
+  myStatter.Gauge("InfectCycling",Number(data));
+}
+
+function gaugeInfectNoCycling(data, status, xhr) {
+  console.log("InfectNoCycling: data = " + data);
+  myStatter.Gauge("InfectNoCycling", Number(data));
+}
+
+var timers = [];
+
+function startTimer() {
+  timers.push(setInterval(flush, FLUSH_INTERVAL));
+  timers.push(setInterval("requestRouted.Submit(myCallbackFunction)", 500));
+  timers.push(setInterval("requestNotRouted.Submit(myCallbackFunction)", 700));
+  timers.push(setInterval("requestInfectNoCycling.Submit(gaugeInfectNoCycling)", 2000));
+  timers.push(setInterval("requestInfectCycled.Submit(gaugeInfectCycling)", 1000));
+}
+
+function stopTimer() {
+  for (var i = 0; i < timers.length; i++) {
+    clearInterval(timers[i]);
   }
-
-  function stopTimer() {
-    clearInterval(timer);
-    clearInterval(flush);
-    console.log("Timer stopped.");
-  }
-
+}
 
 </script>
 </head>
@@ -105,4 +105,4 @@
 <p/>
 <div id="chart_div"></div>
 </body>
-</html>
+</html

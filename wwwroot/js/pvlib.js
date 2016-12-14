@@ -20,68 +20,98 @@ function NewRequestBatch() {
   return batch;
 }
 
-function statter(size) {
+function Statter(size) {
+  size = Number(size);
   var db = [];
+  //console.log(size);
+  if (isNaN(size)) {
+    //console.log("foo");
+    size = 100;
+  }
+  //console.log(size);
   for (var i = 0; i < size; i++) {
     db[i] = {};
   }
   return {
-    cols: {}, // hash to store all unique column names
-    _cols: [],
+    hashCols: {},
+    cols: [],
     record: {}, // object stores values between flushes
     db: db, // fixed-size database
-    init: function(size) {
-      for (var i = 0; i < size; i++) {
-        this.db[i] = {};
-      }
-    },
-    inc: function(k,v) {
-      this.cols[k] = k.toString();
-      var match = false;
-      for (var i = 0; i < this._cols.length; i++) {
-        if (this._cols[i] === k.toString()) {
-          match = true;
-        }
-      }
-      if (match != true) {
-        console.log("match != true");
-        this._cols.push(k);
+    Inc: function(k,v) {
+      //k = k.toString(); v = Number(v);    
+      if (this.hashCols[k] === undefined) {
+        this.hashCols[k] = k;
+        this.cols.push(k);
       }
       this.record[k] === undefined ? this.record[k] = v : this.record[k] += v;
     },
-    gauge: function(k,v) {
-      this.cols[k] = k;
+    Gauge: function(k,v) {
+      //k = k.toString(); v = Number(v);
+      if (this.hashCols[k] === undefined) {
+        this.hashCols[k] = k;
+        this.cols.push(k);
+      }
       this.record[k] = v;
     },
-    flush: function() {
+    Flush: function() {
       this.db[this.db.length] = this.record; // add record to end
       this.db.splice(0,1); // remove first record
       this.record = {}; // reset record
+      //console.log(this.db);
     },
-    label: function(k, text) {
-      this.cols[k] = text;
+    Label: function(k, text) {
+      //k = k.toString(); text = text.toString();
+      if (this.hashCols[k] === undefined) {
+        this.cols.push(k);
+      }
+      this.hashCols[k] = text;
     },
-    dump: function() {
+    ToArray: function() {
       var data = [];
       var row = [];
-      for (var i = 0; i < this._cols.length; i++) {
-        console.log("prop = " + this._cols[i]);
-        row.push(this._cols[i]);
+      for (var i = 0; i < this.cols.length; i++) {
+        //console.log("prop = " + this.cols[i]);
+        row.push(this.hashCols[this.cols[i]]);
       }
       data[data.length] = row;
-      console.log(row);
+      //console.log(row);
       for (var i = 0; i < this.db.length; i++) {
         //console.log("i = " + i);
         row = [];
-        for (var n = 0; n < this._cols.length; n++) {
-          //console.log("this._cols[" + n + "] = " + this._cols[n]);
-          this.db[i][(this._cols[n])] === undefined ? row.push(0) : row.push(this.db[i][(this._cols[n])]);
+        for (var n = 0; n < this.cols.length; n++) {
+          //console.log("this.cols[" + n + "] = " + this.cols[n]);
+          this.db[i][(this.cols[n])] === undefined ? row.push(0) : row.push(this.db[i][(this.cols[n])]);
         }
         data[data.length] = row;
-        console.log(row);
+        //console.log(row);
       }
-      console.log("done.");
+      //console.log(data);
       return data;
+    }
+  };
+}
+
+function AppInfo(url) {
+  if (url === undefined) {
+    url = "http://localhost:8080";
+  }
+  return {
+    url: url,
+    ID: undefined,
+    ImageName: "",
+    DesiredInstances: undefined,
+    IsStateless: undefined,
+    Submit: function(callbackFunction) {
+      var obj = new Object();
+      obj.ImageName = this.ImageName;
+      obj.ID = this.ID;
+      obj.DesiredInstances = this.DesiredInstances;
+      obj.IsStateless = this.IsStateless;
+      var post = $.post(url, obj);
+
+      post.always(function(data, status, xhr) {
+        callbackFunction(data, status, xhr);
+      });
     }
   };
 }

@@ -29,9 +29,7 @@ polyverse/config/docker/config_json: |
       }
     }
   }
-polyverse/config/monitoring/docker_log_driver: "gelf"
-polyverse/config/monitoring/docker_log_opts: |
-  { "gelf-address":"udp://192.168.84.130:12201" }
+polyverse/config/monitoring/docker_log_driver: "json-file"
 polyverse/config/monitoring/log_source_line: "true"
 polyverse/config/monitoring/log_container_changes: "true"
 polyverse/config/monitoring/log_metrics: "false"
@@ -40,127 +38,56 @@ polyverse/config/monitoring/statter_cluster_name: "chris_test_cluster"
 polyverse-apps/website: |
   app = function() {
 
-    function getCookieValue(r, c, key) {
-      if (r.Header["Cookie"]) {
-        cookies = r.Header["Cookie"][0].split(";");
-        for (var i = 0; i < cookies.length; i++) {
-          cookie = cookies[i].trim().split("=");
-          if (key == cookie[0]) {
-            if (cookie.length > 1) {
-              return cookie[1];
-            } else {
-              return "";
-            }
-          }
-        } 
-      }
-      return "";
-    }
-
-    // TO DO: this doesn't work. results in otto panicking while performing a reflection.
-    function getCookieJar(r, c) {
-      var obj = {};
-
-      if (r.Header["Cookie"]) {
-        cookies = r.Header["Cookie"][0].split(";");
-        for (var i = 0; i < cookies.length; i++) {
-          cookie = cookies[i].split("=");
-          k = cookie[0];
-          if (cookie.length > 1) {
-            v = cookie[1];
-          } else {
-            v = "";
-          }
-          obj[k] = v;
-        }
-      }
-
-      c.Log.Infof("getCookieJar() = %v", obj);
-      return obj;
-    }
-
     return {
       Name: function() {
-        return "pv";
+        return "polysploit";
       },
       IsRequestSupported: function(r, c) {
         return true ;
       },
       Route: function(r, c) {
-        var routeInfoType = getCookieValue(r, c, "routeType");
-        var appName = getCookieValue(r, c, "appName");
+        var id = "default";
+        var perInstanceTimeout = 5000000000;
+        var desiredInstances = 5;
+        var isStateless = true;
 
-        var baseImage = getCookieValue(r, c, "routeTypeVal");
-        var proxyPass = getCookieValue(r, c, "routeTypeVal");
-
-        c.Log.Infof("Route() routeInfoType:" + routeInfoType + ", appName:" + appName + ", baseImage:" + baseImage + "proxyPass:" + proxyPass);
-
-        if ((routeInfoType == "URL") && (proxyPass == "")) {
-          c.Log.Errorf("routeInfoType == URL but proxyPass is empty.");
-          return null;
-        }
-
-        if ((routeInfoType == "ManagedContainer") && (baseImage == "")) {
-          c.Log.Errorf("routeInfoType == ManagedContainer but baseImage is empty.");
-          return null;
-        }
-
-        var routeBindingPort = getCookieValue(r, c, "routeBindingPort");
-
-        if (routeInfoType == "ManagedContainer") {
-          var bindingPort = getCookieValue(r, c, "routeBindingPort");
-          if (bindingPort == "") {
-            c.Log.Infof("bindingPort is empty. Setting to 8080.");
-            bindingPort = "8080";
+        if (r.Method === "POST") {
+          if (r.Form["ID"] === undefined) {
+            c.Log.Info("X-Polysploit: Method is POST but ID is undefined. Returning null.");
+            return null;
+          }
+        
+          if ((r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
+            id = r.Form["ID"][0];
+            c.Log.Infof("Setting ID to: %s", id);
           }
 
-          c.Log.Infof("Launching with BindingPort=" + parseInt(bindingPort) + ", BaseImage=" + baseImage);
+          if ((r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
+            perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);
+            c.Log.Infof("Setting PerInstanceTimeout to: %v", perInstanceTimeout);
+          }
 
-          return {
-            ID: appName,
-            Timeout: 5 * 60 * 1000000000,
-            ManagedContainer: {
-              BaseImage: baseImage,
-              PerInstanceTimeout: 10 * 1000000000,
-              DesiredInstances: 3,
-              IsStateless: true,
-              HealthCheckURLPath: "/",
-              LaunchGracePeriod: 60 * 1000000000,
-              ConnectionDrainGracePeriod: 3 * 1000000000,
-              Cmd: [''],
-              BindingPort: parseInt(bindingPort)
-            }
-          };
+          if ((r.Form["DesiredInstances"] != undefined) && (r.Form["DesiredInstances"][0] != undefined)) {
+            desiredInstances = Number(r.Form["DesiredInstances"][0]);
+            c.Log.Infof("Setting DesiredInstances to: %v", desiredInstances);
+          }
+
+          if ((r.Form["IsStateless"] != undefined) && (r.Form["IsStateless"][0] != undefined)) {
+            isStateless = Boolean(r.Form["IsStateless"]);
+            c.Log.Infof("Setting isStateless to: %v", isStateless);
+          }
+
+          c.Log.Infof("X-Polysploit: ID = %s, PerInstanceTimeout = %v, DesiredInstances = %v, IsStateless = %v", id, perInstanceTimeout, desiredInstances, isStateless);
         }
 
-        if (routeInfoType == "URL") {
-          var proxypass = "-proxy-pass=";
-          proxypass = proxypass.concat(proxyPass);
-          return {
-            ID: appName,
-            Timeout: 5 * 60 * 1000000000,
-            ManagedContainer: {
-              BaseImage: "polyverse/modsecurity:8e1da091bef5b8ece7ca1d87e05e220ed8c96bcd",
-              PerInstanceTimeout: 10 * 1000000000,
-              DesiredInstances: 3,
-              IsStateless: true,
-              HealthCheckURLPath: "/health",
-              LaunchGracePeriod: 60 * 1000000000,
-              ConnectionDrainGracePeriod: 5 * 1000000000,
-              Cmd: [proxypass, "-SecAuditLogParts=ABFHKZ"],
-              BindingPort: 8080
-            }
-          };
-        }
-      
         return {
-          ID: "default",
+          ID: id,
           Timeout: 365 * 24 * 60 * 60 * 1000000000,
           ManagedContainer: {
             BaseImage: "polyverse/polysploit",
-            PerInstanceTimeout: 5 * 1000000000,
-            DesiredInstances: 5,
-            IsStateless: true,
+            PerInstanceTimeout: perInstanceTimeout,
+            DesiredInstances: desiredInstances,
+            IsStateless: isStateless,
             HealthCheckURLPath: "/",
             LaunchGracePeriod: 60 * 1000000000,
             ConnectionDrainGracePeriod: 3 * 1000000000,
