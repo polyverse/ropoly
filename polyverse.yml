@@ -14,7 +14,7 @@ polyverse/config/vfi: |
     },
     "router": {
       "type": "dockerImage",
-      "address": "polyverse/router:99b61de3d4a2aca291105e2caedbfe5bcc6f7f29"
+      "address": "polyverse/router:f5c7190e8c9a7c0c76dff4f94b1a717d7a6325d3"
     },
     "containerManager": {
       "type": "dockerImage",
@@ -46,39 +46,31 @@ polyverse-apps/website: |
         return true ;
       },
       Route: function(r, c) {
-        var id = "default";
-        var perInstanceTimeout = 5000000000;
-        var desiredInstances = 5;
-        var isStateless = true;
-
-        if (r.Method === "POST") {
-          if (r.Form["ID"] === undefined) {
-            c.Log.Info("X-Polysploit: Method is POST but ID is undefined. Returning null.");
-            return null;
-          }
-        
-          if ((r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
-            id = r.Form["ID"][0];
-            c.Log.Infof("Setting ID to: %s", id);
-          }
-
-          if ((r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
-            perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);
-            c.Log.Infof("Setting PerInstanceTimeout to: %v", perInstanceTimeout);
-          }
-
-          if ((r.Form["DesiredInstances"] != undefined) && (r.Form["DesiredInstances"][0] != undefined)) {
-            desiredInstances = Number(r.Form["DesiredInstances"][0]);
-            c.Log.Infof("Setting DesiredInstances to: %v", desiredInstances);
-          }
-
-          if ((r.Form["IsStateless"] != undefined) && (r.Form["IsStateless"][0] != undefined)) {
-            isStateless = Boolean(r.Form["IsStateless"]);
-            c.Log.Infof("Setting isStateless to: %v", isStateless);
-          }
-
-          c.Log.Infof("X-Polysploit: ID = %s, PerInstanceTimeout = %v, DesiredInstances = %v, IsStateless = %v", id, perInstanceTimeout, desiredInstances, isStateless);
+        if ((r.Method === "POST") && (r.Form["ID"] === undefined)) {
+          return null;
         }
+
+        if ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
+          var id = r.Form["ID"][0];
+        } else {
+          var id = "default";
+        }
+
+        if ((r.Method === "POST") && (r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
+          var perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);
+        } else {
+          var perInstanceTimeout = 10000000000;
+        }
+
+        var desiredInstances = ((r.Method === "POST") && (r.Form["DesiredInstances"] != undefined) && (r.Form["DesiredInstances"][0] != undefined)) ? Number(r.Form["DesiredInstances"][0]) : 3;
+
+        if ((r.Method === "POST") && (r.Form["IsStateless"] != undefined) && (r.Form["IsStateless"][0] != undefined)) {
+          var isStateless = /^true$/i.test(r.Form["IsStateless"][0]);
+        } else {
+          var isStateless = true;
+        }
+
+        c.Log.Infof("X-Polysploit: ID = %s, PerInstanceTimeout = %v, DesiredInstances = %v, IsStateless = %v", id, perInstanceTimeout, desiredInstances, isStateless);
 
         return {
           ID: id,

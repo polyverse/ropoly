@@ -2,7 +2,8 @@
 <head>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript" src="js/pvlib.js"></script>
+<script type="text/javascript" src="js/statter.js"></script>
+<script type="text/javascript" src="js/appinfo.js"></script>
 <script>
 var NUM_ROWS = 10;
 var FLUSH_INTERVAL = 5000;
@@ -16,18 +17,21 @@ var chartOptions = {
   }
 };
 
-var requestNotRouted = new AppInfo("http://localhost:8080/reflect");
+var requestNotRouted = new AppInfo("http://localhost:8080/infect");
 
-var requestRouted = new AppInfo("http://localhost:8080/reflect");
+var requestRouted = new AppInfo("http://localhost:8080/infect");
 requestRouted.ID = "requestRouted";
 
 var requestInfectNoCycling = new AppInfo("http://localhost:8080/infect");
 requestInfectNoCycling.ID = "infectNoCycling";
 requestInfectNoCycling.IsStateless = false;
+requestInfectNoCycling.PerInstanceTimeout = 0;
+requestInfectNoCycling.DesiredInstances = 1;
 
 var requestInfectCycled = new AppInfo("http://localhost:8080/infect");
 requestInfectCycled.ID = "infectCycled";
-requestInfectCycled.PerInstanceTimeout = 5000000000;
+requestInfectCycled.PerInstanceTimeout = 1000000000;
+requestInfectCycled.DesiredInstances = 5;
 
 var myStatter = new Statter(NUM_ROWS);
 google.charts.load('current', {packages: ['corechart', 'line']});
@@ -35,12 +39,10 @@ google.charts.setOnLoadCallback(init);
 
 function init() {
   for (var i = 0; i < NUM_ROWS; i++) {
-    var d = new Date();
-    myStatter.Gauge("Index",d.toLocaleTimeString());
+    var d = new Date(Date.now() - ((NUM_ROWS - i) * FLUSH_INTERVAL));
+    myStatter.Gauge("Time",d.toLocaleTimeString());
     myStatter.Flush();
   }
-  //myStatter.Gauge("200",0);
-  //myStatter.Flush();
   refresh();
 }
 
@@ -54,9 +56,7 @@ var counter = 0;
 function flush() {
   counter++;
   var d = new Date();
-  myStatter.Gauge("Index",d.toLocaleTimeString());
-  //console.log(d.toLocaleTimeString());
-  //myStatter.Gauge("400",Math.random() * 100);
+  myStatter.Gauge("Time",d.toLocaleTimeString());
   myStatter.Flush();
   refresh();
 }
@@ -70,6 +70,15 @@ function myCallbackFunction(data, status, xhr) {
     status = data.status.toString();
   }
   myStatter.Inc(status, 1);
+}
+
+function incBlockedRequests(data, status, xhr) {
+  if (xhr.status != undefined) {
+    myStatter.Inc("NotBlocked",1);
+  }
+  if (data.status != undefined) {
+    myStatter.Inc("Blocked",1);
+  }
 }
 
 function gaugeInfectCycling(data, status, xhr) {
@@ -86,9 +95,9 @@ var timers = [];
 
 function startTimer() {
   timers.push(setInterval(flush, FLUSH_INTERVAL));
-  timers.push(setInterval("requestRouted.Submit(myCallbackFunction)", 500));
-  timers.push(setInterval("requestNotRouted.Submit(myCallbackFunction)", 700));
-  timers.push(setInterval("requestInfectNoCycling.Submit(gaugeInfectNoCycling)", 2000));
+  //timers.push(setInterval("requestRouted.Submit(myCallbackFunction)", 500));
+  timers.push(setInterval("requestNotRouted.Submit(incBlockedRequests)", 1000));
+  timers.push(setInterval("requestInfectNoCycling.Submit(gaugeInfectNoCycling)", 1000));
   timers.push(setInterval("requestInfectCycled.Submit(gaugeInfectCycling)", 1000));
 }
 
