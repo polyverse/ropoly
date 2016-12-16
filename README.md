@@ -33,7 +33,7 @@ This page displays "widgets" that each represent a different Request. Starting a
 
 ### wwwroot/js/AppInfo.js
 
-Usage:
+Example:
 ```
 <html><head>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
@@ -56,3 +56,34 @@ post.always(function(data, status, xhr) {
 <body></body>
 </html>
 ```
+
+### wwwroot/js/statter.js
+
+Example:
+```
+var myStatter = new Statter(10); // creates a 10-member array of empty objects (aka metrics_db)
+
+// metrics_db:
+// [ [],[],[],[],[],[],[],[],[],[] ]
+
+myStatter.Inc("metric1",1); // create and/or increment a dynamically managed metric called "metric1" by 1.
+myStatter.Inc("metric1",1); // metric "metric1" will now hold a value of 2.
+myStatter.Flush(); // current metrics will be written to metrics_db using FIFO.
+
+// metrics_db:
+// [ [],[],[],[],[],[],[],[],[],[0:2] ]
+
+myStatter.Inc("metric1",1);
+myStatter.Gauge("metric2",3); // metric "metric2" will now hold a value of 3.
+myStatter.Gauge("metric2",2); // "metric2" value is now 2.
+myStatter.Flush();
+
+// metrics_db:
+// [ [],[],[],[],[],[],[],[],[0:2],[0:1,1:2] ]
+
+var myArray = myStatter.ToArray(); // return metrics_db as a fixed-size, padded array with a header row
+
+// myArray:
+// [ [0:"metric1",1:"metric2"],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:0,1:0],[0:2,1:0],[0:1,1:2] ]
+```
+
