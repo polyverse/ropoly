@@ -1,5 +1,5 @@
 hash: 9c716bab6c3fb65ce6c93e0d81fd827378a7c818495e81c5ff31a13c77d0bc69
-updated: 2016-12-09T09:31:02.818074425-08:00
+updated: 2016-12-15T23:32:42.981790041-08:00
 imports:
 - name: github.com/polyverse-security/framework
   version: 75144367e48a25d93dc11c292871c22c84ed6db1
@@ -12,7 +12,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/sys
-  version: 478fcf54317e52ab69f40bb4c7a1520288d7f7ea
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
-testImports: []
+devImports: []
