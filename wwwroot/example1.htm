@@ -17,6 +17,21 @@ var chartOptions = {
   }
 };
 
+$(document).ready(function() {
+
+  // Create widget 1
+  appInfo = new AppInfo("http://localhost:8081/reflect");
+  appInfo.ID = "One1";
+  widget = createAppInfoWidget("widgetOne", appInfo);
+  widget.callback = function() {
+    myStatter.Inc(widget.id,1);
+  }
+  widget.interval = 0;
+  console.log("widget.id = " + widget.id + ", widget.appInfo.ID = " + widget.appInfo.ID);
+
+  console.log("Initialization complete.");
+});
+
 var requestNotRouted = new AppInfo("http://localhost:8080/infect");
 
 var requestRouted = new AppInfo("http://localhost:8080/infect");
@@ -38,6 +53,12 @@ google.charts.load('current', {packages: ['corechart', 'line']});
 google.charts.setOnLoadCallback(init);
 
 function init() {
+  var obj = {};
+
+  obj = document.getElementById('one');
+  obj.appInfo = new AppInfo("http://localhost:8081/infect");
+  obj.appInfo.ID = "oneId";
+
   for (var i = 0; i < NUM_ROWS; i++) {
     var d = new Date(Date.now() - ((NUM_ROWS - i) * FLUSH_INTERVAL));
     myStatter.Gauge("Time",d.toLocaleTimeString());
@@ -70,6 +91,16 @@ function myCallbackFunction(data, status, xhr) {
     status = data.status.toString();
   }
   myStatter.Inc(status, 1);
+}
+
+function createAppInfoWidget(id, appInfo) {
+  o = document.getElementById(id);
+  o.innerHTML += "<input type=button id=" + id + "1 value='Save' onclick='start(this);'></input><input type=button value='Stop' onclick=stop('" + id + "1');></input>"; 
+
+  var obj = document.getElementById(id + 1);
+  obj.appInfo = appInfo;
+
+  return obj;
 }
 
 function incBlockedRequests(data, status, xhr) {
@@ -107,10 +138,32 @@ function stopTimer() {
   }
 }
 
+function someCallback(data, status, xhr) {
+  console.log("someCallback()");
+}
+
+function start(caller) {
+  console.log("caller.id = " + caller.id);
+  console.log("caller.appInfo.ID = " + caller.appInfo.ID);
+  console.log("caller.appInfo.Submit = " + caller.appInfo.Submit);
+  console.log("caller.callback = " + caller.callback);
+  //caller.timer = setInterval(document.getElementById(caller.id).appInfo.Submit(someCallback), caller.interval === undefined ? 1000 : caller.interval);
+  caller.timer = setInterval(caller.callback, caller.interval === undefined ? 1000 : caller.interval);
+}
+
+function stop(id) {
+  console.log("stop(" + id + ")");
+  clearInterval(document.getElementById(id).timer);
+}
+
 </script>
 </head>
 <body>
 <input type=button value="Start" onclick="startTimer();"/><input type=button value="Stop" onclick="stopTimer();"/>
+<p/>
+<input id=one type=button value="Start" onclick="start(this);"/>
+<input type=button value="Stop" onclick="stop('one');"/>
+<div id="widgetOne"></div>
 <p/>
 <div id="chart_div"></div>
 </body>

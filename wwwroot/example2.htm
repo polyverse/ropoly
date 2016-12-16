@@ -1,0 +1,147 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://www.gstatic.com/charts/loader.js"></script>
+<script src="js/polysploitWidget.js"></script>
+<script src="js/statter.js"></script>
+<script src="js/appInfo.js"></script>
+<style>
+  .widget {
+    background-color: #CFCFCF;
+    padding: 5px;
+    margin: 5px;
+    font-family: Arial;
+    height: 200px;
+    width: 200px;
+  }
+  input {
+    width: 80px;
+  }
+</style>
+<script>
+var NUM_ROWS = 50;
+var FLUSH_INTERVAL = 5000;
+var REQUEST_INTERVAL = 500;
+var ENDPOINT_URL = "http://localhost:8080/infect";
+
+var CHART_OPTIONS = {
+  height: 500,
+  width: 1000,
+  hAxis: {
+    title: "Time",
+  },
+  vAxis: {
+    //title: "Requests"
+    //format: '0',
+    //ticks: [0,1],
+    viewWindowMode:'explicit',
+    viewWindow: {
+      min: 0
+    }
+  }
+};
+
+var myStatter = new Statter(NUM_ROWS);
+for (var i = 0; i < (NUM_ROWS - 1); i++) {
+  var d = new Date(Date.now() - ((NUM_ROWS - (i + 1)) * FLUSH_INTERVAL));
+  myStatter.Gauge("Time",d.toLocaleTimeString());
+  myStatter.Gauge("Blocked",0);
+  myStatter.Flush();
+}
+setInterval(myFlush,FLUSH_INTERVAL);
+google.charts.load('current', {packages: ['corechart', 'line']});
+google.charts.setOnLoadCallback(myFlush);
+
+var html_1 = `
+  <input type=button onclick='this.parentElement.post();' value="start"></input><input type=button onclick='this.parentElement.stop();' value="stop"></input>
+`;
+
+function myFlush() {
+  var d = new Date(Date.now());
+  myStatter.Gauge("Time",d.toLocaleTimeString());
+  myStatter.Flush();
+  var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+  var data = new google.visualization.arrayToDataTable(myStatter.ToArray(),false);
+  chart.draw(data, CHART_OPTIONS);
+}
+
+$(document).ready(function() {
+
+  // widget 1
+  var myAppInfo = new appInfo();
+  myAppInfo.ID = "infectCycled";
+  myAppInfo.ImageName = "polyverse/polysploit";
+  myAppInfo.PerInstanceTimeout = 1000000000;
+  myAppInfo.DesiredInstances = 5; 
+ 
+  var myWidget = new polysploitWidget("widget1", myAppInfo);
+  myWidget.interval = REQUEST_INTERVAL;
+  myWidget.url = ENDPOINT_URL;
+  myWidget.callback = function(data, status, xhr){
+    myStatter.Gauge("Infections (Self-Healing)", Number(data));
+  };
+  myWidget.innerHTML += "Each request creates an unauthorized file in the target container. There are 5 target containers that are cycled every 10 seconds.<p/><div id=widget1status>Not Running.</div>"
+  myWidget.innerHTML += html_1;
+
+  // widget 2
+  var myAppInfo = new appInfo();
+  myAppInfo.ID = "infectNotCycled";
+  myAppInfo.ImageName = "polyverse/polysploit";
+  myAppInfo.DesiredInstances = 1;
+  myAppInfo.IsStateless = false;
+
+  var myWidget = new polysploitWidget("widget2", myAppInfo);
+  myWidget.interval = REQUEST_INTERVAL;
+  myWidget.url = ENDPOINT_URL;
+  myWidget.callback = function(data, status, xhr){
+    myStatter.Gauge("Infections (Normal)", Number(data));
+  };
+  myWidget.innerHTML += "Each request creates an unauthorized file in the target container. The target container isn't cycled.<p/><div id=widget2status>Not Running.</div>";
+  myWidget.innerHTML += html_1;
+
+  // widget 3
+  var myAppInfo = new appInfo();
+  myAppInfo.ID = undefined;  // appinfo doesn't return route if this is undefined.
+  myAppInfo.ImageName = "polyverse/polysploit";
+  myAppInfo.PerInstanceTimeout = 1000000000;
+  myAppInfo.DesiredInstances = 5; 
+
+  var myWidget = new polysploitWidget("widget3", myAppInfo);
+  myWidget.interval = REQUEST_INTERVAL;
+  myWidget.url = ENDPOINT_URL;
+  myWidget.callback = function(data, status, xhr){
+    myStatter.Inc("Non-Whitelisted Request - " + status, 1);
+  };
+  myWidget.innerHTML += "Each request includes a pattern that isn't explicitly whitelisted by the Polyverse router.<p/>"
+  myWidget.innerHTML += html_1;
+
+  // widget 4
+  var myAppInfo = new appInfo();
+  myAppInfo.ID = "goodRequest";
+  myAppInfo.ImageName = "polyverse/polysploit";
+  myAppInfo.PerInstanceTimeout = 1000000000;
+  myAppInfo.DesiredInstances = 5;
+
+  var myWidget = new polysploitWidget("widget4", myAppInfo);
+  myWidget.interval = REQUEST_INTERVAL;
+  myWidget.url = ENDPOINT_URL;
+  myWidget.callback = function(data, status, xhr){
+    myStatter.Inc("Whitelisted Request - " + status, 1);
+  };
+  myWidget.innerHTML += "Each request includes a pattern that is explicitly whitelisted by the Polyverse router.<p/>"
+  myWidget.innerHTML += html_1;
+});
+</script>
+</head>
+<body>
+<table>
+<tr>
+  <td><div id="widget1" class="widget"></div></td>
+  <td><div id="widget2" class="widget"></div></td>
+  <td><div id="widget3" class="widget"></div></td>
+  <td><div id="widget4" class="widget"></div></td>
+</tr>
+</table>
+<div id="chart_div"></div>
+</body>
+</html>

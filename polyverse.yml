@@ -50,11 +50,12 @@ polyverse-apps/website: |
           return null;
         }
 
-        if ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
-          var id = r.Form["ID"][0];
-        } else {
-          var id = "default";
-        }
+        //if ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
+        //  var id = r.Form["ID"][0];
+        //} else {
+        //  var id = "default";
+        //}
+        var id = ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) ? r.Form["ID"][0] : "default";
 
         if ((r.Method === "POST") && (r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
           var perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);
