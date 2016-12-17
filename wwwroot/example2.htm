@@ -14,6 +14,9 @@
     height: 200px;
     width: 200px;
   }
+  .info {
+    font-size: 12px;
+  }
   input {
     width: 80px;
   }
@@ -41,6 +44,25 @@ var CHART_OPTIONS = {
   }
 };
 
+function systemSettingsHTML() {
+  var str = "<b>URL:</b> " + ENDPOINT_URL + ", <b>Request Interval:</b> " + (REQUEST_INTERVAL / 1000) + "s" + ", <b>Flush Interval:</b> " + (FLUSH_INTERVAL / 1000) + "s";
+  return str;
+}
+
+function printAppInfo(appInfo) {
+  var str = "";
+
+  str += "<div class=info>";
+  str += "ID: " + appInfo.ID + "<br/>";
+  str += "ImageName: " + appInfo.ImageName + "<br/>";
+  str += "DesiredInstances: " + appInfo.DesiredInstances + "<br/>";
+  str += "PerInstanceTimeout: " + appInfo.PerInstanceTimeout + "<br/>";
+  str += "IsStateless: " + appInfo.IsStateless + "<br/>";
+  str += "</div>";
+
+  return str;
+}
+
 var myStatter = new Statter(NUM_ROWS);
 for (var i = 0; i < (NUM_ROWS - 1); i++) {
   var d = new Date(Date.now() - ((NUM_ROWS - (i + 1)) * FLUSH_INTERVAL));
@@ -67,6 +89,9 @@ function myFlush() {
 
 $(document).ready(function() {
 
+  var systemSettings = document.getElementById("systemSettings");
+  systemSettings.innerHTML = systemSettingsHTML();
+
   // widget 1
   var myAppInfo = new appInfo();
   myAppInfo.ID = "infectCycled";
@@ -80,7 +105,8 @@ $(document).ready(function() {
   myWidget.callback = function(data, status, xhr){
     myStatter.Gauge("Infections (Self-Healing)", Number(data));
   };
-  myWidget.innerHTML += "Each request creates an unauthorized file in the target container. There are 5 target containers that are cycled every 10 seconds.<p/><div id=widget1status>Not Running.</div>"
+  myWidget.innerHTML += "Infect a container that's cycling (5 instances, 10 seconds).<p/>";
+  myWidget.innerHTML += printAppInfo(myAppInfo) + "<p/>";
   myWidget.innerHTML += html_1;
 
   // widget 2
@@ -96,7 +122,8 @@ $(document).ready(function() {
   myWidget.callback = function(data, status, xhr){
     myStatter.Gauge("Infections (Normal)", Number(data));
   };
-  myWidget.innerHTML += "Each request creates an unauthorized file in the target container. The target container isn't cycled.<p/><div id=widget2status>Not Running.</div>";
+  myWidget.innerHTML += "Infect a non-cycling container.<p/>";
+  myWidget.innerHTML += printAppInfo(myAppInfo) + "<p/>";
   myWidget.innerHTML += html_1;
 
   // widget 3
@@ -110,9 +137,14 @@ $(document).ready(function() {
   myWidget.interval = REQUEST_INTERVAL;
   myWidget.url = ENDPOINT_URL;
   myWidget.callback = function(data, status, xhr){
-    myStatter.Inc("Non-Whitelisted Request - " + status, 1);
+    if (status === "error") {
+     myStatter.Inc("Blocked",1);
+    } else {
+     myStatter.Inc("Non-Whitelisted Request - " + status, 1);
+    }
   };
-  myWidget.innerHTML += "Each request includes a pattern that isn't explicitly whitelisted by the Polyverse router.<p/>"
+  myWidget.innerHTML += "<b>Blocked</b> scenario<p/>";
+  myWidget.innerHTML += printAppInfo(myAppInfo) + "<p/>";
   myWidget.innerHTML += html_1;
 
   // widget 4
@@ -129,16 +161,18 @@ $(document).ready(function() {
     myStatter.Inc("Whitelisted Request - " + status, 1);
   };
   myWidget.innerHTML += "Each request includes a pattern that is explicitly whitelisted by the Polyverse router.<p/>"
+  myWidget.innerHTML += printAppInfo(myAppInfo) + "<p/>";
   myWidget.innerHTML += html_1;
 });
 </script>
 </head>
 <body>
+<div id=systemSettings></div>
 <table>
 <tr>
-  <td><div id="widget1" class="widget"></div></td>
-  <td><div id="widget2" class="widget"></div></td>
   <td><div id="widget3" class="widget"></div></td>
+  <td><div id="widget2" class="widget"></div></td>
+  <td><div id="widget1" class="widget"></div></td>
   <td><div id="widget4" class="widget"></div></td>
 </tr>
 </table>
