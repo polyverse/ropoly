@@ -51,12 +51,9 @@ polyverse-apps/website: |
           return null;
         }
 
-        //if ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) {
-        //  var id = r.Form["ID"][0];
-        //} else {
-        //  var id = "default";
-        //}
         var id = ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) ? r.Form["ID"][0] : "default";
+
+        var baseImage = ((r.Method === "POST") && (r.Form["BaseImage"] != undefined) && (r.Form["BaseImage"][0] != undefined)) ? r.Form["BaseImage"][0] : "polyverse/polysploit";
 
         if ((r.Method === "POST") && (r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
           var perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);
@@ -78,7 +75,7 @@ polyverse-apps/website: |
           ID: id,
           Timeout: 365 * 24 * 60 * 60 * 1000000000,
           ManagedContainer: {
-            BaseImage: "polyverse/polysploit",
+            BaseImage: baseImage,
             PerInstanceTimeout: perInstanceTimeout,
             DesiredInstances: desiredInstances,
             IsStateless: isStateless,
