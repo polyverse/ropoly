@@ -1,6 +1,46 @@
 hash: 9c716bab6c3fb65ce6c93e0d81fd827378a7c818495e81c5ff31a13c77d0bc69
-updated: 2016-12-15T23:32:42.981790041-08:00
+updated: 2016-12-17T22:56:56.712939545-08:00
 imports:
+- name: github.com/docker/distribution
+  version: 2d500932f2c7f032d2abc51f2ef940871d541319
+  subpackages:
+  - reference
+  - digest
+- name: github.com/docker/docker
+  version: 88862e707affccf9c46347361689b2ffef39dc5c
+  subpackages:
+  - api/types
+  - client
+  - api/types/container
+  - api/types/events
+  - api/types/filters
+  - api/types/network
+  - api/types/reference
+  - api/types/registry
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
+  - api/types/volume
+  - pkg/tlsconfig
+  - api/types/mount
+  - api/types/blkiodev
+  - api/types/strslice
+- name: github.com/docker/go-connections
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
+  subpackages:
+  - sockets
+  - tlsconfig
+  - nat
+- name: github.com/docker/go-units
+  version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
+- name: github.com/Microsoft/go-winio
+  version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
+- name: github.com/opencontainers/runc
+  version: 27a67c9aa024584b69f599a55290476badd317e9
+  subpackages:
+  - libcontainer/user
+- name: github.com/pkg/errors
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/framework
   version: 75144367e48a25d93dc11c292871c22c84ed6db1
   subpackages:
@@ -11,8 +51,15 @@ imports:
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: golang.org/x/net
+  version: 45e771701b814666a7eb299e6c7a57d0b1799e91
+  subpackages:
+  - context
+  - context/ctxhttp
+  - proxy
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
+  - windows
 devImports: []
