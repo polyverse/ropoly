@@ -12,6 +12,8 @@ import (
 )
 
 func DockerHandler(w http.ResponseWriter, r *http.Request) {
+	log.Infof("r.URL.Path = %s", r.URL.Path);
+
 	client, err := client.NewEnvClient()
 	if err != nil {
 		log.Panic(err)

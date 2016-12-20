@@ -31,6 +31,7 @@ func main() {
 	http.HandleFunc("/health", handlers.HealthHandler)
 	http.HandleFunc("/infect", handlers.InfectHandler)
 	http.HandleFunc("/reflect", handlers.ReflectHandler)
+	http.HandleFunc("/proxy", handlers.ProxyHandler)
 	http.HandleFunc("/docker", handlers.DockerHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
