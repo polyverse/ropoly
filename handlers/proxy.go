@@ -88,7 +88,8 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		index := regexp.MustCompile(`(?i)<BODY[^>]*>`).FindStringSubmatchIndex(newstr)
-		fmt.Fprintf(w, strings.Insert(newstr,fmt.Sprintf("<img src=\"%s://%s/img/skull.png\" style=\"position: absolute; z-index: 999; width: 600px;\"/></img>", scheme, r.Host), index[1]))
+		owned := `<img src="` + scheme + `://` + r.Host + `/img/skull.png" style="position:absolute;margin:auto;top:0;right:0;left:0;bottom:0;height:95%%;z-index:999;opacity:0.8;"></img>`
+		fmt.Fprintf(w, strings.Insert(newstr,owned, index[1]))
 	} else {
 		fmt.Fprintf(w, newstr)
 	}
