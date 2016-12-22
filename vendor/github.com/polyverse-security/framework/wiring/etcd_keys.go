@@ -184,4 +184,6 @@ var (
 	//Where the router stores active connections information
 	ExternalConnectionsBaseKey = "/polyverse/active_connections/external/"
 	InternalConnectionsBaseKey = "/polyverse/active_connections/internal/"
+
+	AppClientRootKey = "/apps"
 )

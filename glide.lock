@@ -1,5 +1,5 @@
-hash: 9c716bab6c3fb65ce6c93e0d81fd827378a7c818495e81c5ff31a13c77d0bc69
-updated: 2016-12-17T22:56:56.712939545-08:00
+hash: faa5341d8e7e636f2552c127ea25976d0dce2eceb72682b4012ebf098d097697
+updated: 2016-12-21T18:52:19.90510254-08:00
 imports:
 - name: github.com/docker/distribution
   version: 2d500932f2c7f032d2abc51f2ef940871d541319
@@ -12,39 +12,40 @@ imports:
   - api/types
   - client
   - api/types/container
-  - api/types/events
   - api/types/filters
+  - api/types/mount
   - api/types/network
-  - api/types/reference
   - api/types/registry
   - api/types/swarm
+  - api/types/events
+  - api/types/reference
   - api/types/time
   - api/types/versions
   - api/types/volume
   - pkg/tlsconfig
-  - api/types/mount
   - api/types/blkiodev
   - api/types/strslice
 - name: github.com/docker/go-connections
   version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
+  - nat
   - sockets
   - tlsconfig
-  - nat
 - name: github.com/docker/go-units
   version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
 - name: github.com/Microsoft/go-winio
   version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
 - name: github.com/opencontainers/runc
-  version: 27a67c9aa024584b69f599a55290476badd317e9
+  version: 9a1e53eafc0ebef4712b442a0aa53a1a7016a23d
   subpackages:
   - libcontainer/user
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/framework
-  version: 75144367e48a25d93dc11c292871c22c84ed6db1
+  version: 0ffefd03630224a62337bf766e52f2ff12a0b987
   subpackages:
   - monitoring/polyverse-log-formatter
+  - strings
 - name: github.com/russross/blackfriday
   version: 0b647d0506a698cca42caca173e55559b12a69f2
 - name: github.com/shurcooL/sanitized_anchor_name
