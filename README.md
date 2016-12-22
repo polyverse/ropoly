@@ -22,6 +22,9 @@ This endpoint creates a new unique file in the `/tmp` directory. This is useful 
 ### /health
 Simple healthcheck url that returns an HTTP/200 with the body "OK".
 
+### /proxy?url=<http[s]://host[:port]>
+The provided url will be retrieved server-side and returned in the response. All relative paths (`\"\/[a-zA-Z]`) are made into absolute paths. If `/infect` is called at least once, the provided url contents will have a skull image overlayed.
+
 ### /
 All other requests will return the specified resource from the `wwwroot\` folder. If the resource doesn't exist, an HTTP/404 will be returned.
 
