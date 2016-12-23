@@ -1,10 +1,10 @@
 package: github.com/polyverse-security/polysploit
 import:
 - package: github.com/Sirupsen/logrus
-  version: ~0.11.0
+  version: ^0.10.0
 - package: github.com/polyverse-security/framework
-  version: ~0.17.*
+  version: ^0.17.4
   subpackages:
   - monitoring/polyverse-log-formatter
 - package: github.com/russross/blackfriday
-  version: ~1.4.0
+  version: ^1.4.0

@@ -1,30 +1,30 @@
-hash: faa5341d8e7e636f2552c127ea25976d0dce2eceb72682b4012ebf098d097697
-updated: 2016-12-21T18:52:19.90510254-08:00
+hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
+updated: 2016-12-23T14:25:43.112600744-08:00
 imports:
 - name: github.com/docker/distribution
   version: 2d500932f2c7f032d2abc51f2ef940871d541319
   subpackages:
-  - reference
   - digest
+  - reference
 - name: github.com/docker/docker
   version: 88862e707affccf9c46347361689b2ffef39dc5c
   subpackages:
   - api/types
-  - client
+  - api/types/blkiodev
   - api/types/container
+  - api/types/events
   - api/types/filters
   - api/types/mount
   - api/types/network
-  - api/types/registry
-  - api/types/swarm
-  - api/types/events
   - api/types/reference
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
   - api/types/time
   - api/types/versions
   - api/types/volume
+  - client
   - pkg/tlsconfig
-  - api/types/blkiodev
-  - api/types/strslice
 - name: github.com/docker/go-connections
   version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
@@ -36,7 +36,7 @@ imports:
 - name: github.com/Microsoft/go-winio
   version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
 - name: github.com/opencontainers/runc
-  version: 9a1e53eafc0ebef4712b442a0aa53a1a7016a23d
+  version: 303f9a5ebb0c1c4d70422ebc4519f2db235b6f89
   subpackages:
   - libcontainer/user
 - name: github.com/pkg/errors
@@ -63,4 +63,4 @@ imports:
   subpackages:
   - unix
   - windows
-devImports: []
+testImports: []
