@@ -1,7 +1,6 @@
 #!/bin/bash
 
 REPO=polysploit
-BUILDER_SHA=329dc3e5d35a9e4f3644d9f0f0926e477b50d1cb
 IMAGE_NAME_BASE=polysploit
 
 echo "$(date) Building binary..."
