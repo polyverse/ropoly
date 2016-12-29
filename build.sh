@@ -20,7 +20,7 @@ IMAGE_NAME=polyverse/$IMAGE_NAME_BASE:$headsha
 echo "--> IMAGE_NAME is $IMAGE_NAME"
 
 echo "$(date) Building a minimal docker image for $IMAGE_NAME_BASE tagged with $headsha..."
-docker build -f Dockerfile -t $IMAGE_NAME .
+docker build --no-cache -f Dockerfile -t $IMAGE_NAME .
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo "$(date) --> Docker build failed."
@@ -48,7 +48,7 @@ IMAGE_NAME=polyverse-tools.jfrog.io/$IMAGE_NAME_BASE:$headsha
 echo "--> IMAGE_NAME is $IMAGE_NAME"
 
 echo "$(date) Building a minimal docker image for $IMAGE_NAME_BASE tagged with $headsha..."
-docker build -f Dockerfile -t $IMAGE_NAME .
+docker build --no-cache -f Dockerfile -t $IMAGE_NAME .
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo "$(date) --> Docker build failed."
