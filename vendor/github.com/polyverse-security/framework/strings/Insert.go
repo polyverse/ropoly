@@ -14,6 +14,6 @@ func Insert(str string, substr string, pos int) string {
 	buffer.WriteString(str[:pos])
 	buffer.WriteString(substr)
 	buffer.WriteString(str[pos:])
-	
+
 	return buffer.String()
 }

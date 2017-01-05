@@ -57,6 +57,7 @@ func (e *EtcdKey) StringValue() (string, error) {
 	if bootstrapInProgress {
 		return "", fmt.Errorf("StringValue skipping Etcd query, bootstrapInProgress: %v", bootstrapInProgress)
 	}
+
 	etcdClient := NewEtcdClientCoreOS()
 	log.WithFields(log.Fields{"Key": e.Name()}).Info("Attempting to fetch global configuraton key from etcd.")
 	ctx, cancelFunc := context.WithTimeout(context.Background(), etcdKeyReadTimeout)

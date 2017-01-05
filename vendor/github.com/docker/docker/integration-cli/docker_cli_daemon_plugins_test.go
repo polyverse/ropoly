@@ -258,7 +258,7 @@ func (s *DockerDaemonSuite) TestVolumePlugin(c *check.C) {
 }
 
 func (s *DockerDaemonSuite) TestGraphdriverPlugin(c *check.C) {
-	testRequires(c, Network, IsAmd64, DaemonIsLinux, overlaySupported)
+	testRequires(c, Network, IsAmd64, DaemonIsLinux, overlay2Supported, ExperimentalDaemon)
 
 	s.d.Start()
 
@@ -268,7 +268,7 @@ func (s *DockerDaemonSuite) TestGraphdriverPlugin(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf(out))
 
 	// restart the daemon with the plugin set as the storage driver
-	s.d.Restart("-s", plugin)
+	s.d.Restart("-s", plugin, "--storage-opt", "overlay2.override_kernel_check=1")
 
 	// run a container
 	out, err = s.d.Cmd("run", "--rm", "busybox", "true") // this will pull busybox using the plugin
@@ -290,10 +290,17 @@ func (s *DockerDaemonSuite) TestPluginVolumeRemoveOnRestart(c *check.C) {
 	s.d.Restart("--live-restore=true")
 
 	out, err = s.d.Cmd("plugin", "disable", pName)
-	c.Assert(err, checker.IsNil, check.Commentf(out))
-	out, err = s.d.Cmd("plugin", "rm", pName)
 	c.Assert(err, checker.NotNil, check.Commentf(out))
 	c.Assert(out, checker.Contains, "in use")
+
+	out, err = s.d.Cmd("volume", "rm", "test")
+	c.Assert(err, checker.IsNil, check.Commentf(out))
+
+	out, err = s.d.Cmd("plugin", "disable", pName)
+	c.Assert(err, checker.IsNil, check.Commentf(out))
+
+	out, err = s.d.Cmd("plugin", "rm", pName)
+	c.Assert(err, checker.IsNil, check.Commentf(out))
 }
 
 func existsMountpointWithPrefix(mountpointPrefix string) (bool, error) {

@@ -1,5 +1,5 @@
-hash: a572ee257f968e9529d756666e1aa44c84986a0c7710390329e83469700af91e
-updated: 2016-12-08T16:13:15.937663935-08:00
+hash: d8400861136d81c181ed209b8cc28dcfc8b42b14132082124b3ddb167a4fa684
+updated: 2017-01-04T14:19:59.581143952-08:00
 imports:
 - name: github.com/cactus/go-statsd-client
   version: d8eabe07bc70ff9ba6a56836cde99d1ea3d005f7
@@ -16,12 +16,12 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/docker/distribution
-  version: 844b92879f179f16a26ce441631880aa3079b7f4
+  version: 76f514b618dc815f0dcf56f52988e7f2fa735f7a
   subpackages:
   - digest
   - reference
 - name: github.com/docker/docker
-  version: 4d92237de1b34c8bf99e549db27b83fd087cd765
+  version: 88862e707affccf9c46347361689b2ffef39dc5c
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -40,26 +40,14 @@ imports:
   - cliconfig/configfile
   - client
   - pkg/tlsconfig
-- name: github.com/docker/engine-api
-  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
-  subpackages:
-  - types
-  - types/blkiodev
-  - types/container
-  - types/filters
-  - types/network
-  - types/registry
-  - types/strslice
-  - types/swarm
-  - types/versions
 - name: github.com/docker/go-connections
-  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
+  version: eb315e36415380e7c2fdee175262560ff42359da
   subpackages:
   - nat
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
 - name: github.com/ghodss/yaml
   version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
 - name: github.com/golang/protobuf
@@ -75,10 +63,6 @@ imports:
   - utilities
 - name: github.com/Microsoft/go-winio
   version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
-- name: github.com/opencontainers/runc
-  version: 34f23cb99c30040e2ca82442eeb22d15a757f78d
-  subpackages:
-  - libcontainer/user
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/statter
@@ -86,7 +70,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/net
-  version: e31bd588d1077ee66a958c0ad3a235f2084b4195
+  version: 69d4b8aa71caaaa75c3dfc11211d1be495abec7c
   subpackages:
   - context
   - context/ctxhttp
@@ -98,7 +82,7 @@ imports:
   - proxy
   - trace
 - name: golang.org/x/sys
-  version: 478fcf54317e52ab69f40bb4c7a1520288d7f7ea
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
   - windows

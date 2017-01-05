@@ -83,20 +83,18 @@ func init() {
 
 func newDockerClient() DockerClient {
 	var err error
-	for dockerClient == nil {
+	//exportEnvironment
+	exportEnvironment()
 
-		//exportEnvironment
-		exportEnvironment()
-
-		dockerClient, err = docker.NewEnvClient()
-		if err != nil {
-			if strings.Contains(err.Error(), "unable to parse docker host") {
-				log.Panicf("Unable to construct docker client from the environment - check DOCKER_HOST: %+v", err)
-			}
-			log.WithFields(log.Fields{"Error": err}).Error("Unable to construct docker client from the environment.")
-			time.Sleep(time.Duration(10) * time.Second)
-		}
+	dockerClient, err = docker.NewEnvClient()
+	if err != nil {
+		log.WithFields(log.Fields{"Error": err}).Fatal("Unable to construct docker client from the environment.")
 	}
+
+	if _, err := dockerClient.Info(context.Background()); err != nil {
+		log.WithFields(log.Fields{"Error": err}).Fatal("Unable to get Docker Info (which indicates the connection to docker is not functioning correctly.)")
+	}
+
 	return dockerClient
 }
 

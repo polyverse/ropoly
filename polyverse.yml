@@ -10,15 +10,15 @@ polyverse/config/vfi: |
     },
     "supervisor": {
       "type": "dockerImage",
-      "address": "polyverse/supervisor:3e11e266c5d0c7aeed32f826da53eaece5f9411f"
+      "address": "polyverse/supervisor:5070011dd2a34265121a960005e73a5a9fc3f914"
     },
     "router": {
       "type": "dockerImage",
-      "address": "polyverse/router:f5c7190e8c9a7c0c76dff4f94b1a717d7a6325d3"
+      "address": "polyverse/router:5453e8c9b2b7264b725f97297a078f4d47bfa71e"
     },
     "containerManager": {
       "type": "dockerImage",
-      "address": "polyverse/container-manager:9c279e40a4482a1d62cb7aa7f567538dad46e2d7"
+      "address": "polyverse/container-manager:64be36fd2ebe6091250603d937139991aa909538"
     }
   }
 polyverse/config/docker/config_json: |
@@ -29,14 +29,13 @@ polyverse/config/docker/config_json: |
       }
     }
   }
-polyverse/config/monitoring/docker_log_driver: "gelf"
-polyverse/config/monitoring/docker_log_opts: "gelf-address=udp://192.168.0.26:12201"
+polyverse/config/monitoring/docker_log_driver: "json-file"
 polyverse/config/monitoring/log_source_line: "true"
 polyverse/config/monitoring/log_container_changes: "true"
 polyverse/config/monitoring/log_metrics: "false"
 polyverse/config/monitoring/statsd_endpoint: "127.0.0.1:8125"
 polyverse/config/monitoring/statter_cluster_name: "chris_test_cluster"
-polyverse-apps/website: |
+apps/website: |
   app = function() {
 
     return {

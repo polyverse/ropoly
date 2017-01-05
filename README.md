@@ -3,7 +3,7 @@
 The purpose of this container is to provide endpoints that behave a specific way that is useful in testing or demonstrating Polyverse capabilities.
 
 ```
-docker run -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse/supervisor:3e11e266c5d0c7aeed32f826da53eaece5f9411f -config-yaml-file=/polyverse.yml
+docker run -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse/supervisor:5070011dd2a34265121a960005e73a5a9fc3f914 -config-yaml-file=/polyverse.yml
 ```
 
 ## About the AppDef
