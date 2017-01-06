@@ -25,7 +25,13 @@ polyverse/config/docker/config_json: |
   {
     "auths": {
       "https://index.docker.io/v1/": {
-        "auth": "cHZyZWFkb25seTpnd2JLcjd4Vm5CRzlZeQ=="
+        "auth": "cnN1bmRhaGw6eEMyLXpNVi1uN2EtS3pT"
+      },
+      "polyverse-runtime.jfrog.io": {
+        "auth": "cm95OkFLQ3AyVm9hcXBhNER5a055UThYZFZEbUNXWmdjazdHODZGNHR0NWtvcU1KRzdKQmpqVlhBazl4VzNBSzVXV25nUEFyeGs0ZWk="
+        },
+      "polyverse-tools.jfrog.io": {
+        "auth": "cm95OkFLQ3AyVm9hcXBhNER5a055UThYZFZEbUNXWmdjazdHODZGNHR0NWtvcU1KRzdKQmpqVlhBazl4VzNBSzVXV25nUEFyeGs0ZWk="
       }
     }
   }

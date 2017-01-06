@@ -4,7 +4,7 @@ The purpose of this container is to provide endpoints that behave a specific way
 
 # The version of supervisor below comes from: pv vfi get Runtime/Artifactory:v0.17.0-rc2
 ```
-docker run -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse-runtime.jfrog.io/supervisor:8181674177f0c9e57056517c426374a104bc580a -config-yaml-file=/polyverse.yml
+docker run -e DOCKER_API_VERSION=1.24 -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse-runtime.jfrog.io/supervisor:8181674177f0c9e57056517c426374a104bc580a -config-yaml-file=/polyverse.yml
 ```
 
 ## About the AppDef
