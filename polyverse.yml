@@ -1,4 +1,4 @@
-polyverse/config/vfi: |
+polyverse/config/vfi: | # From: pv vfi get Runtime/Artifactory:v0.17.0-rc2
   {
     "etcd": {
       "type": "dockerImage",
@@ -10,15 +10,15 @@ polyverse/config/vfi: |
     },
     "supervisor": {
       "type": "dockerImage",
-      "address": "polyverse/supervisor:5070011dd2a34265121a960005e73a5a9fc3f914"
+      "address": "polyverse-runtime.jfrog.io/supervisor:8181674177f0c9e57056517c426374a104bc580a"
     },
     "router": {
       "type": "dockerImage",
-      "address": "polyverse/router:5453e8c9b2b7264b725f97297a078f4d47bfa71e"
+      "address": "polyverse-runtime.jfrog.io/router:5d448da3b3be7c7829edadb9b1764e6f1608cd9b"
     },
     "containerManager": {
       "type": "dockerImage",
-      "address": "polyverse/container-manager:64be36fd2ebe6091250603d937139991aa909538"
+      "address": "polyverse-runtime.jfrog.io/container-manager:79f0479f4a1dab6d8e842e1188bb91dfcbd9d6c9"
     }
   }
 polyverse/config/docker/config_json: |
@@ -52,7 +52,7 @@ apps/website: |
 
         var id = ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) ? r.Form["ID"][0] : "default";
 
-        var baseImage = ((r.Method === "POST") && (r.Form["BaseImage"] != undefined) && (r.Form["BaseImage"][0] != undefined)) ? r.Form["BaseImage"][0] : "polyverse/polysploit";
+        var baseImage = ((r.Method === "POST") && (r.Form["BaseImage"] != undefined) && (r.Form["BaseImage"][0] != undefined)) ? r.Form["BaseImage"][0] : "polyverse-tools.jfrog.io/polysploit";
 
         if ((r.Method === "POST") && (r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
           var perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);

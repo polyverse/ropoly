@@ -1,9 +1,10 @@
-# polyverse/polysploit
+# polyverse-tools.jfrog.io/polysploit
 
 The purpose of this container is to provide endpoints that behave a specific way that is useful in testing or demonstrating Polyverse capabilities.
 
+# The version of supervisor below comes from: pv vfi get Runtime/Artifactory:v0.17.0-rc2
 ```
-docker run -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse/supervisor:5070011dd2a34265121a960005e73a5a9fc3f914 -config-yaml-file=/polyverse.yml
+docker run -d --name=polyverse_supervisor_1 -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/polyverse.yml:/polyverse.yml polyverse-runtime.jfrog.io/supervisor:8181674177f0c9e57056517c426374a104bc580a -config-yaml-file=/polyverse.yml
 ```
 
 ## About the AppDef
@@ -45,7 +46,7 @@ Example:
 // Create an appInfo object and specify values.
 var myAppInfo = new appInfo();
 myAppInfo.ID = "foo";
-myAppInfo.ImageName = "polyverse/polysploit";
+myAppInfo.ImageName = "polyverse-tools.jfrog.io/polysploit";
 myAppInfo.DesiredInstances = 3;
 myAppInfo.PerInstanceTimeout = 1000000000;
 myAppInfo.IsStateless = true;
