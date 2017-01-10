@@ -15,7 +15,9 @@ func InfectHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("err: %s", err)
 	}
-	files, _ := ioutil.ReadDir("/tmp")
+	//files, _ := ioutil.ReadDir("/tmp")
 
-	io.WriteString(w, fmt.Sprintf("%v\n", len(files)))
+	msg := fmt.Sprintf("{\"Event\":\"security.polysploit.ChangedFile\",\"Filename\":\"/tmp/data%03d\"}", len(f1) + 1)
+        fmt.Printf("%s", msg)
+	io.WriteString(w, fmt.Sprintf("%s",msg))
 }
