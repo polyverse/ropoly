@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/reflect", handlers.ReflectHandler)
 	http.HandleFunc("/proxy", handlers.ProxyHandler)
 	http.HandleFunc("/docker", handlers.DockerHandler)
+	http.HandleFunc("/panic", handlers.PanicHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
