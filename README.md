@@ -23,14 +23,14 @@ This endpoint creates a new unique file in the `/tmp` directory. This is useful 
 ### /health
 Simple healthcheck url that returns an HTTP/200 with the body "OK".
 
-### /proxy?url=<http[s]://host[:port]>
+### /proxy?url=\<http[s]://host[:port]\>
 The provided url will be retrieved server-side and returned in the response. All relative paths (`\"\/[a-zA-Z]`) are made into absolute paths. If `/infect` is called at least once, the provided url contents will have a skull image overlayed.
 
 ### /api/v0/library
 Return list of loaded libraries for the current process
 
-### /api/v0/memory[?<search|regexp>=<string|regexp>][&limit=<count>][&start=<address>]
-Search executable memory starting at <address> (default 0) and return <count> (default 10) instances. If search is used, string is the pattern. If regexp is used, regexp is the regular expression.
+### /api/v0/memory[?\<search|regexp\>=\<string|regexp\>][&limit=\<count\>][&start=\<address\>]
+Search executable memory starting at \<address\> (default 0) and return \<count\> (default 10) instances. If search is used, string is the pattern. If regexp is used, regexp is the regular expression.
 
 ### /api/v0/overflow?chain=ropstring
 Performs buffer overflow by passing ropstring to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
