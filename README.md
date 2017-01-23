@@ -29,11 +29,11 @@ The provided url will be retrieved server-side and returned in the response. All
 ### /api/v0/library
 Return list of loaded libraries for the current process
 
-### /api/v0/memory[?\<search|regexp\>=\<string|regexp\>][&limit=\<count\>][&start=\<address\>]
-Search executable memory starting at \<address\> (default 0) and return \<count\> (default 10) instances. If search is used, string is the pattern. If regexp is used, regexp is the regular expression.
+### /api/v0/memory/search[[<string|regexp]=_target_][&limit=_number_][&start=_address_]
+Search executable memory starting at _address_ (default 0) and return _number_ (default 10) instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
 
-### /api/v0/overflow?chain=ropstring
-Performs buffer overflow by passing ropstring to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
+### /api/v0/overflow?chain=_ropstring_
+Performs buffer overflow by passing _ropstring_ to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
 
 ### /
 All other requests will return the specified resource from the `wwwroot\` folder. If the resource doesn't exist, an HTTP/404 will be returned.

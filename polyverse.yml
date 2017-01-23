@@ -58,7 +58,7 @@ apps/website: |
 
         var id = ((r.Method === "POST") && (r.Form["ID"] != undefined) && (r.Form["ID"][0] != undefined)) ? r.Form["ID"][0] : "default";
 
-        var baseImage = ((r.Method === "POST") && (r.Form["BaseImage"] != undefined) && (r.Form["BaseImage"][0] != undefined)) ? r.Form["BaseImage"][0] : "polyverse/polysploit";
+        var baseImage = ((r.Method === "POST") && (r.Form["BaseImage"] != undefined) && (r.Form["BaseImage"][0] != undefined)) ? r.Form["BaseImage"][0] : "polysploit";
 
         if ((r.Method === "POST") && (r.Form["PerInstanceTimeout"] != undefined) && (r.Form["PerInstanceTimeout"][0] != undefined)) {
           var perInstanceTimeout = Number(r.Form["PerInstanceTimeout"][0]);

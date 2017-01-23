@@ -73,8 +73,8 @@ func ROPMemorySearch(p process.Process, search string, startN addressType, limit
 	return addresses, nil
 }
 
-func ROPMemoryHandler(w rest.ResponseWriter, r *rest.Request) {
-	search := r.FormValue("search")
+func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
+	search := r.FormValue("string")
 	if search == "" {
 		search = r.FormValue("regexp")
 	}
@@ -120,7 +120,7 @@ func ROPMemoryHandler(w rest.ResponseWriter, r *rest.Request) {
         }
 
         w.WriteJson(addresses)
-}
+} // ROPMemorySearchHandler()
 
 type librariesType []string
 

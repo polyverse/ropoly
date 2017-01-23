@@ -31,7 +31,7 @@ func main() {
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
 		rest.Get("/library", handlers.ROPLibraryHandler),
-		rest.Get("/memory", handlers.ROPMemoryHandler),
+		rest.Get("/memory/search", handlers.ROPMemorySearchHandler),
 		rest.Get("/overflow", handlers.ROPOverflowHandler),
 	)
 	if err != nil {
