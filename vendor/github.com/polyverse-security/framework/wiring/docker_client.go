@@ -4,11 +4,13 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
+	fcontext "github.com/polyverse-security/framework/context"
 	"golang.org/x/net/context"
 	"io"
 	"io/ioutil"
@@ -56,6 +58,9 @@ type (
 		TaskInspectWithRaw(ctx context.Context, taskID string) (swarm.Task, []byte, error)
 		TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error)
 	}
+	EventsAPI interface {
+		Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error)
+	}
 	DockerClient interface // http://play.golang.org/p/5zkJ1jTsJu
 	{
 		DockerSystemAPI
@@ -64,6 +69,7 @@ type (
 		DockerVolumeAPI
 		DockerNetworkAPI
 		SwarmServiceAPI
+		EventsAPI
 	}
 	dockerFactory func() DockerClient
 )
@@ -91,7 +97,7 @@ func newDockerClient() DockerClient {
 		log.WithFields(log.Fields{"Error": err}).Fatal("Unable to construct docker client from the environment.")
 	}
 
-	if _, err := dockerClient.Info(context.Background()); err != nil {
+	if _, err := dockerClient.Info(fcontext.DefaultDockerTimeout()); err != nil {
 		log.WithFields(log.Fields{"Error": err}).Fatal("Unable to get Docker Info (which indicates the connection to docker is not functioning correctly.)")
 	}
 

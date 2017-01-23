@@ -1,13 +1,18 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-01-05T12:04:07.891888114-08:00
+updated: 2017-01-23T09:22:42.387166181-08:00
 imports:
-- name: github.com/docker/distribution
-  version: 76f514b618dc815f0dcf56f52988e7f2fa735f7a
+- name: github.com/ant0ine/go-json-rest
+  version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
   subpackages:
-  - digest
+  - rest
+  - rest/trie
+- name: github.com/docker/distribution
+  version: 7a0972304e201e2a5336a69d00e112c27823f554
+  subpackages:
+  - digestset
   - reference
 - name: github.com/docker/docker
-  version: 43cc971d7694bc05c3c8b9641364f0a4e3775817
+  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -34,14 +39,25 @@ imports:
 - name: github.com/docker/go-units
   version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
 - name: github.com/Microsoft/go-winio
-  version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
+  version: 307e919c663683a9000576fdc855acaf9534c165
+- name: github.com/opencontainers/go-digest
+  version: 21dfd564fd89c944783d00d069f33e3e7123c448
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/framework
-  version: fd0b34167223c1831f304aacab611240789f854b
+  version: a41ab72daaba01b3d7b271c72a6a0181460f3589
   subpackages:
   - monitoring/polyverse-log-formatter
   - strings
+- name: github.com/polyverse-security/masche
+  version: a88922a1bf621ebfa224e8ee3192391961ca1d3e
+  subpackages:
+  - common
+  - cresponse
+  - listlibs
+  - memaccess
+  - memsearch
+  - process
 - name: github.com/russross/blackfriday
   version: 0b647d0506a698cca42caca173e55559b12a69f2
 - name: github.com/shurcooL/sanitized_anchor_name
@@ -49,7 +65,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/net
-  version: 67957fd0b1868d2b9f4fd2b3a3474c83bc3d49c3
+  version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
   subpackages:
   - context
   - context/ctxhttp

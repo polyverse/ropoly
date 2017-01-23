@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
@@ -29,6 +30,8 @@ type (
 	}
 	DockerSwarmServiceAPIMock struct {
 	}
+	DockerEventsAPIMock struct {
+	}
 	DockerClientMock struct {
 		DockerSystemAPIMock
 		DockerImageAPIMock
@@ -36,6 +39,7 @@ type (
 		DockerVolumeAPIMock
 		DockerNetworkAPIMock
 		DockerSwarmServiceAPIMock
+		DockerEventsAPIMock
 	}
 )
 
@@ -147,4 +151,8 @@ func (sm DockerSwarmServiceAPIMock) TaskInspectWithRaw(ctx context.Context, task
 
 func (sm DockerSwarmServiceAPIMock) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
 	return []swarm.Task{}, nil
+}
+
+func (em DockerEventsAPIMock) Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error) {
+	return make(chan events.Message), make(chan error)
 }

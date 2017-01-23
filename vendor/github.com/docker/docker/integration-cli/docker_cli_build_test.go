@@ -7043,17 +7043,6 @@ func (s *DockerSuite) TestBuildCmdShellArgsEscaped(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestContinueCharSpace(c *check.C) {
-	// Test to make sure that we don't treat a \ as a continuation
-	// character IF there are spaces (or tabs) after it on the same line
-	name := "testbuildcont"
-	_, err := buildImage(name, "FROM busybox\nRUN echo hi \\\t\nbye", true)
-	c.Assert(err, check.NotNil, check.Commentf("Build 1 should fail - didn't"))
-
-	_, err = buildImage(name, "FROM busybox\nRUN echo hi \\ \nbye", true)
-	c.Assert(err, check.NotNil, check.Commentf("Build 2 should fail - didn't"))
-}
-
 // Test case for #24912.
 func (s *DockerSuite) TestBuildStepsWithProgress(c *check.C) {
 	name := "testbuildstepswithprogress"
@@ -7394,6 +7383,10 @@ func (s *DockerSuite) TestBuildWorkdirCmd(c *check.C) {
                 FROM golang:1.7-alpine
                 WORKDIR /
                 `
-	_, err := buildImage("testbuildworkdircmd", dockerFile, false)
+	_, err := buildImage("testbuildworkdircmd", dockerFile, true)
 	c.Assert(err, checker.IsNil)
+
+	_, out, err := buildImageWithOut("testbuildworkdircmd", dockerFile, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.Count(out, "Using cache"), checker.Equals, 1)
 }

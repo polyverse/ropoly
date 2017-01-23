@@ -7,8 +7,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cliconfig/configfile"
+	"github.com/polyverse-security/framework/context"
 	"github.com/polyverse-security/framework/wiring"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -16,57 +16,99 @@ import (
 
 const defaultRegistry = "https://index.docker.io/v1/"
 
+var (
+	noRegistryFoundError error = fmt.Errorf("No registry of this name found in config json.")
+)
+
+func noOpPrivilegeFunc() (string, error) {
+	log.Info("No op registry auth function called. Returning an empty auth token, and no error.")
+	return "", nil
+}
+
 func GetPrivilegeFunc() types.RequestPrivilegeFunc {
-	return GetPrivilegeFuncForRegistry(defaultRegistry)
+	if function, err := GetPrivilegeFuncForRegistry(defaultRegistry); err == nil {
+		return function
+	} else {
+		if err == noRegistryFoundError {
+			log.Error("No auth credentials found for default registry (docker.io) in config json.")
+		} else {
+			log.WithField("Error", err).Error("An unexpected error occurred when retrieving a privilege function for the default registry (docker.io).")
+		}
+		return noOpPrivilegeFunc
+	}
 }
 
 func GetPrivilegeFuncForImage(image string) types.RequestPrivilegeFunc {
-	registry := defaultRegistry
+	log.Infof("Getting privilege function for image: %s", image)
 
-	//split the image into three parts if possible
+	//split the image into parts if possible
 	fragments := strings.Split(image, "/")
-	if len(fragments) == 3 {
-		log.WithField("RegistryFragment", fragments[0]).Info("Registry found. Not using default registry.")
-		registry = fragments[0] //first fragment is the registry
+	log.WithFields(log.Fields{"ImageName": image, "Fragments": fragments}).Debug("Broken down image name into fragments separated by /")
+	if len(fragments) > 1 {
+		registry := fragments[0]
+		log.WithField("RegistryCandidateFragment", registry).Info("Since number of fragments was more than one, we're going to treat the first segment as registry...")
+		if function, err := GetPrivilegeFuncForRegistry(registry); err == nil {
+			log.WithField("Registry", registry).Debug("Registry of this name, had auth entry in config json. Returning auth function for it.")
+			return function
+		} else if err == noRegistryFoundError {
+			log.WithFields(log.Fields{"Registry": registry, "Image": image}).Warning("If this image's prefix was indeed meant to be a registry specifier, then we didn't find auth details for it. This function will try and return auth credentials for the default docker.io registry, if one is available.")
+		} else {
+			log.WithFields(log.Fields{"Registry": registry, "Image": image, "Error": err}).Error("An unexpected error occurred when trying to retrieve registry auth credentials for this image/registry. The error was not expected. We're going to proceed to fallbacks to docker.io and see if something else will work.")
+		}
 	}
+
+	log.WithField("Registry", defaultRegistry).Warning("No specific registry found. Obtaining auth function for the default docker.io registry.")
+	if function, err := GetPrivilegeFuncForRegistry(defaultRegistry); err == nil {
+		log.WithField("Registry", defaultRegistry).Debug("Registry of this name, had auth entry in config json. Returning auth function for it.")
+		return function
+	} else {
+		if err == noRegistryFoundError {
+			log.WithFields(log.Fields{"Registry": defaultRegistry}).Warning("There were no credentials found for the default docker.io registry in config json. Going to return a no-op privilege function.")
+		} else {
+			log.WithFields(log.Fields{"Registry": defaultRegistry}).Error("An unexpected error occurred when trying to obtain a privilege function. Going to return a no-op privilege function.")
+		}
+		return noOpPrivilegeFunc
+	}
+}
+
+func GetPrivilegeFuncForRegistry(registry string) (types.RequestPrivilegeFunc, error) {
 
 	if registry == "docker.io" { //Special case
 		log.Info("Registry docker.io being resolved as a special case to the default registry URL")
 		registry = defaultRegistry
 	}
 
-	//Find registry from the image
-	return GetPrivilegeFuncForRegistry(registry)
-}
-
-func GetPrivilegeFuncForRegistry(registry string) types.RequestPrivilegeFunc {
+	log.Infof("Getting privilege function for registry: %s", registry)
 	if cf, err := getDockerConfig(); err != nil {
 		log.WithField("Error", err).Error("Error loading docker config.")
-		return func() (string, error) {
-			return "", fmt.Errorf("Unable to load Docker Config. Cannot provide auth token.")
-		}
+		return nil, fmt.Errorf("Unable to load Docker Config. Cannot provide the privilege function to generate credentials.")
 	} else {
 		return getPrivilegeFunc(cf, registry)
 	}
 }
 
-func getPrivilegeFunc(cf configfile.ConfigFile, registry string) types.RequestPrivilegeFunc {
+func getPrivilegeFunc(cf configfile.ConfigFile, registry string) (types.RequestPrivilegeFunc, error) {
+
+	if len(cf.AuthConfigs) == 0 {
+		err := fmt.Errorf("Auth Configs are empty. No authentication will be provided.")
+		log.Error(err)
+		return nil, noRegistryFoundError
+	} else if _, ok := cf.AuthConfigs[registry]; !ok {
+		err := fmt.Errorf("No auth info found for registry: %s", registry)
+		log.Error(err)
+		return nil, noRegistryFoundError
+	}
+
 	privilegeFunc := func() (string, error) {
-		if len(cf.AuthConfigs) == 0 {
-			err := fmt.Errorf("Auth Configs are empty. No authentication will be provided.")
-			log.Error(err)
-			return "", err
-		} else if auth, ok := cf.AuthConfigs[registry]; !ok {
-			err := fmt.Errorf("No auth info found for registry: %s", registry)
-			log.Error(err)
-			return "", err
-		} else if resp, err := wiring.GetDockerClient().RegistryLogin(context.Background(), auth); err != nil {
+		auth := cf.AuthConfigs[registry]
+
+		if resp, err := wiring.GetDockerClient().RegistryLogin(context.DefaultDockerTimeout(), auth); err != nil {
 			err := fmt.Errorf("Error occurred when authenticating to registry %s: ", registry, err)
 			log.Error(err)
 			return "", err
 		} else {
 			authConfig := types.AuthConfig{}
-			log.WithField("Status", resp.Status).Info("Authentication completed against the registry.")
+			log.WithField("Status", resp.Status).Infof("Authentication completed against the registry: %s", registry)
 			if resp.IdentityToken != "" {
 				authConfig.IdentityToken = resp.IdentityToken
 			} else {
@@ -100,7 +142,7 @@ func getPrivilegeFunc(cf configfile.ConfigFile, registry string) types.RequestPr
 		}
 	}
 
-	return types.RequestPrivilegeFunc(privilegeFunc)
+	return types.RequestPrivilegeFunc(privilegeFunc), nil
 }
 
 func getDockerConfig() (configfile.ConfigFile, error) {

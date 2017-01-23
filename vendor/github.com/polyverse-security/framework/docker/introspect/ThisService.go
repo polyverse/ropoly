@@ -6,8 +6,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/polyverse-security/framework/context"
 	"github.com/polyverse-security/framework/wiring"
-	"golang.org/x/net/context"
 )
 
 //These are swarm labels
@@ -26,7 +26,7 @@ func ThisService() (swarm.Service, error) {
 		log.WithField("Error", err).Error("Unable to get Service ID for the current container.")
 		return swarm.Service{}, err
 	} else {
-		service, _, err := dc.ServiceInspectWithRaw(context.Background(), serviceId)
+		service, _, err := dc.ServiceInspectWithRaw(context.DefaultDockerTimeout(), serviceId)
 		return service, err
 	}
 }
@@ -34,8 +34,8 @@ func ThisService() (swarm.Service, error) {
 /**
 Returns the name of this task under a service.
 */
-func ThisTaskName() (string, error) {
-	return getLabelFromContainer("com.docker.swarm.task.name")
+func ThisTaskId() (string, error) {
+	return getLabelFromContainer("com.docker.swarm.task.id")
 }
 
 func ThisServiceId() (string, error) {
@@ -43,16 +43,16 @@ func ThisServiceId() (string, error) {
 }
 
 func ThisServiceTaskList() ([]swarm.Task, error) {
-	serviceName, err := getLabelFromContainer("com.docker.swarm.service.name")
+	serviceId, err := ThisServiceId()
 	if err != nil {
-		log.WithField("Error", err).Error("Unable to get service name for this container. Cannot get tasks under the service, without a service name.")
+		log.WithField("Error", err).Error("Unable to get service Id for this container. Cannot get tasks under the service, without a service Id.")
 	}
 
 	dc := wiring.GetDockerClient()
 	serviceIdFilter := filters.NewArgs()
-	serviceIdFilter.Add("service", serviceName)
+	serviceIdFilter.Add("service", serviceId)
 
-	return dc.TaskList(context.Background(), types.TaskListOptions{
+	return dc.TaskList(context.DefaultDockerTimeout(), types.TaskListOptions{
 		Filters: serviceIdFilter,
 	})
 }

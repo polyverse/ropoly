@@ -4,8 +4,8 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
+	"github.com/polyverse-security/framework/context"
 	"github.com/polyverse-security/framework/wiring"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -19,7 +19,7 @@ func ThisContainer() (types.ContainerJSON, error) {
 		return types.ContainerJSON{}, err
 	}
 
-	return dc.ContainerInspect(context.Background(), containerId)
+	return dc.ContainerInspect(context.DefaultDockerTimeout(), containerId)
 }
 
 func ThisContainerId() (string, error) {
@@ -48,7 +48,7 @@ func getContainerIdFromCgroupContents(contents string) (string, error) {
 	for _, line := range lines {
 		if strings.Contains(line, "/docker/") {
 			log.Debugf("Found a line in /proc/self/cgroup which might contain the docker container id: %s", line)
-			docker_prefix_idx := strings.Index(line, "/docker/")
+			docker_prefix_idx := strings.LastIndex(line, "/docker/")
 			if docker_prefix_idx == -1 {
 				log.Errorf("Something went terribly wrong. The string \"/docker/\" is contained in the line we're parsing, but it's index is -1 (indicating it does not exist.) Look at this line and determine what's wrong: %s", line)
 			} else {

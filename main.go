@@ -7,6 +7,7 @@ import (
 	"github.com/polyverse-security/framework/monitoring/polyverse-log-formatter"
 	log "github.com/Sirupsen/logrus"
 	"github.com/polyverse-security/polysploit/handlers"
+	"github.com/ant0ine/go-json-rest/rest"
 )
 
 func pseudo_uuid() (uuid string) {
@@ -26,8 +27,21 @@ func pseudo_uuid() (uuid string) {
 func main() {
 	log.SetFormatter(polyverse_log_formatter.NewFormatter())
 
-	http.HandleFunc("/", handlers.DefaultHandler)
+	api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
+	router, err := rest.MakeRouter(
+		rest.Get("/library", handlers.ROPLibraryHandler),
+		rest.Get("/memory", handlers.ROPMemoryHandler),
+		rest.Get("/overflow", handlers.ROPOverflowHandler),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	api.SetApp(router)
 
+	http.Handle("/api/v0/", http.StripPrefix("/api/v0", api.MakeHandler()))
+
+	http.HandleFunc("/", handlers.DefaultHandler)
 	http.HandleFunc("/health", handlers.HealthHandler)
 	http.HandleFunc("/infect", handlers.InfectHandler)
 	http.HandleFunc("/reflect", handlers.ReflectHandler)

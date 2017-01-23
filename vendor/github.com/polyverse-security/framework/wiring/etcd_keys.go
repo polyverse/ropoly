@@ -3,14 +3,15 @@ package wiring
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"golang.org/x/net/context"
+	"github.com/polyverse-security/framework/context"
 	"time"
 )
 
 var (
-	bootstrapInProgress bool
-	overrides           map[string]string
-	etcdKeyReadTimeout  time.Duration = time.Duration(20) * time.Second //This is a high value due to that weird Mac bug of delaying connections by 10 seconds.
+	bootstrapInProgress      bool
+	overrides                map[string]string
+	etcdKeyReadTimeout       time.Duration = time.Duration(20) * time.Second //This is a high value due to that weird Mac bug of delaying connections by 10 seconds.
+	bootstrapInProgressError error         = fmt.Errorf("StringValue skipping Etcd query, because Bootstrap is in progress")
 )
 
 func SetBootstrapInProgress(bip bool) {
@@ -55,17 +56,19 @@ func (e *EtcdKey) Name() string {
 
 func (e *EtcdKey) StringValue() (string, error) {
 	if bootstrapInProgress {
-		return "", fmt.Errorf("StringValue skipping Etcd query, bootstrapInProgress: %v", bootstrapInProgress)
+		return "", bootstrapInProgressError
 	}
 
 	etcdClient := NewEtcdClientCoreOS()
-	log.WithFields(log.Fields{"Key": e.Name()}).Info("Attempting to fetch global configuraton key from etcd.")
-	ctx, cancelFunc := context.WithTimeout(context.Background(), etcdKeyReadTimeout)
-	defer cancelFunc()
+	log.WithFields(log.Fields{"Key": e.Name()}).Debug("Attempting to fetch global configuraton key from etcd.")
+	ctx := context.WithTimeout(etcdKeyReadTimeout)
 
-	if resp, err := etcdClient.Get(ctx, e.Name()); err != nil || resp == nil || len(resp.Kvs) != 1 { //Timeout in half a second
+	if resp, err := etcdClient.Get(ctx, e.Name()); err != nil {
+		//Timeout in half a second
 		log.WithFields(log.Fields{"Error": err, "Key": e.Name(), "Timeout": etcdKeyReadTimeout}).Error("Error occurred fetching global configuraton key from etcd.")
 		return "", err
+	} else if resp == nil || len(resp.Kvs) != 1 {
+		return "", fmt.Errorf("Either the response was invalid, or no keys of this name were found in etcd: %s", e.Name())
 	} else {
 		return string(resp.Kvs[0].Value), nil
 	}
@@ -75,7 +78,11 @@ func (e *EtcdKey) StringValueWithFallback() string {
 	if value, err := e.StringValue(); err == nil {
 		return value
 	} else {
-		log.WithField("Error", err).Error("An error occurred fetching this key from etcd. Attempting to find it in the override map.")
+		if err != bootstrapInProgressError {
+			log.WithField("Error", err).Error("An error occurred fetching this key from etcd. Attempting to find it in the override map.")
+		} else {
+			log.WithField("Error", err).Debug("An error occurred fetching this key from etcd. Attempting to find it in the override map.")
+		}
 		return e.StringFallbackValue()
 	}
 }
@@ -84,7 +91,7 @@ func (e *EtcdKey) StringFallbackValue() string {
 	if value, err := e.fromOverrideMap(); err == nil {
 		return value
 	} else {
-		log.WithField("Error", err).Error("Value not found in the override map. Returning default: %v", e.defaultValue)
+		log.WithField("Error", err).Debugf("Value not found in the override map. Returning default: %v", e.defaultValue)
 		return e.defaultValue
 	}
 }
@@ -123,6 +130,7 @@ var (
 	//Core Polyverse-wide settings
 	ScrambledBinaries = ConfigRootKey.NewSubKey("scrambled_binaries", "true", "true/false - Determines if Polyverse uses Scrambled Binaries whenever possible.")
 	VFI               = ConfigRootKey.NewSubKey("vfi", "{}", "Mandatory key - it contains the JSON representation of the VFI that should be used for launching Polyverse.")
+	RotationInterval  = ConfigRootKey.NewSubKey("rotation_internval", "1", "In seconds, the interval after which Polyverse's own components are rotated. Zero indicates no rotation. Only components whose cluster size is greater than one are rotated (because polyverse requires at least one replica of all components at all times.)")
 
 	//Router settings
 	RouterRootKey            = ConfigRootKey.NewSubKey("router", "", "This key is merely a prefix for all router configurations. It's value doesn't represent or affect anything.")
@@ -161,10 +169,9 @@ var (
 	ProfilerOutputFilename = MonitoringRootKey.NewSubKey("profiler_output_filename", "/polyverse-service.prof", "Specifies where the profiler output (when the profiler key is used) should be stored. The file will be within the container for each profiled service, unless this location is pointed to a volume mounted externally.")                                                             //Where the profiler output should be saved
 	ProfilerHeapOutputFile = MonitoringRootKey.NewSubKey("profiler_heap_output_filename", "/polyverse-service-heap.prof", "Specifies where the profiler heap output (when the profiler key is used) should be stored. The file will be within the container for each profiled service, unless this location is pointed to a volume mounted externally.")                                              //Where the heap should be saved
 
-	//Customer-Container settings
-	CustomerContainerRootKey = ConfigRootKey.NewSubKey("customer_containers", "", "This is the root prefix key for settings relating to containers that we run from our customers (the actual app that runs on top of polyverse.) In and of itself, this key has no meaning.")
-	CustomerContainerNetwork = CustomerContainerRootKey.NewSubKey("network", "polyverse_container_nw", "This key provides the name of the docker network to use for joining customer containers on. You should not have to change this setting from its default in most cases.")
-	VolumeDriver             = CustomerContainerRootKey.NewSubKey("volume_driver", "", "This key specifies the volume driver (that should be preconfigured on your swarm) to use for mounting stateful volumes into customer containers.")
+	//Managed settings (containers we manage)
+	ManagedContainersRootKey = ConfigRootKey.NewSubKey("managed_containers", "", "This is the root prefix key for settings relating to containers that we manage for the applications Polyverse hosts. In and of itself, this key has no meaning.")
+	ManagedContainersNetwork = ManagedContainersRootKey.NewSubKey("network", "managed_container_nw", "This key provides the name of the docker network to use for joining managed containers to. You should not have to change this setting from its default in most cases.")
 
 	//Various component-level settings
 	ComponentsRootKey = ConfigRootKey.NewSubKey("components", "", "This is the root prefix key for runtime, management and supervision settings related to specific polyverse components.")

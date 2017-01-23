@@ -4,6 +4,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	fcontext "github.com/polyverse-security/framework/context"
 	"github.com/polyverse-security/framework/control-flow/canceller"
 	"github.com/polyverse-security/framework/wiring"
 	"golang.org/x/net/context"
@@ -49,7 +50,7 @@ func WatchEtcdKeyWithCancel(canceller *canceller.Canceller, key string, action W
 		defer canceller.Done()
 	}
 
-	cancelCtx, cancelCtxFunc := context.WithCancel(context.Background())
+	cancelCtx, cancelCtxFunc := context.WithCancel(fcontext.NoTimeout())
 
 	w := wiring.NewEtcdWatcher(etcdClient)
 	if w == nil {
@@ -61,7 +62,7 @@ func WatchEtcdKeyWithCancel(canceller *canceller.Canceller, key string, action W
 
 	if wo.initEvents {
 		//get snapshot
-		if resp, err := etcdClient.Get(context.Background(), key, etcd.WithPrefix()); err != nil {
+		if resp, err := etcdClient.Get(fcontext.DefaultEtcdTimeout(), key, etcd.WithPrefix()); err != nil {
 			log.WithField("Error", err).Error("Error occurred when getting initial key states from etcd. Unable to begin watch.")
 		} else {
 			etcdOpOptions = append(etcdOpOptions, etcd.WithRev(resp.Header.Revision+1))

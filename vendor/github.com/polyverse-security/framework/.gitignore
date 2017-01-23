@@ -1,2 +1,4 @@
 .idea/
 framework.iml
+*.DS_Store
+
