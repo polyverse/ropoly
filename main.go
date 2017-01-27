@@ -30,12 +30,12 @@ func main() {
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
-		rest.Get("/library", handlers.ROPLibraryHandler),
 		rest.Get("/memory/safe", handlers.ROPMemorySafeHandler),
+		rest.Get("/memory/library", handlers.ROPMemoryLibraryHandler),
 		rest.Get("/memory/disasm", handlers.ROPMemoryDisAsmHandler),
 		rest.Get("/memory/gadget", handlers.ROPMemoryGadgetHandler),
 		rest.Get("/memory/search", handlers.ROPMemorySearchHandler),
-		rest.Get("/overflow", handlers.ROPOverflowHandler),
+		rest.Get("/memory/overflow", handlers.ROPMemoryOverflowHandler),
 	)
 	if err != nil {
 		log.Fatal(err)

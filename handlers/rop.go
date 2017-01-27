@@ -279,7 +279,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
 
 type librariesType []string
 
-func ROPLibraryList(p process.Process) (librariesType, error) {
+func ROPMemoryLibraryList(p process.Process) (librariesType, error) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
         logErrors(harderror, softerrors)
         if harderror != nil {
@@ -293,9 +293,9 @@ func ROPLibraryList(p process.Process) (librariesType, error) {
         }
 
         return libraries, nil
-} // ROPLibraryList()
+} // ROPMemoryLibraryList()
 
-func ROPLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
+func ROPMemoryLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
         logErrors(harderror, softerrors)
         if harderror != nil {
@@ -303,7 +303,7 @@ func ROPLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
                 return
         }
 
-        libraries, err := ROPLibraryList(p)
+        libraries, err := ROPMemoryLibraryList(p)
         if err != nil {
                 rest.Error(w, err.Error(), http.StatusBadRequest)
                 return
@@ -312,7 +312,7 @@ func ROPLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
         w.WriteJson(libraries)
 } // ROPLibraryHandler()
 
-func ROPOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
+func ROPMemoryOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
 	chain := r.FormValue("chain")
 
 	var u uint64
@@ -323,4 +323,4 @@ func ROPOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
 		bytes[j] = byte(v)
 	}
 	fmt.Printf("after: %v\n", bytes)
-} // ROPOverflowHandler()
+} // ROPMemoryOverflowHandler()

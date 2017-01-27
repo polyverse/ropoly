@@ -34,19 +34,19 @@ All other requests will return the specified resource from the `wwwroot\` folder
 ### /api/v0/memory/safe
 Return safe start and end addresses of real code somewhere in this container. Useful to get started with the rest of the API.
 
+### /api/v0/memory/library
+Return list of loaded libraries for the current process
+
 ### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_][&end=_end_][&limit=_limit_]
 Search executable memory between _start_ and _end_ and return up to _limit_ instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
 
-### /api/v0/memory/disasm[start=_start_][&end=_end_][&limit=limit_]
+### /api/v0/memory/disasm[start=_start_][&end=_end_][&limit=_limit_]
 Disassemble executable memory between _start_ and _end_ and return up to _limit_ instructions. 
 
 ### /api/v0/memory/gadget[start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
 Search executable memory between _start_ and _end_ and return up to _limit_ gadgets constrained to _instructions_ and _octets_ bytes. 
 
-### /api/v0/library
-Return list of loaded libraries for the current process
-
-### /api/v0/overflow?chain=_ropstring_
+### /api/v0/memory/overflow?chain=_ropstring_
 Performs buffer overflow by passing _ropstring_ to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
 
 ## Examples

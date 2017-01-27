@@ -46,7 +46,7 @@ apps/website: |
 
     return {
       Name: function() {
-        return "polysploit";
+        return "polyverse/polysploit";
       },
       IsRequestSupported: function(r, c) {
         return true ;
