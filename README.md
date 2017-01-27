@@ -34,14 +34,14 @@ All other requests will return the specified resource from the `wwwroot\` folder
 ### /api/v0/memory/safe
 Return safe start and end addresses of real code somewhere in this container. Useful to get started with the rest of the API.
 
-### /api/v0/memory/disasm[start=_start_address_][&end=_end_address_][&limit=_max_instructions_]
-Disassemble executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) instructions. 
+### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_][&end=_end_][&limit=_limit_]
+Search executable memory between _start_ and _end_ and return up to _limit_ instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
 
-### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_address_][&end=_end_address_][&limit=_limit_]
-Search executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
+### /api/v0/memory/disasm[start=_start_][&end=_end_][&limit=limit_]
+Disassemble executable memory between _start_ and _end_ and return up to _limit_ instructions. 
 
-### /api/v0/memory/gadget[start=_start_address_][&end=_end_address_][&limit=_limit_][&instructions=_max_instructions_][&octets=_max_octets_]
-Search executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) gadgets containing no more than _max_instructions_ (default all) and no longer than _max_octets_ (default all). 
+### /api/v0/memory/gadget[start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
+Search executable memory between _start_ and _end_ and return up to _limit_ gadgets constrained to _instructions_ and _octets_ bytes. 
 
 ### /api/v0/library
 Return list of loaded libraries for the current process
