@@ -50,7 +50,7 @@ DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmLen length)
         disAsmInfoPtr->info.buffer                    = start;
 	
 	disAsmInfoPtr->start = start;
-	disAsmInfoPtr->end = start + length;
+	disAsmInfoPtr->end = start + length - 1;
 
 	return disAsmInfoPtr;
 } // DisAsmInfoInit()

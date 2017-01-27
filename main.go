@@ -30,6 +30,7 @@ func main() {
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
+		rest.Get("/memory/test", handlers.ROPMemoryTestHandler),
 		rest.Get("/memory/safe", handlers.ROPMemorySafeHandler),
 		rest.Get("/memory/library", handlers.ROPMemoryLibraryHandler),
 		rest.Get("/memory/disasm", handlers.ROPMemoryDisAsmHandler),

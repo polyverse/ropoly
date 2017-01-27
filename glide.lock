@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-01-27T08:28:00.443697821-08:00
+updated: 2017-01-27T11:08:51.651233091-08:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
@@ -45,7 +45,7 @@ imports:
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
-  version: cf0281f3140c5e9ed28882c2e172b668e92612d9
+  version: d6dc44b1b4c4402ba4739d169cee4a288531ae14
 - name: github.com/polyverse-security/framework
   version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:

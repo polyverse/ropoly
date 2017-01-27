@@ -30,7 +30,7 @@ func TestDisAsm(t *testing.T) {
 	length := Len(len(bytes))
 	end := Ptr(unsafe.Pointer(&bytes[length-1]))
 
-	info := InfoInit(start, length)
+	info := InfoInit(start, end)
 
 	var gadgets GadgetList
 

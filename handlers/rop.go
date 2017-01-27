@@ -39,6 +39,10 @@ func ROPMemorySafeHandler(w rest.ResponseWriter, r *rest.Request) {
        	w.WriteJson(safeType{disasm.SafeStartAddress(), disasm.SafeEndAddress()})
 } // ROPMemorySafeHandler()
 
+func ROPMemoryTestHandler(w rest.ResponseWriter, r *rest.Request) {
+       	w.WriteJson("Test")
+} // ROPMemoryTestHandler()
+
 func ROPMemoryDisAsmHandler(w rest.ResponseWriter, r *rest.Request) {
 	var err error
 
@@ -78,11 +82,11 @@ func ROPMemoryDisAsmHandler(w rest.ResponseWriter, r *rest.Request) {
         	}
 	}
 
-        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Len(endN-startN))
+        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Ptr(endN))
 
         var instructions disasm.InstructionList
 
-        for pc := startN; (pc < endN) && (len(instructions) < int(limitN)); {
+        for pc := startN; (pc <= endN) && (len(instructions) < int(limitN)); {
                 instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
                 if err != nil {
 			rest.Error(w, err.Error(), http.StatusBadRequest)
@@ -159,11 +163,11 @@ func ROPMemoryGadgetHandler(w rest.ResponseWriter, r *rest.Request) {
         	}
 	}
 
-        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Len(endN-startN))
+        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Ptr(endN))
 
         var gadgets disasm.GadgetList
 
-        for pc := startN; (pc < endN) && (len(gadgets) < int(limitN)); pc = pc + 1 {
+        for pc := startN; (pc <= endN) && (len(gadgets) < int(limitN)); pc = pc + 1 {
                 gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc))
                 if err == nil {
 			 if (len(gadget.Instructions) < int(instructionsN)) && (gadget.Octets < int(octetsN)) {
@@ -175,7 +179,7 @@ func ROPMemoryGadgetHandler(w rest.ResponseWriter, r *rest.Request) {
         w.WriteJson(gadgets)
 } // ROPMemoryGadgetHandler()
 
-func ROPMemorySearch(p process.Process, search string, startN addressType, limitN uint, useRegexp bool) (addressesType, error) {
+func ROPMemorySearch(p process.Process, search string, startN addressType, endN addressType, limitN uint, useRegexp bool) (addressesType, error) {
 	var addresses addressesType
 
         for start, i := uintptr(startN), uint(0); i < limitN; {
@@ -201,10 +205,7 @@ func ROPMemorySearch(p process.Process, search string, startN addressType, limit
                         }
 		}
 
-                if found {
-			//bytes := *(*[10]byte)(unsafe.Pointer(address))
-			//chars := string(bytes[:])
-			//fmt.Printf("address: %x, contents: %v, chars: %s\n", address, bytes, chars)
+                if found && address <= uintptr(endN) {
                         start = address + 1
 			addresses = append(addresses, addressType(address))
 			i = i + 1
@@ -231,7 +232,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
         	}
 	}
 
-/*
+
 	var endN uint64 = math.MaxUint64
         end := r.FormValue("end")
 	if end == "end" {
@@ -243,7 +244,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
                 	return
         	}
 	}
-*/
+
 	var limitN uint64 = math.MaxInt32
         limit := r.FormValue("limit")
 	if limit == "limit" {
@@ -268,7 +269,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
                 return
         }
 
-	addresses, err := ROPMemorySearch(p, search, addressType(startN), uint(limitN), r.FormValue("regexp") != "")
+	addresses, err := ROPMemorySearch(p, search, addressType(startN), addressType(endN), uint(limitN), r.FormValue("regexp") != "")
         if err != nil {
                 rest.Error(w, err.Error(), http.StatusBadRequest)
 		return

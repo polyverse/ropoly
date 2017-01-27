@@ -37,8 +37,8 @@ func SafeStartAddress() Ptr {
 	return Ptr(C.DisAsmSafeStartAddress())
 } // SafeStartAddress()
 
-func InfoInit(start Ptr, length Len) Info {
-	cinfo := C.DisAsmInfoInit(start, C.DisAsmLen(length))
+func InfoInit(start Ptr, end Ptr) Info {
+	cinfo := C.DisAsmInfoInit(start, C.DisAsmLen(end - start + 1))
 	iinfo := &iInfo{cinfo}
 	runtime.SetFinalizer(iinfo, InfoFree)
 	info := Info{iinfo}
@@ -54,18 +54,20 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
         disAsmInfoPtr := info.info.info
 
         bytes := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, pc))
-        s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
-        s = strings.TrimSpace(s)
-
-        return &Instruction{pc, bytes, s}, nil
-
+	if bytes > 0 {
+        	s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
+        	s = strings.TrimSpace(s)
+        	return &Instruction{pc, bytes, s}, nil
+	} else {
+		return nil, errors.New("Error with disassembly")
+	}
 } // DecodeInstruction()
 
 func DecodeGadget(info Info, pc Ptr) (gadget *Gadget, err error) {
         disAsmInfoPtr := info.info.info
 	g := Gadget{Address: pc, Octets: 0, Instructions: nil}
 
-        for pc0 := pc; pc0 < Ptr(disAsmInfoPtr.end); {
+        for pc0 := pc; pc0 <= Ptr(disAsmInfoPtr.end); {
                 var b byte = byte(C.DisAsmAccessByte(disAsmInfoPtr, pc0))
                 var good bool = b == 0xC3                                                 // ret
                 var bad bool = ((b == 0xE9) || (b == 0xEA) || (b == 0xEB) || (b == 0xFF)) // jmps. ToDo: More work here
