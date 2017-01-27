@@ -124,13 +124,78 @@ func (e *EtcdKey) NewSubKey(keyName string, defaultValue string, description str
 	return subKey
 }
 
+const (
+	router_healthy_response_body = `
+	<html>
+	    <head>
+	        <title>Polyverse health...</title>
+	    </head>
+	    <body>
+			<p>Polyverse is 20/20.</p>
+	    </body>
+	</html>
+	`
+
+	router_healthy_response_headers = `
+	{
+		"Content-Type": "text/html",
+		"Cache-Control"" "no-cache, no-store, must-revalidate",
+		"Pragma": "no-cache",
+		"Expires": "0"
+	}
+	`
+
+	router_route_up_timeout_response_body = `
+	<html>
+	    <head>
+	        <title>Creating new Polyverse Container...</title>
+	        <meta http-equiv="refresh" content="5" />
+	    </head>
+	    <body>
+			<p>A new polyverse container for this path {{.R.URL.Path}} is being created, since one does not already exist. This process is taking a little longer than expected.</p>
+
+			<p>This page will auto-refresh in 5 seconds. If it does not, please <a href="{{.R.RequestURI}}">click here</a>.</p>
+	    </body>
+	</html>
+	`
+
+	router_route_up_timeout_response_headers = `
+	{
+		"Content-Type": "text/html",
+		"Cache-Control"" "no-cache, no-store, must-revalidate",
+		"Pragma": "no-cache",
+		"Expires": "0"
+	}
+	`
+
+	router_queue_publish_error_response_body = `
+	<html>
+	    <head>
+	        <title>Polyverse Error</title>
+	    </head>
+	    <body>
+			<p>Polyverse had an error handling this request: {{.E}}</p>
+	    </body>
+	</html>
+	`
+
+	router_queue_publish_error_response_headers = `
+	{
+		"Content-Type": "text/html",
+		"Cache-Control"" "no-cache, no-store, must-revalidate",
+		"Pragma": "no-cache",
+		"Expires": "0"
+	}
+	`
+)
+
 var (
 	ConfigRootKey = newEtcdKey("/polyverse/config", "", "This is the root configuration key. It is merely a prefix and not a real key whose value matters.")
 
 	//Core Polyverse-wide settings
 	ScrambledBinaries = ConfigRootKey.NewSubKey("scrambled_binaries", "true", "true/false - Determines if Polyverse uses Scrambled Binaries whenever possible.")
 	VFI               = ConfigRootKey.NewSubKey("vfi", "{}", "Mandatory key - it contains the JSON representation of the VFI that should be used for launching Polyverse.")
-	RotationInterval  = ConfigRootKey.NewSubKey("rotation_internval", "1", "In seconds, the interval after which Polyverse's own components are rotated. Zero indicates no rotation. Only components whose cluster size is greater than one are rotated (because polyverse requires at least one replica of all components at all times.)")
+	RotationInterval  = ConfigRootKey.NewSubKey("rotation_interval", "0", "In seconds, the interval after which Polyverse's own components are rotated. Zero indicates no rotation. Only components whose cluster size is greater than one are rotated (because polyverse requires at least one replica of all components at all times.)")
 
 	//Router settings
 	RouterRootKey            = ConfigRootKey.NewSubKey("router", "", "This key is merely a prefix for all router configurations. It's value doesn't represent or affect anything.")
@@ -142,6 +207,24 @@ var (
 	RouterSslCert            = RouterRootKey.NewSubKey("ssl_cert", "", "The SSL Certificate to be presented to the client for authentication.")
 	RouterSslPrivateKey      = RouterRootKey.NewSubKey("ssl_private_key", "", "The private key backing the SSL cert (this proving you are who you say you are.)")
 	RouterSslHostname        = RouterRootKey.NewSubKey("ssl_hostname", "", "The hostname/domain name for which this SSL cert is valid. (e.g. polyverse.io)")
+
+	HealthCheckRootKey    = RouterRootKey.NewSubKey("health_check", "", "This is a root key to handle router's health check configuration")
+	HealthCheckURLPath    = HealthCheckRootKey.NewSubKey("url_path", "", "This key contains the path of the URL which, when pinged, allows the router to report on it's own healthy (200 OK being healthy, everything else being unhealthy.) When set to blank, the router exposes no health check URL, and you can use alternative means such as TCP checks, or no checks.")
+	HealthCheckStatusCode = HealthCheckRootKey.NewSubKey("status_code", "200", "This key contains the status code to send back when a router health check is requested")
+	HealthCheckHeaders    = HealthCheckRootKey.NewSubKey("headers", router_healthy_response_headers, "This key contains the response headers to send back when a router health check is requested. Headers should be a JSON Struct with each field denoting a header name, and the field's value denoting the header value. This field supports the golang text/template package for allowing deep substitutions. https://golang.org/pkg/text/template/ The template map has one key: R which contains the golang http.Request object.")
+	HealthCheckBody       = HealthCheckRootKey.NewSubKey("body", router_healthy_response_body, "This key contains the response body to send back when a router health check is requested.  This field uses the golang html/template package for deep substitutions. https://golang.org/pkg/html/template/ The template map has one key: R which contains the golang http.Request object.")
+
+	RouteUpRootKey           = RouterRootKey.NewSubKey("route_up", "", "This key is a prefix for all settings related to waiting for, and reacting to how routes come up for the first time.")
+	RouteUpTimeout           = RouteUpRootKey.NewSubKey("timeout", "30000000000", "Number of nanoseconds router should wait for a route to be created (after publishing the unhandled request to the queue.)")
+	RouteUpPollInterval      = RouteUpRootKey.NewSubKey("poll_interval", "200000000", "Number of nanoseconds router should wait before polling to check whether a route has been created.")
+	RouteUpTimeoutStatusCode = RouteUpRootKey.NewSubKey("status_code", "200", "When route-up times out, this is the status code to send back to the caller.")
+	RouteUpTimeoutHeaders    = RouteUpRootKey.NewSubKey("headers", router_route_up_timeout_response_headers, "When route-up times out, these are the headers to send back to the caller. Headers should be represented as a JSON Struct with field:value denoting header-name:value. This field supports the golang text/template package for allowing deep substitutions. https://golang.org/pkg/text/template/ The template map has one key: R which contains the golang http.Request object.")
+	RouteUpTimeoutBody       = RouteUpRootKey.NewSubKey("body", router_route_up_timeout_response_body, "When route-up times out, this is the body to send back to the caller. This field uses the golang html/template package for deep substitutions. https://golang.org/pkg/html/template/ The template map has one key: R which contains the golang http.Request object.")
+
+	QueuePublishErrorRootKey    = RouterRootKey.NewSubKey("queue_publish_error", "", "This is a root key to handle router's configuration on how to respond when there's an error publishing unhandled requests to the queue.")
+	QueuePublishErrorStatusCode = QueuePublishErrorRootKey.NewSubKey("status_code", "200", "This key contains the status code to send back when an error occurs publishing an unhandled request to the queue.")
+	QueuePublishErrorHeaders    = QueuePublishErrorRootKey.NewSubKey("headers", router_queue_publish_error_response_headers, "This key contains the response headers to send back when an error occurs publishing an unhandled request to the queue. Headers should be a JSON Struct with each field denoting a header name, and the field's value denoting the header value. This field supports the golang text/template package for allowing deep substitutions. https://golang.org/pkg/text/template/ The template map has TWO keys: R which contains the golang http.Request object, and E which contains the golang type error which occurred.")
+	QueuePublishErrorBody       = QueuePublishErrorRootKey.NewSubKey("body", router_queue_publish_error_response_body, "This key contains the response body to send back when an error occurs publishing an unhandled request to the queue.  This field uses the golang html/template package for deep substitutions. https://golang.org/pkg/html/template/ The template map has TWO keys: R which contains the golang http.Request object, and E which contains the golang type error which occurred.")
 
 	//Docker settings
 	DockerRootKey    = ConfigRootKey.NewSubKey("docker", "", "This is the root prefix key for all docker-connection settings (allowing Polyverse to connect to the Docker/Swarm fabric.) This key does not do anything and means nothing.")

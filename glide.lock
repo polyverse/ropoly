@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-01-23T09:22:42.387166181-08:00
+updated: 2017-01-26T15:55:11.299357439-08:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
@@ -7,7 +7,7 @@ imports:
   - rest
   - rest/trie
 - name: github.com/docker/distribution
-  version: 7a0972304e201e2a5336a69d00e112c27823f554
+  version: 545102ea07aa9796f189d82f606b7c27d7aa3ed3
   subpackages:
   - digestset
   - reference
@@ -44,8 +44,10 @@ imports:
   version: 21dfd564fd89c944783d00d069f33e3e7123c448
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+- name: github.com/polyverse-security/disasm
+  version: cf0281f3140c5e9ed28882c2e172b668e92612d9
 - name: github.com/polyverse-security/framework
-  version: a41ab72daaba01b3d7b271c72a6a0181460f3589
+  version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:
   - monitoring/polyverse-log-formatter
   - strings

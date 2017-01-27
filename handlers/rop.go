@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/ant0ine/go-json-rest/rest"
+	"math"
 	"net/http"
 	"os"
         log "github.com/Sirupsen/logrus"
@@ -13,12 +14,9 @@ import (
 	"github.com/polyverse-security/masche/listlibs"
 	"github.com/polyverse-security/masche/memsearch"
 	"github.com/polyverse-security/masche/process"
-)
 
-//type Address struct {
-//	Address	uintptr `json: "address"`
-//	Content string  `json: "content"`
-//}
+	"github.com/polyverse-security/disasm"
+)
 
 type addressType uintptr // unsafe.Pointer
 type addressesType []addressType
@@ -30,7 +28,152 @@ func logErrors(harderror error, softerrors []error) {
 	for _, soft := range softerrors {
 		log.Print(soft)
 	}
+} // logErrors
+
+type safeType struct {
+	StartAddress disasm.Ptr
+	EndAddress   disasm.Ptr
 }
+
+func ROPMemorySafeHandler(w rest.ResponseWriter, r *rest.Request) {
+       	w.WriteJson(safeType{disasm.SafeStartAddress(), disasm.SafeEndAddress()})
+} // ROPMemorySafeHandler()
+
+func ROPMemoryDisAsmHandler(w rest.ResponseWriter, r *rest.Request) {
+	var err error
+
+	var startN uint64 = 0
+        start := r.FormValue("start")
+	if start == "start" {
+		startN = uint64(disasm.SafeStartAddress())
+	} else if start != "" {
+        	startN, err = strconv.ParseUint(start, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var endN uint64 = math.MaxUint64
+        end := r.FormValue("end")
+	if end == "end" {
+		endN = uint64(disasm.SafeEndAddress())
+	} else if end != "" {
+        	endN, err = strconv.ParseUint(end, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var limitN uint64 = math.MaxInt32
+        limit := r.FormValue("limit")
+	if limit == "limit" {
+		limitN = 100
+	} else if limit != "" {
+        	limitN, err = strconv.ParseUint(limit, 0, 32)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Len(endN-startN))
+
+        var instructions disasm.InstructionList
+
+        for pc := startN; (pc < endN) && (len(instructions) < int(limitN)); {
+                instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
+                if err != nil {
+			rest.Error(w, err.Error(), http.StatusBadRequest)
+			return
+                } // if
+
+                instructions = append(instructions, *instruction)
+		pc = pc + uint64(instruction.Octets)
+        } // for
+
+       	w.WriteJson(instructions)
+} // ROPMemoryDisAsmHandler()
+
+func ROPMemoryGadgetHandler(w rest.ResponseWriter, r *rest.Request) {
+	var err error
+
+	var startN uint64 = 0
+        start := r.FormValue("start")
+	if start == "start" {
+		startN = uint64(disasm.SafeStartAddress())
+	} else if start != "" {
+        	startN, err = strconv.ParseUint(start, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var endN uint64 = math.MaxUint64
+        end := r.FormValue("end")
+	if end == "end" {
+		endN = uint64(disasm.SafeEndAddress())
+	} else if end != "" {
+        	endN, err = strconv.ParseUint(end, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var limitN uint64 = math.MaxInt32
+        limit := r.FormValue("limit")
+	if limit == "limit" {
+		limitN = 100
+	} else if limit != "" {
+        	limitN, err = strconv.ParseUint(limit, 0, 32)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var instructionsN uint64 = math.MaxInt32
+        instructions := r.FormValue("instructions")
+	if instructions == "instructions" {
+		instructionsN = 5
+	} else if instructions != "" {
+        	instructionsN, err = strconv.ParseUint(instructions, 0, 32)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+	var octetsN uint64 = math.MaxInt32
+        octets := r.FormValue("octets")
+	if octets == "octets" {
+		octetsN = 100
+	} else if octets != "" {
+        	octetsN, err = strconv.ParseUint(octets, 0, 32)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+        info := disasm.InfoInit(disasm.Ptr(startN), disasm.Len(endN-startN))
+
+        var gadgets disasm.GadgetList
+
+        for pc := startN; (pc < endN) && (len(gadgets) < int(limitN)); pc = pc + 1 {
+                gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc))
+                if err == nil {
+			 if (len(gadget.Instructions) < int(instructionsN)) && (gadget.Octets < int(octetsN)) {
+                        	gadgets = append(gadgets, *gadget)
+			} // if
+                } // if
+        } // for
+
+        w.WriteJson(gadgets)
+} // ROPMemoryGadgetHandler()
 
 func ROPMemorySearch(p process.Process, search string, startN addressType, limitN uint, useRegexp bool) (addressesType, error) {
 	var addresses addressesType
@@ -59,9 +202,9 @@ func ROPMemorySearch(p process.Process, search string, startN addressType, limit
 		}
 
                 if found {
-			bytes := *(*[10]byte)(unsafe.Pointer(address))
-			chars := string(bytes[:])
-			fmt.Printf("address: %x, contents: %v, chars: %s\n", address, bytes, chars)
+			//bytes := *(*[10]byte)(unsafe.Pointer(address))
+			//chars := string(bytes[:])
+			//fmt.Printf("address: %x, contents: %v, chars: %s\n", address, bytes, chars)
                         start = address + 1
 			addresses = append(addresses, addressType(address))
 			i = i + 1
@@ -71,40 +214,52 @@ func ROPMemorySearch(p process.Process, search string, startN addressType, limit
         } // for
 
 	return addresses, nil
-}
+} // ROPMemorySearch()
 
 func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
+	var err error
+
+	var startN uint64 = 0
+        start := r.FormValue("start")
+	if start == "start" {
+		startN = uint64(disasm.SafeStartAddress())
+	} else if start != "" {
+        	startN, err = strconv.ParseUint(start, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
+/*
+	var endN uint64 = math.MaxUint64
+        end := r.FormValue("end")
+	if end == "end" {
+		endN = uint64(disasm.SafeEndAddress())
+	} else if end != "" {
+        	endN, err = strconv.ParseUint(end, 0, 64)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+*/
+	var limitN uint64 = math.MaxInt32
+        limit := r.FormValue("limit")
+	if limit == "limit" {
+		limitN = 100
+	} else if limit != "" {
+        	limitN, err = strconv.ParseUint(limit, 0, 32)
+        	if err != nil {
+                	rest.Error(w, err.Error(), http.StatusBadRequest)
+                	return
+        	}
+	}
+
 	search := r.FormValue("string")
 	if search == "" {
 		search = r.FormValue("regexp")
 	}
-
-        start := r.FormValue("start")
-        if start == "" {
-		start = "0"
-	}
-	startN, err := strconv.ParseUint(start, 0, 64)
-	if err != nil {
-		rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-        limit := r.FormValue("limit")
-	if limit == "" {
-		limit = "10"
-	}
-	limitN, err := strconv.ParseUint(limit, 0, 32)
-        if err != nil {
-                rest.Error(w, err.Error(), http.StatusBadRequest)
-		return
-        }
-	if limitN > 1000 {
-		limitN = 1000
-	}
-
-	fmt.Printf("search: %s\n", search)
-	fmt.Printf("start: %v\n", start)
-	fmt.Printf("limit: %v\n", limit)
 
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
         logErrors(harderror, softerrors)
@@ -132,14 +287,13 @@ func ROPLibraryList(p process.Process) (librariesType, error) {
         }
 
         libraries, harderror, softerrors := listlibs.ListLoadedLibraries(p)
-fmt.Printf("libraries: %v\n", libraries)
         logErrors(harderror, softerrors)
         if harderror != nil {
                 return nil, harderror
         }
 
         return libraries, nil
-}
+} // ROPLibraryList()
 
 func ROPLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
@@ -156,7 +310,7 @@ func ROPLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
         }
 
         w.WriteJson(libraries)
-}
+} // ROPLibraryHandler()
 
 func ROPOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
 	chain := r.FormValue("chain")
@@ -169,4 +323,4 @@ func ROPOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
 		bytes[j] = byte(v)
 	}
 	fmt.Printf("after: %v\n", bytes)
-}
+} // ROPOverflowHandler()

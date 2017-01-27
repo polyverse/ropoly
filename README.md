@@ -26,17 +26,28 @@ Simple healthcheck url that returns an HTTP/200 with the body "OK".
 ### /proxy?url=\<http[s]://host[:port]\>
 The provided url will be retrieved server-side and returned in the response. All relative paths (`\"\/[a-zA-Z]`) are made into absolute paths. If `/infect` is called at least once, the provided url contents will have a skull image overlayed.
 
+### /
+All other requests will return the specified resource from the `wwwroot\` folder. If the resource doesn't exist, an HTTP/404 will be returned.
+
+## Introspection API Endpoints
+
+### /api/v0/memory/safe
+Return safe start and end addresses of real code somewhere in this container. Useful to get started with the rest of the API.
+
+### /api/v0/memory/disasm[start=_start_address_][&end=_end_address_][&limit=_max_instructions_]
+Disassemble executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) instructions. 
+
+### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_address_][&end=_end_address_][&limit=_limit_]
+Search executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
+
+### /api/v0/memory/gadget[start=_start_address_][&end=_end_address_][&limit=_limit_][&instructions=_max_instructions_][&octets=_max_octets_]
+Search executable memory between _start_address_ (default 0) and _end_address_ (default all) and return up to _limit_ (default all) gadgets containing no more than _max_instructions_ (default all) and no longer than _max_octets_ (default all). 
+
 ### /api/v0/library
 Return list of loaded libraries for the current process
 
-### /api/v0/memory/search[[<string|regexp]=_target_][&limit=_number_][&start=_address_]
-Search executable memory starting at _address_ (default 0) and return _number_ (default 10) instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
-
 ### /api/v0/overflow?chain=_ropstring_
 Performs buffer overflow by passing _ropstring_ to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
-
-### /
-All other requests will return the specified resource from the `wwwroot\` folder. If the resource doesn't exist, an HTTP/404 will be returned.
 
 ## Examples
 ### /example2.htm

@@ -37,14 +37,25 @@ var (
 
 type etcdWrapper struct {
 	updateMutex  sync.RWMutex
-	actualClient EtcdClientCoreOS
+	actualClient *etcd.Client
+
+	keepAlivesMutex sync.Mutex
+	keepAlives      []etcd.LeaseID
 }
 
-func (e *etcdWrapper) ReplaceActualClient(c EtcdClientCoreOS) {
+func (e *etcdWrapper) ReplaceActualClient(c *etcd.Client) {
 	e.updateMutex.Lock()
 	defer e.updateMutex.Unlock()
 	log.Info("Replaced the actual etcd client with a new one (presumably because of members update)")
 	e.actualClient = c
+
+	log.Infof("Replaying %d keepalives onto the new client, to ensure our leases to etcd don't expire.", len(e.keepAlives))
+	e.keepAlivesMutex.Lock()
+	defer e.keepAlivesMutex.Unlock()
+	//replay all keepalives onto the new client.
+	for _, lease := range e.keepAlives {
+		e.actualClient.KeepAlive(fcontext.DefaultEtcdTimeout(), lease)
+	}
 }
 
 func (e etcdWrapper) checkSafety() {
@@ -115,7 +126,13 @@ func (e *etcdWrapper) Revoke(ctx context.Context, id etcd.LeaseID) (*etcd.LeaseR
 func (e *etcdWrapper) KeepAlive(ctx context.Context, id etcd.LeaseID) (<-chan *etcd.LeaseKeepAliveResponse, error) {
 	e.updateMutex.RLock()
 	defer e.updateMutex.RUnlock()
+
+	e.keepAlivesMutex.Lock()
+	defer e.keepAlivesMutex.Unlock()
 	e.checkSafety()
+
+	e.keepAlives = append(e.keepAlives, id)
+
 	return e.actualClient.KeepAlive(ctx, id)
 }
 
@@ -196,16 +213,21 @@ func newEtcdClientCoreOS() EtcdClientCoreOS {
 		cachedCoreOSClient = &etcdWrapper{
 			actualClient: c,
 			updateMutex:  sync.RWMutex{},
+
+			keepAlives:      []etcd.LeaseID{},
+			keepAlivesMutex: sync.Mutex{},
 		}
 		return cachedCoreOSClient
 	}
 }
 
 func newEtcdClientWatcher(client EtcdClientCoreOS) EtcdClientWatcher {
-	if etcdClient, ok := client.(*etcd.Client); ok {
-		return etcd.NewWatcher(etcdClient)
+	if etcdClient, ok := client.(*etcdWrapper); ok {
+		return etcd.NewWatcher(etcdClient.actualClient)
+	} else {
+		log.WithField("EtcdClientType", reflect.TypeOf(client)).Fatal("Unable to generate am Etcd Client Watcher from this etcd client type. Expected type: wiring.etcdWrapper")
+		return nil
 	}
-	return nil
 }
 
 func defaultEtcdMachines() []string {
