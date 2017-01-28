@@ -55,5 +55,5 @@ func main() {
 	http.HandleFunc("/docker", handlers.DockerHandler)
 	http.HandleFunc("/panic", handlers.PanicHandler)
 
-	log.Fatal(http.ListenAndServe(":8088", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
