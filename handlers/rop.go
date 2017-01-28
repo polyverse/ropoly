@@ -12,36 +12,37 @@ import (
 	"unsafe"
 
 	"github.com/polyverse-security/masche/listlibs"
+	"github.com/polyverse-security/masche/memaccess"
 	"github.com/polyverse-security/masche/memsearch"
 	"github.com/polyverse-security/masche/process"
 
 	"github.com/polyverse-security/disasm"
 )
 
-type addressType uintptr // unsafe.Pointer
-type addressesType []addressType
-
-func logErrors(harderror error, softerrors []error) {
-	if harderror != nil {
-		log.Fatal(harderror)
-	}
-	for _, soft := range softerrors {
-		log.Print(soft)
-	}
-} // logErrors
+type AddressType uintptr
+type AddressesType []AddressType
 
 type safeType struct {
 	StartAddress disasm.Ptr
 	EndAddress   disasm.Ptr
 }
 
-func ROPMemorySafeHandler(w rest.ResponseWriter, r *rest.Request) {
-       	w.WriteJson(safeType{disasm.SafeStartAddress(), disasm.SafeEndAddress()})
-} // ROPMemorySafeHandler()
+func logErrors(hardError error, softErrors []error) {
+	if hardError != nil {
+		log.Fatal(hardError)
+	}
+	for _, softError := range softErrors {
+		log.Print(softError)
+	}
+} // logErrors
 
 func ROPMemoryTestHandler(w rest.ResponseWriter, r *rest.Request) {
        	w.WriteJson("Test")
 } // ROPMemoryTestHandler()
+
+func ROPMemorySafeHandler(w rest.ResponseWriter, r *rest.Request) {
+       	w.WriteJson(safeType{disasm.SafeStartAddress(), disasm.SafeEndAddress()})
+} // ROPMemorySafeHandler()
 
 func ROPMemoryDisAsmHandler(w rest.ResponseWriter, r *rest.Request) {
 	var err error
@@ -179,8 +180,29 @@ func ROPMemoryGadgetHandler(w rest.ResponseWriter, r *rest.Request) {
         w.WriteJson(gadgets)
 } // ROPMemoryGadgetHandler()
 
-func ROPMemorySearch(p process.Process, search string, startN addressType, endN addressType, limitN uint, useRegexp bool) (addressesType, error) {
-	var addresses addressesType
+func ROPMemoryRegionsHandler(w rest.ResponseWriter, r *rest.Request) {
+        var regions []memaccess.MemoryRegion
+
+        process, hardError, softErrors := process.OpenFromPid(uint(os.Getpid()))
+		logErrors(hardError, softErrors)
+
+	for address := AddressType(0);; {
+		region, hardError, softErrors := memaccess.NextReadableMemoryRegion(process, uintptr(address))
+			logErrors(hardError, softErrors)
+
+		if region == memaccess.NoRegionAvailable {
+			break
+		}
+
+		regions = append(regions, region)
+		address = AddressType(region.Address + uintptr(region.Size))
+	} // for
+
+       	w.WriteJson(regions)
+} // ROPMemoryRegionsHandler()
+
+func ROPMemorySearch(p process.Process, search string, startN AddressType, endN AddressType, limitN uint, useRegexp bool) (AddressesType, error) {
+	var addresses AddressesType
 
         for start, i := uintptr(startN), uint(0); i < limitN; {
 		var found bool
@@ -207,7 +229,7 @@ func ROPMemorySearch(p process.Process, search string, startN addressType, endN 
 
                 if found && address <= uintptr(endN) {
                         start = address + 1
-			addresses = append(addresses, addressType(address))
+			addresses = append(addresses, AddressType(address))
 			i = i + 1
                 } else {
                         i = limitN
@@ -269,7 +291,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
                 return
         }
 
-	addresses, err := ROPMemorySearch(p, search, addressType(startN), addressType(endN), uint(limitN), r.FormValue("regexp") != "")
+	addresses, err := ROPMemorySearch(p, search, AddressType(startN), AddressType(endN), uint(limitN), r.FormValue("regexp") != "")
         if err != nil {
                 rest.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -296,7 +318,7 @@ func ROPMemoryLibraryList(p process.Process) (librariesType, error) {
         return libraries, nil
 } // ROPMemoryLibraryList()
 
-func ROPMemoryLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
+func ROPMemoryLibrariesHandler(w rest.ResponseWriter, r *rest.Request) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
         logErrors(harderror, softerrors)
         if harderror != nil {
@@ -311,7 +333,7 @@ func ROPMemoryLibraryHandler(w rest.ResponseWriter, r *rest.Request) {
         }
 
         w.WriteJson(libraries)
-} // ROPLibraryHandler()
+} // ROPLibrariesHandler()
 
 func ROPMemoryOverflowHandler(w rest.ResponseWriter, r *rest.Request) {
 	chain := r.FormValue("chain")

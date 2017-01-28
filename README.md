@@ -34,8 +34,11 @@ All other requests will return the specified resource from the `wwwroot\` folder
 ### /api/v0/memory/safe
 Return safe start and end addresses of real code somewhere in this container. Useful to get started with the rest of the API.
 
-### /api/v0/memory/library
+### /api/v0/memory/libraries
 Return list of loaded libraries for the current process
+
+### /api/v0/memory/regions
+Return list of memory regions for the current process
 
 ### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_][&end=_end_][&limit=_limit_]
 Search executable memory between _start_ and _end_ and return up to _limit_ instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
