@@ -48,11 +48,12 @@ func main() {
 
 	http.HandleFunc("/", handlers.DefaultHandler)
 	http.HandleFunc("/health", handlers.HealthHandler)
+	http.HandleFunc("/event", handlers.EventHandler)
 	http.HandleFunc("/infect", handlers.InfectHandler)
 	http.HandleFunc("/reflect", handlers.ReflectHandler)
 	http.HandleFunc("/proxy", handlers.ProxyHandler)
 	http.HandleFunc("/docker", handlers.DockerHandler)
 	http.HandleFunc("/panic", handlers.PanicHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8088", nil))
 }
