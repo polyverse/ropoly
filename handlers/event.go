@@ -13,8 +13,6 @@ func EventHandler(w http.ResponseWriter, r *http.Request) {
 		code = "200"
 	}
 
-	msg := fmt.Sprintf("{\"log_type\":\"access_log\",\"Status\":\"%s\",\"RawQuery\":\"%s\"}", code, r.URL.RawQuery)
-	
-	log.Infof("%s", msg)
-	io.WriteString(w, fmt.Sprintf("%s",msg))
+	log.WithFields(log.Fields{"log_type":"access_log","Status":code}).Infof("%s?%s", r.URL.Path, r.URL.RawQuery)
+	io.WriteString(w, fmt.Sprintf("%s %s", code, r.URL.RawQuery))
 }
