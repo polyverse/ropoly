@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	log "github.com/Sirupsen/logrus"
 )
 
 func EventHandler(w http.ResponseWriter, r *http.Request) {
@@ -12,8 +13,8 @@ func EventHandler(w http.ResponseWriter, r *http.Request) {
 		code = "200"
 	}
 
-	msg := fmt.Sprintf("{\"log_type\":\"access_log\",\"Status\":\"%s\"}", code)
+	msg := fmt.Sprintf("{\"log_type\":\"access_log\",\"Status\":\"%s\",\"RawQuery\":\"%s\"}", code, r.URL.RawQuery)
 	
-	fmt.Printf("%s", msg)
+	log.Infof("%s", msg)
 	io.WriteString(w, fmt.Sprintf("%s",msg))
 }
