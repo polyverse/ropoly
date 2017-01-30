@@ -8,7 +8,7 @@ import (
 )
 
 func EventHandler(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query().Get("code")
+	code := r.FormValue("code")
 	if code == "" {
 		code = "200"
 	}
