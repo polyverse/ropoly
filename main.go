@@ -48,6 +48,7 @@ func main() {
 
 	http.HandleFunc("/", handlers.DefaultHandler)
 	http.HandleFunc("/health", handlers.HealthHandler)
+	http.HandleFunc("/event", handlers.EventHandler)
 	http.HandleFunc("/infect", handlers.InfectHandler)
 	http.HandleFunc("/reflect", handlers.ReflectHandler)
 	http.HandleFunc("/proxy", handlers.ProxyHandler)
