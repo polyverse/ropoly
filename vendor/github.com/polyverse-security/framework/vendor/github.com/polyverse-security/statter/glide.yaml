@@ -1,5 +1,0 @@
-package: github.com/polyverse-security/statter
-import:
-- package: github.com/cactus/go-statsd-client
-  subpackages:
-  - statsd

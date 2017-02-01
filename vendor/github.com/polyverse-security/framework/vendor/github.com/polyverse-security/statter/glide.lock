@@ -1,8 +1,0 @@
-hash: 97e3016dd2d9c97d94622686f79c637c1b48e51b3c96fe36b5d9227e38443d12
-updated: 2016-05-26T14:49:10.779777231-07:00
-imports:
-- name: github.com/cactus/go-statsd-client
-  version: 95cb85a8d6b2d1ccfce95fa58d1ca3445779d8af
-  subpackages:
-  - statsd
-devImports: []
