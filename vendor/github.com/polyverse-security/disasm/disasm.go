@@ -21,14 +21,14 @@ type Info struct {
 
 type Instruction struct {
 	Address Ptr    //`json: "address"`
-	Octets  int    //`json: "octets"`
+	Octets  Len    //`json: "octets"`
 	DisAsm  string //`json: "disasm"`
 }
 type InstructionList []Instruction
 
 type Gadget struct {
 	Address      Ptr             //`json: "address"`
-	Octets       int             //`json: "octets"`
+	Octets       Len             //`json: "octets"`
 	Instructions InstructionList //`json: "instructions"`
 }
 type GadgetList []Gadget
@@ -53,29 +53,37 @@ func AccessByte(info Info, pc Ptr) (byte, error) {
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
 
-        bytes := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, pc))
+        bytes := C.DisAsmDecodeInstruction(disAsmInfoPtr, pc)
 	if bytes > 0 {
         	s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
         	s = strings.TrimSpace(s)
-        	return &Instruction{pc, bytes, s}, nil
+        	return &Instruction{pc, Len(bytes), s}, nil
 	} else {
 		return nil, errors.New("Error with disassembly")
 	}
 } // DecodeInstruction()
 
-func DecodeGadget(info Info, pc Ptr) (gadget *Gadget, err error) {
+func DecodeGadget(info Info, pc Ptr, instructions Len, octets Len) (gadget *Gadget, err error) {
         disAsmInfoPtr := info.info.info
 	g := Gadget{Address: pc, Octets: 0, Instructions: nil}
 
         for pc0 := pc; pc0 <= Ptr(disAsmInfoPtr.end); {
                 var b byte = byte(C.DisAsmAccessByte(disAsmInfoPtr, pc0))
-                var good bool = b == 0xC3                                                 // ret
-                var bad bool = ((b == 0xE9) || (b == 0xEA) || (b == 0xEB) || (b == 0xFF)) // jmps. ToDo: More work here
+                var good bool = ((b == 0xC2) || (b == 0xC3) || (b == 0xCA) || (b == 0xCB) || (b == 0xEA))
+                var bad bool = ((b == 0xE9) || (b == 0xEB) || (b == 0xFF)) // Need to add CALL ABSOLUTE here
 
-                instruction, _ := DecodeInstruction(info, pc0)
+                instruction, err := DecodeInstruction(info, pc0)
+		if err != nil {
+			return nil, err
+		}
+
 		g.Octets += instruction.Octets
                 g.Instructions = append(g.Instructions, *instruction)
 
+		if (g.Octets > octets) || (Len(len(g.Instructions)) > instructions) {
+			return nil, errors.New("Limits exceeded")
+		} // if
+ 
                 pc0 = Ptr(uintptr(pc0) + uintptr(instruction.Octets))
 
                 if good {

@@ -32,10 +32,28 @@ func TestDisAsm(t *testing.T) {
 
 	info := InfoInit(start, end)
 
+	var instructions InstructionList
+
+	for pc := start; pc <= end; {
+		instruction, err := DecodeInstruction(info, pc)
+		if err != nil {
+			break;
+		} // if
+		instructions = append(instructions, *instruction)
+		pc = Ptr(uintptr(pc) + uintptr(instruction.Octets))
+	} //for
+
+	numInstructions := len(instructions)
+	fmt.Printf("INSTRUCTION COUNT BETWEEN 0x%x and 0x%x: %d\n", start, end, numInstructions )
+	is, err := json.Marshal(instructions)
+	if err == nil {
+		fmt.Printf("%s\n", is)
+	} // if
+
 	var gadgets GadgetList
 
-	for pc := start; pc < end; pc = pc + 1 {
-		gadget, err := DecodeGadget(info, pc)
+	for pc := start; pc <= end; pc = pc + 1 {
+		gadget, err := DecodeGadget(info, pc, length, length)
 		if err == nil {
 			gadgets = append(gadgets, *gadget)
 		} // if
@@ -43,8 +61,8 @@ func TestDisAsm(t *testing.T) {
 
 	numGadgets := len(gadgets)
 	fmt.Printf("GADGET COUNT BETWEEN 0x%x and 0x%x: %d (%d%%)\n", start, end, numGadgets, numGadgets*100/int((uintptr(end)-uintptr(start))))
-	s, err := json.Marshal(gadgets)
+	gs, err := json.Marshal(gadgets)
 	if err == nil {
-		fmt.Printf("%s\n", s)
+		fmt.Printf("%s\n", gs)
 	}
 } // TestDisAsm()

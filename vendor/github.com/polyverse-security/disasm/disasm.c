@@ -60,7 +60,7 @@ unsigned char DisAsmAccessByte(DisAsmInfoType *disAsmInfoPtr, DisAsmPtr pc)
 	return *((unsigned char *) pc);
 } // DisAsmAccessByte()
 
-int DisAsmDecodeInstruction(DisAsmInfoType *disAsmInfoPtr, DisAsmPtr pc)
+DisAsmLen DisAsmDecodeInstruction(DisAsmInfoType *disAsmInfoPtr, DisAsmPtr pc)
 {
 	disAsmInfoPtr->disAsmPrintBuffer.index = 0;
 

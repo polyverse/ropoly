@@ -8,6 +8,49 @@ import (
 	"os"
 )
 
+func nextMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, harderror error, softerrors []error) {
+
+	mapsFile, harderror := os.Open(common.MapsFilePathFromPid(p.Pid()))
+	if harderror != nil {
+		return
+	}
+	defer mapsFile.Close()
+
+	region = MemoryRegion{}
+	scanner := bufio.NewScanner(mapsFile)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		items := common.SplitMapsFileEntry(line)
+
+		if len(items) != 6 {
+			return region, fmt.Errorf("Unrecognised maps line: %s", line), softerrors
+		}
+
+		start, end, err := common.ParseMapsFileMemoryLimits(items[0])
+		if err != nil {
+			return region, err, softerrors
+		}
+
+		// Skip vsyscall as it can't be read. It's a special page mapped by the kernel to accelerate some syscalls.
+		if items[5] == "[vsyscall]" {
+			continue
+		}
+
+		if end <= address {
+			continue
+		}
+
+		access := None
+		if items[1][0] != '-' {access += Readable}
+		if items[1][1] != '-' {access += Writable}
+		if items[1][2] != '-' {access += Executable}
+		return MemoryRegion{Address: start, Size: uint(end - start), Access: access, Kind: items[5]}, nil, softerrors
+	}
+
+	return NoRegionAvailable, nil, softerrors
+}
+
 func nextReadableMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, harderror error,
 	softerrors []error) {
 
@@ -54,20 +97,6 @@ func nextReadableMemoryRegion(p process.Process, address uintptr) (region Memory
 			softerrors = append(softerrors, fmt.Errorf("Unreadable memory %s", items[0]))
 			continue
 		}
-
-                // Check if memory is executable
-                if items[1][2] == '-' {
-
-                        // If we were already reading a region this will just finish it. We only report the softerror when we
-                        // were actually trying to read it.
-                        if region.Address != 0 {
-                                return region, nil, softerrors
-                        }
-
-                        softerrors = append(softerrors, fmt.Errorf("Non-executable memory %s", items[0]))
-                        continue
-                }
-
 
 		size := uint(end - start)
 
