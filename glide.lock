@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-01-31T19:23:03.607600168-08:00
+updated: 2017-02-01T17:04:07.707504841-08:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
@@ -52,7 +52,7 @@ imports:
   - monitoring/polyverse-log-formatter
   - strings
 - name: github.com/polyverse-security/masche
-  version: fa1858223513a0021b30413053fd38f12ba22811
+  version: 72432adae56dabf56006250ed5bf88fef2ec903d
   subpackages:
   - common
   - cresponse
@@ -67,13 +67,13 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/net
-  version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
+  version: 007e530097ad7f954752df63046b4036f98ba6a6
   subpackages:
   - context
   - context/ctxhttp
   - proxy
 - name: golang.org/x/sys
-  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  version: 7a6e5648d140666db5d920909e082ca00a87ba2c
   subpackages:
   - unix
   - windows

@@ -1,14 +1,81 @@
 package memaccess
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/polyverse-security/masche/process"
 	"github.com/polyverse-security/masche/test"
 	"os"
+	"os/exec"
+	"strconv"
 	"testing"
 )
 
+func roy0(t *testing.T, proc process.Process) {
+	cmdName, lookErr := exec.LookPath("vmmap")
+	if lookErr != nil {
+		t.Fatal(lookErr)
+	}
+
+	cmdArgs := []string {"-w", "-v", "-interleaved", strconv.Itoa(int(proc.Pid()))}
+
+	cmd := exec.Command(cmdName, cmdArgs...)
+	cmdReader, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scanner := bufio.NewScanner(cmdReader)
+	go func() {
+		for scanner.Scan() {
+			fmt.Printf("roy0: %s: | %s\n", cmdName, scanner.Text())
+		}
+	}()
+
+	err = cmd.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func roy(t *testing.T, proc process.Process) {
+
+	var region MemoryRegion
+	region, err, softerrors := NextMemoryRegion(proc, 0)
+	test.PrintSoftErrors(softerrors)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if region == NoRegionAvailable {
+		t.Error("No starting region returned")
+	}
+
+	roy0(t, proc)
+
+	previousRegion := region
+	for region != NoRegionAvailable {
+		region, err, softerrors = NextMemoryRegion(proc, region.Address+uintptr(region.Size))
+		test.PrintSoftErrors(softerrors)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if region != NoRegionAvailable && region.Address < previousRegion.Address+uintptr(previousRegion.Size) {
+			t.Error("Returned region is not after the previous one.")
+		}
+
+		previousRegion = region
+	}
+}
+
 func TestManuallyWalk(t *testing.T) {
+fmt.Println("TestManuallyWalk: Enter\n")
 	cmd, err := test.LaunchTestCase()
 	if err != nil {
 		t.Fatal(err)
@@ -21,6 +88,8 @@ func TestManuallyWalk(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	roy(t, proc)
 
 	var region MemoryRegion
 	region, err, softerrors = NextReadableMemoryRegion(proc, 0)
@@ -47,6 +116,7 @@ func TestManuallyWalk(t *testing.T) {
 
 		previousRegion = region
 	}
+fmt.Println("TestManuallyWalk: Exit\n")
 }
 
 func TestCopyMemory(t *testing.T) {
@@ -116,7 +186,6 @@ func TestCopyMemory(t *testing.T) {
 			t.Error(fmt.Sprintf("Read %d bytes after the region", len(buffer)))
 		}
 	}
-
 }
 
 func memoryRegionsOverlap(region1 MemoryRegion, region2 MemoryRegion) bool {

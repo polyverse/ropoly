@@ -172,6 +172,7 @@ response_t *get_next_readable_memory_region(process_handle_t handle,
     uint32_t depth = 0;
     *region_available = false;
 
+abort();
     for (;;) {
         info_count = VM_REGION_SUBMAP_INFO_COUNT_64;
         kret = mach_vm_region_recurse(handle, &addr, &size, &depth, (vm_region_recurse_info_t)&info, &info_count);

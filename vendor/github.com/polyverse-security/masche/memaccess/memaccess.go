@@ -27,7 +27,7 @@ type MemoryRegion struct {
 }
 
 func (m MemoryRegion) String() string {
-	return fmt.Sprintf("MemoryRegion[%x-%x)", m.Address, m.Address+uintptr(m.Size))
+	return fmt.Sprintf("MemoryRegion[%x-%x %v %v)", m.Address, m.Address+uintptr(m.Size), m.Access, m.Kind)
 }
 
 // A centinel value indicating that there is no more regions available.
@@ -61,7 +61,18 @@ func NextMemoryRegionAccess(p process.Process, address uintptr, access Access) (
 //
 // If there aren't more regions available the special value NoRegionAvailable is returned.
 func NextReadableMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, harderror error, softerrors []error) {
-	return nextReadableMemoryRegion(p, address)
+	r1, h1, s1 := NextMemoryRegionAccess(p, address, Readable)
+	for {
+		r2, h2, _ := NextMemoryRegionAccess(p, r1.Address + uintptr(r1.Size), Readable)
+		if (h2 != nil) || (r2 == NoRegionAvailable) || (r2.Address > r1.Address + uintptr(r1.Size)) {
+			break;
+		} // if
+
+		r1.Size += r2.Size
+	}
+
+	return r1, h1, s1
+	// return NextMemoryRegionAccess(p, address, Readable)
 }
 
 // CopyMemory fills the entire buffer with memory from the process starting in address (in the process address space).

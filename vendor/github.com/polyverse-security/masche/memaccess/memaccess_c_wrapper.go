@@ -32,25 +32,6 @@ func nextMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, 
 	return MemoryRegion{uintptr(cRegion.start_address), uint(cRegion.length), Access(cRegion.access), C.GoString(cRegion.kind)}, harderror, softerrors
 }
 
-func nextReadableMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, harderror error, softerrors []error) {
-	var isAvailable C.bool
-	var cRegion C.memory_region_t
-
-	response := C.get_next_readable_memory_region(
-		(C.process_handle_t)(p.Handle()),
-		C.memory_address_t(address),
-		&isAvailable,
-		&cRegion)
-	harderror, softerrors = cresponse.GetResponsesErrors(unsafe.Pointer(response))
-	C.response_free(response)
-
-	if harderror != nil || isAvailable == false {
-		return NoRegionAvailable, harderror, softerrors
-	}
-
-	return MemoryRegion{uintptr(cRegion.start_address), uint(cRegion.length), Readable, ""}, harderror, softerrors
-}
-
 func copyMemory(p process.Process, address uintptr, buffer []byte) (harderror error, softerrors []error) {
 	buf := unsafe.Pointer(&buffer[0])
 
