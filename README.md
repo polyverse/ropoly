@@ -37,8 +37,8 @@ Return safe start and end addresses of real code somewhere in this container. Us
 ### /api/v0/memory/libraries
 Return list of loaded libraries for the current process
 
-### /api/v0/memory/regions
-Return list of memory regions for the current process
+### /api/v0/memory/regions[?access=\<[_R_][_W_][_X_]|_None_\>]
+Return list of memory regions for the current process subject to at least access permissions (default _R_). Any combination of _R_, _W_ and _X_ is permitted as well as the token _None_ which will return all regions. (Case is not significant.)
 
 ### /api/v0/memory/search[[\<string|regexp\>]=_target_][&start=_start_][&end=_end_][&limit=_limit_]
 Search executable memory between _start_ and _end_ and return up to _limit_ instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.

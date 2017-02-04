@@ -15,8 +15,13 @@ const (
 	Executable = 4
 )
 
+func (a Access) String() string {
+	return fmt.Sprintf("%03b", a)
+}
+
 // MemoryRegion represents a region of readable contiguos memory of a process.
 // No readable memory can be available right next to this region, it's maximal in its upper bound.
+// RES: (This is only true now for NextReadableMemoryRegion)
 //
 // NOTE: This region is not necessary equivalent to the OS's region, if any.
 type MemoryRegion struct {
@@ -50,7 +55,7 @@ func NextMemoryRegionAccess(p process.Process, address uintptr, access Access) (
 	}
 
 	if (region.Access & access) != access {
-		return NextMemoryRegionAccess(p, region.Address + uintptr(region.Size), access)
+		region, harderror, softerrors = NextMemoryRegionAccess(p, region.Address + uintptr(region.Size), access)
 	}
 
 	return region, harderror, softerrors

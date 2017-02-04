@@ -9,6 +9,7 @@ import (
         log "github.com/Sirupsen/logrus"
 	"regexp"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/polyverse-security/masche/listlibs"
@@ -45,7 +46,7 @@ func ROPMemorySafeHandler(w rest.ResponseWriter, r *rest.Request) {
        	w.WriteJson(SafeResult{StartAddress: disasm.SafeStartAddress(), EndAddress: disasm.SafeEndAddress()})
 } // ROPMemorySafeHandler()
 
-type InstructionListResult struct {
+type DisAsmResult struct {
 	NumInstructions disasm.Len
         InstructionList disasm.InstructionList
 }
@@ -124,10 +125,10 @@ func ROPMemoryDisAsmHandler(w rest.ResponseWriter, r *rest.Request) {
         	} // for
 	} // for
 
-       	w.WriteJson(InstructionListResult{NumInstructions: disasm.Len(len(instructionList)), InstructionList: instructionList})
+       	w.WriteJson(DisAsmResult{NumInstructions: disasm.Len(len(instructionList)), InstructionList: instructionList})
 } // ROPMemoryDisAsmHandler()
 
-type GadgetListResult struct {
+type GadgetResult struct {
 	NumGadgets disasm.Len
         GadgetList disasm.GadgetList
 }
@@ -218,11 +219,13 @@ func ROPMemoryGadgetHandler(w rest.ResponseWriter, r *rest.Request) {
 
 	        info := disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address + uintptr(region.Size) - 1))
 
-fmt.Printf("Searching region: %v\n", region)
+		fmt.Printf("Searching region: %v\n", region)
+
         	for ; (pc <= endN) && pc < uint64((region.Address + uintptr(region.Size))) && (len(gadgetList) < int(limitN)); pc++ {
-if (pc % 1000000) == 0 {
-	fmt.Printf("pc: %v\n", pc)
-}
+			if (pc % 0x100000) == 0 {
+				fmt.Printf("pc: %x\n", pc)
+			} // if
+
 	                gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc), disasm.Len(instructionsN), disasm.Len(octetsN))
 		 	if err == nil {
                         	gadgetList = append(gadgetList, *gadget)
@@ -230,34 +233,77 @@ if (pc % 1000000) == 0 {
         	} // for
 	} // for
 
-       	w.WriteJson(GadgetListResult{NumGadgets: disasm.Len(len(gadgetList)), GadgetList: gadgetList})
+       	w.WriteJson(GadgetResult{NumGadgets: disasm.Len(len(gadgetList)), GadgetList: gadgetList})
 } // ROPMemoryGadgetHandler()
 
-type RegionList []memaccess.MemoryRegion
-type RegionListResult struct {
+type RegionsResult struct {
+	Span       memaccess.MemoryRegion
+	Size       uint
 	NumRegions int
-        RegionList RegionList
+        Regions    []memaccess.MemoryRegion
 }
 
 func ROPMemoryRegionsHandler(w rest.ResponseWriter, r *rest.Request) {
-        var regionsList []memaccess.MemoryRegion
+	var access memaccess.Access = memaccess.None;
+
+	accessS := strings.ToUpper(r.FormValue("access"))
+	if accessS == "NONE" {
+		access = memaccess.None
+	} else if accessS == "" {
+		access = memaccess.Readable
+	} else {
+		if i := strings.Index(accessS, "R"); i != -1 {
+			access |= memaccess.Readable
+			accessS = strings.Replace(accessS, "R", "", 1)
+		} // if
+		if i := strings.Index(accessS, "W"); i != -1 {
+			access |= memaccess.Writable
+			accessS = strings.Replace(accessS, "W", "", 1)
+		} // if
+		if i := strings.Index(accessS, "X"); i != -1 {
+			access |= memaccess.Executable
+			accessS = strings.Replace(accessS, "X", "", 1)
+		} // if
+		if accessS != "" {
+               		rest.Error(w, "Improper Access specification.", http.StatusBadRequest)
+			return
+		} // if
+	} // else
 
         process, hardError, softErrors := process.OpenFromPid(uint(os.Getpid()))
 		logErrors(hardError, softErrors)
 
+	var regions []memaccess.MemoryRegion
+	var size uint = 0
+
 	for address := AddressType(0);; {
-		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(address), memaccess.Readable)
+		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(address), access)
 			logErrors(hardError, softErrors)
 
 		if region == memaccess.NoRegionAvailable {
 			break
 		} // if
 
-		regionsList = append(regionsList, region)
+		regions = append(regions, region)
+
+		size += region.Size
 		address = AddressType(region.Address + uintptr(region.Size))
 	} // for
 
-       	w.WriteJson(RegionListResult{NumRegions: len(regionsList), RegionList: regionsList})
+	numRegions := len(regions)
+
+	span := memaccess.NoRegionAvailable
+	span.Access = memaccess.Readable
+	span.Kind = "Span"
+
+	if numRegions > 0 {
+		span.Address = regions[0].Address
+		span.Size = uint((regions[numRegions-1].Address + uintptr(regions[numRegions-1].Size)) - span.Address)
+	} // if
+
+	regionsResult := RegionsResult{Span: span, Size: size, NumRegions: numRegions, Regions: regions}
+
+       	w.WriteJson(regionsResult)
 } // ROPMemoryRegionsHandler()
 
 func ROPMemorySearch(p process.Process, search string, startN AddressType, endN AddressType, limitN uint, useRegexp bool) (AddressListType, error) {
@@ -298,7 +344,7 @@ func ROPMemorySearch(p process.Process, search string, startN AddressType, endN 
 	return addressList, nil
 } // ROPMemorySearch()
 
-type AddressListResult struct {
+type SearchResult struct {
 	NumAddresses int
         AddressList AddressListType
 }
@@ -360,7 +406,7 @@ func ROPMemorySearchHandler(w rest.ResponseWriter, r *rest.Request) {
 		return
         } // if
 
-        w.WriteJson(AddressListResult{NumAddresses: len(addressList), AddressList: addressList})
+        w.WriteJson(SearchResult{NumAddresses: len(addressList), AddressList: addressList})
 } // ROPMemorySearchHandler()
 
 type LibraryListType []string
@@ -381,7 +427,7 @@ func ROPMemoryLibraryList(p process.Process) (LibraryListType, error) {
         return libraryList, nil
 } // ROPMemoryLibraryList()
 
-type LibraryListResult struct {
+type LibrariesResult struct {
 	NumLibraries int
         LibraryList LibraryListType
 }
@@ -399,7 +445,7 @@ func ROPMemoryLibrariesHandler(w rest.ResponseWriter, r *rest.Request) {
                 return
         } // if
 
-        w.WriteJson(LibraryListResult{NumLibraries: len(libraryList), LibraryList: libraryList})
+        w.WriteJson(LibrariesResult{NumLibraries: len(libraryList), LibraryList: libraryList})
 } // ROPLibrariesHandler()
 
 func ROPMemoryOverflowHandler(w rest.ResponseWriter, r *rest.Request) {

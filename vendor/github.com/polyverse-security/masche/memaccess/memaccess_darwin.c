@@ -2,6 +2,8 @@
 #include <inttypes.h>
 
 #include <mach/mach_vm.h>
+#include <mach/vm_map.h>
+#include <mach/vm_region.h>
 
 #include "memaccess.h"
 
@@ -110,17 +112,18 @@ static char *name_for_tag(int tag)
 response_t *get_next_memory_region(process_handle_t handle, memory_address_t address, bool *region_available, memory_region_t *memory_region) {
     response_t *response = response_create();
 
-    kern_return_t kret;
-    struct vm_region_submap_info_64 info;
-    mach_msg_type_number_t info_count = 0;
-    mach_vm_address_t addr = address;
-    mach_vm_size_t size = 0;
-    uint32_t depth = 0;
+    vm_address_t addr = address;
+    natural_t depth = 0;
+
     *region_available = false;
 
     for (;;) {
-        info_count = VM_REGION_SUBMAP_INFO_COUNT_64;
-        kret = mach_vm_region_recurse(handle, &addr, &size, &depth, (vm_region_recurse_info_t)&info, &info_count);
+        mach_msg_type_number_t info_count = VM_REGION_SUBMAP_INFO_COUNT_64;
+        vm_region_submap_info_data_64_t info;
+        vm_size_t size;
+
+        kern_return_t kret = vm_region_recurse_64(handle, &addr, &size, &depth, (vm_region_recurse_info_t) &info, &info_count);
+        assert(info_count == VM_REGION_SUBMAP_INFO_COUNT_64);
 
         if (kret == KERN_INVALID_ADDRESS) {
             break;
@@ -139,6 +142,7 @@ response_t *get_next_memory_region(process_handle_t handle, memory_address_t add
 	// Incomprehensible bug wherein the wrong block is returned for the last (past) address of the the region
 	if (addr + size <= address)
 	{
+		//printf("Strange case %lx\n", addr);
 		addr = address + 1;
 		continue;
 	}

@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-01T17:04:07.707504841-08:00
+updated: 2017-02-04T10:52:45.563435318-08:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
@@ -31,7 +31,7 @@ imports:
   - client
   - pkg/tlsconfig
 - name: github.com/docker/go-connections
-  version: 9670439d95da2651d9dfc7acc5d2ed92d3f25ee6
+  version: 7da10c8c50cad14494ec818dcdfb6506265c0086
   subpackages:
   - nat
   - sockets
@@ -52,7 +52,7 @@ imports:
   - monitoring/polyverse-log-formatter
   - strings
 - name: github.com/polyverse-security/masche
-  version: 72432adae56dabf56006250ed5bf88fef2ec903d
+  version: e42da53fcdaedb70444a8c23489f9a05ec9cee2d
   subpackages:
   - common
   - cresponse
@@ -67,7 +67,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: golang.org/x/net
-  version: 007e530097ad7f954752df63046b4036f98ba6a6
+  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
   subpackages:
   - context
   - context/ctxhttp
