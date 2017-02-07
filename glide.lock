@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-07T15:19:03.303228567-08:00
+updated: 2017-02-07T15:24:36.853232361-08:00
 imports:
 - name: github.com/docker/distribution
   version: b1993c95303df3d0214129d85382c3c573e4df20
@@ -44,7 +44,7 @@ imports:
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
-  version: 69dd547785e112fc3b4a6b67f3e8e29bfcbcf60b
+  version: 9b76a6f10ddf3d90111d3b844e4eff925419ee47
 - name: github.com/polyverse-security/framework
   version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:

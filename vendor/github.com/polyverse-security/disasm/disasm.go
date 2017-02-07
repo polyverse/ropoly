@@ -61,8 +61,6 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
 			s = strings.TrimSpace(s)
 			r := regexp.MustCompile(" +")
 			s = r.ReplaceAllString(s, " ")
-			//s = strings.Replace(s, "    ", " ", -1)
-			//s = strings.Replace(s, "  ", " ", -1)
 
         		return &Instruction{pc, Len(octets), s}, nil
 		} // if
