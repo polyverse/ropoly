@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"fmt"
 	"crypto/rand"
+	"github.com/gorilla/mux"
 	"github.com/polyverse-security/framework/monitoring/polyverse-log-formatter"
-	log "github.com/Sirupsen/logrus"
 	"github.com/polyverse-security/polysploit/handlers"
-	"github.com/ant0ine/go-json-rest/rest"
+	log "github.com/Sirupsen/logrus"
 )
 
 func pseudo_uuid() (uuid string) {
@@ -27,33 +27,36 @@ func pseudo_uuid() (uuid string) {
 func main() {
 	log.SetFormatter(polyverse_log_formatter.NewFormatter())
 
-	api := rest.NewApi()
-	api.Use(rest.DefaultDevStack...)
-	router, err := rest.MakeRouter(
-		rest.Get("/memory/test", handlers.ROPMemoryTestHandler),
-		rest.Get("/memory/safe", handlers.ROPMemorySafeHandler),
-		rest.Get("/memory/libraries", handlers.ROPMemoryLibrariesHandler),
-		rest.Get("/memory/regions", handlers.ROPMemoryRegionsHandler),
-		rest.Get("/memory/search", handlers.ROPMemorySearchHandler),
-		rest.Get("/memory/disasm", handlers.ROPMemoryDisAsmHandler),
-		rest.Get("/memory/gadget", handlers.ROPMemoryGadgetHandler),
-		rest.Get("/memory/overflow", handlers.ROPMemoryOverflowHandler),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	api.SetApp(router)
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/", handlers.DefaultHandler)
+	router.HandleFunc("/health", handlers.HealthHandler)
+	router.HandleFunc("/event", handlers.EventHandler)
+	router.HandleFunc("/infect", handlers.InfectHandler)
+	router.HandleFunc("/reflect", handlers.ReflectHandler)
+	router.HandleFunc("/proxy", handlers.ProxyHandler)
+	router.HandleFunc("/docker", handlers.DockerHandler)
+	router.HandleFunc("/panic", handlers.PanicHandler)
 
-	http.Handle("/api/v0/", http.StripPrefix("/api/v0", api.MakeHandler()))
+	api := router.PathPrefix("/api/v0").Subrouter()
+	api.HandleFunc("/memory/test", handlers.ROPMemoryTestHandler)
+	api.HandleFunc("/memory/safe", handlers.ROPMemorySafeHandler)
+	api.HandleFunc("/memory/libraries", handlers.ROPMemoryLibrariesHandler)
+	api.HandleFunc("/memory/regions", handlers.ROPMemoryRegionsHandler)
+	api.HandleFunc("/memory/search", handlers.ROPMemorySearchHandler)
+	api.HandleFunc("/memory/disasm", handlers.ROPMemoryDisAsmHandler)
+	api.HandleFunc("/memory/gadget", handlers.ROPMemoryGadgetHandler)
+	api.HandleFunc("/memory/overflow", handlers.ROPMemoryOverflowHandler)
 
-	http.HandleFunc("/", handlers.DefaultHandler)
-	http.HandleFunc("/health", handlers.HealthHandler)
-	http.HandleFunc("/event", handlers.EventHandler)
-	http.HandleFunc("/infect", handlers.InfectHandler)
-	http.HandleFunc("/reflect", handlers.ReflectHandler)
-	http.HandleFunc("/proxy", handlers.ProxyHandler)
-	http.HandleFunc("/docker", handlers.DockerHandler)
-	http.HandleFunc("/panic", handlers.PanicHandler)
+	// Dump the actual routes that router know about
+	router.Walk(
+		func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+        		t, err := route.GetPathTemplate()
+			if err != nil {
+            			return err
+        		}
+        		fmt.Println(t)
+        		return nil
+		})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

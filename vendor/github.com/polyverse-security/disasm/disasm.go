@@ -7,6 +7,7 @@ import "C"
 import "errors"
 import "runtime"
 import "strings"
+import "regexp"
 
 type Ptr uintptr
 type Len uint64
@@ -53,14 +54,21 @@ func AccessByte(info Info, pc Ptr) (byte, error) {
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
 
-        bytes := C.DisAsmDecodeInstruction(disAsmInfoPtr, pc)
-	if bytes > 0 {
-        	s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
-        	s = strings.TrimSpace(s)
-        	return &Instruction{pc, Len(bytes), s}, nil
-	} else {
-		return nil, errors.New("Error with disassembly")
-	}
+        octets := C.DisAsmDecodeInstruction(disAsmInfoPtr, pc)
+	if octets > 0 {
+		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
+		if !strings.Contains(s, "(bad)") {
+			s = strings.TrimSpace(s)
+			r := regexp.MustCompile(" +")
+			s = r.ReplaceAllString(s, " ")
+			//s = strings.Replace(s, "    ", " ", -1)
+			//s = strings.Replace(s, "  ", " ", -1)
+
+        		return &Instruction{pc, Len(octets), s}, nil
+		} // if
+	} // if
+
+	return nil, errors.New("Error with disassembly")
 } // DecodeInstruction()
 
 func DecodeGadget(info Info, pc Ptr, instructions Len, octets Len) (gadget *Gadget, err error) {

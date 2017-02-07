@@ -1,18 +1,13 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-04T10:52:45.563435318-08:00
+updated: 2017-02-07T15:19:03.303228567-08:00
 imports:
-- name: github.com/ant0ine/go-json-rest
-  version: ce4b71cdf7ba29ef443d704bd923f5bbf281ee30
-  subpackages:
-  - rest
-  - rest/trie
 - name: github.com/docker/distribution
-  version: fb0bebc4b64e3881cc52a2478d749845ed76d2a8
+  version: b1993c95303df3d0214129d85382c3c573e4df20
   subpackages:
   - digestset
   - reference
 - name: github.com/docker/docker
-  version: 2527cfcc49744f56a8d31c420a3ca4657f9fec2e
+  version: 54f71fd84a0dabab9d45f5fe7543a028b1200ca1
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -38,6 +33,10 @@ imports:
   - tlsconfig
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/opencontainers/go-digest
@@ -45,7 +44,7 @@ imports:
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
-  version: d7198a284f7226c0fcdb70fabafc9f525fc349fd
+  version: 69dd547785e112fc3b4a6b67f3e8e29bfcbcf60b
 - name: github.com/polyverse-security/framework
   version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:
@@ -65,9 +64,9 @@ imports:
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+  version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: golang.org/x/net
-  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
+  version: 236b8f043b920452504e263bc21d354427127473
   subpackages:
   - context
   - context/ctxhttp

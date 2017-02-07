@@ -1379,6 +1379,10 @@ definitions:
             type: "array"
             items:
               $ref: "#/definitions/PluginDevice"
+      PluginReference:
+        description: "plugin remote reference used to push/pull the plugin"
+        type: "string"
+        x-nullable: false
       Config:
         description: "The config of a plugin."
         type: "object"
@@ -4417,6 +4421,10 @@ paths:
       responses:
         200:
           description: "no error"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
           schema:
@@ -6306,7 +6314,7 @@ paths:
           schema:
             type: "object"
             properties:
-              VolumesDeleted:
+              NetworksDeleted:
                 description: "Networks that were deleted"
                 type: "array"
                 items:
