@@ -11,7 +11,6 @@ import (
 	"strings"
 	"unsafe"
 
-        //"github.com/gorilla/mux"
         log "github.com/Sirupsen/logrus"
 
 	"github.com/polyverse-security/masche/listlibs"
@@ -40,17 +39,32 @@ func ROPMemoryTestHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemoryTestHandler()
 
 type SafeResult struct {
-	StartAddress disasm.Ptr
-	EndAddress   disasm.Ptr
+	StartAddress disasm.Ptr `json:"startAddress"`
+	EndAddress   disasm.Ptr `json:"endAddress"`
+}
+
+func (sr *SafeResult) MarshalJSON() ([]byte, error) {
+	type Alias SafeResult
+	return json.Marshal(&struct {
+		StartAddress string `json:"startAddress"`
+		EndAddress string `json:"endAddress"`
+		*Alias
+	}{
+		StartAddress: "0x" + strconv.FormatUint(uint64(sr.StartAddress), 16),
+		EndAddress: "0x" + strconv.FormatUint(uint64(sr.EndAddress), 16),
+		Alias:    (*Alias)(sr),
+	})
 }
 
 func ROPMemorySafeHandler(w http.ResponseWriter, r *http.Request) {
-       	json.NewEncoder(w).Encode(SafeResult{StartAddress: disasm.SafeStartAddress(), EndAddress: disasm.SafeEndAddress()})
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+	e.Encode(&SafeResult{StartAddress: disasm.SafeStartAddress(), EndAddress: disasm.SafeEndAddress()})
 } // ROPMemorySafeHandler()
 
 type DisAsmResult struct {
-	NumInstructions disasm.Len
-        InstructionList disasm.InstructionList
+	NumInstructions disasm.Len             `json:"numInstructions"`
+        InstructionList disasm.InstructionList `json:"instructionList"`
 }
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
@@ -127,12 +141,14 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
         	} // for
 	} // for
 
-       	json.NewEncoder(w).Encode(DisAsmResult{NumInstructions: disasm.Len(len(instructionList)), InstructionList: instructionList})
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+       	e.Encode(DisAsmResult{NumInstructions: disasm.Len(len(instructionList)), InstructionList: instructionList})
 } // ROPMemoryDisAsmHandler()
 
 type GadgetResult struct {
-	NumGadgets disasm.Len
-        GadgetList disasm.GadgetList
+	NumGadgets disasm.Len        `json:"numGadgets"`
+        GadgetList disasm.GadgetList `json:"gadgetList"`
 }
 
 func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
@@ -228,21 +244,36 @@ func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("pc: %x\n", pc)
 			} // if
 
-	                gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc), disasm.Len(instructionsN), disasm.Len(octetsN))
+	                gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc), int(instructionsN), int(octetsN))
 		 	if err == nil {
                         	gadgetList = append(gadgetList, *gadget)
 			} // if
         	} // for
 	} // for
 
-       	json.NewEncoder(w).Encode(GadgetResult{NumGadgets: disasm.Len(len(gadgetList)), GadgetList: gadgetList})
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+       	e.Encode(&GadgetResult{NumGadgets: disasm.Len(len(gadgetList)), GadgetList: gadgetList})
 } // ROPMemoryGadgetHandler()
 
 type RegionsResult struct {
-	Span       memaccess.MemoryRegion
-	Size       uint
-	NumRegions int
-        Regions    []memaccess.MemoryRegion
+	Span       *memaccess.MemoryRegion  `json:"span"`
+	Size       uint                     `json:"size"`
+	NumRegions int                      `json:"numRegions"`
+        Regions    []memaccess.MemoryRegion `json:"regions"`
+}
+
+func (rr *RegionsResult) MarshalJSON() ([]byte, error) {
+	type Alias RegionsResult
+	return json.Marshal(&struct {
+		Span *memaccess.MemoryRegion `json:"span"`
+		Size string                  `json:"size"`
+		*Alias
+	}{
+		Span:  rr.Span,
+		Size:  "0x" + strconv.FormatUint(uint64(rr.Size), 16),
+		Alias: (*Alias)(rr),
+	})
 }
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -303,9 +334,11 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 		span.Size = uint((regions[numRegions-1].Address + uintptr(regions[numRegions-1].Size)) - span.Address)
 	} // if
 
-	regionsResult := RegionsResult{Span: span, Size: size, NumRegions: numRegions, Regions: regions}
+	regionsResult := RegionsResult{Span: &span, Size: size, NumRegions: numRegions, Regions: regions}
 
-       	json.NewEncoder(w).Encode(regionsResult)
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+       	e.Encode(&regionsResult)
 } // ROPMemoryRegionsHandler()
 
 func ROPMemorySearch(p process.Process, search string, startN AddressType, endN AddressType, limitN uint, useRegexp bool) (AddressListType, error) {
@@ -347,8 +380,8 @@ func ROPMemorySearch(p process.Process, search string, startN AddressType, endN 
 } // ROPMemorySearch()
 
 type SearchResult struct {
-	NumAddresses int
-        AddressList AddressListType
+	NumAddresses int            `json:"numAddresses"`
+        AddressList AddressListType `json:"addressList"`
 }
 
 func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -408,7 +441,9 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 		return
         } // if
 
-        json.NewEncoder(w).Encode(SearchResult{NumAddresses: len(addressList), AddressList: addressList})
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+        e.Encode(SearchResult{NumAddresses: len(addressList), AddressList: addressList})
 } // ROPMemorySearchHandler()
 
 type LibraryListType []string
@@ -430,8 +465,8 @@ func ROPMemoryLibraryList(p process.Process) (LibraryListType, error) {
 } // ROPMemoryLibraryList()
 
 type LibrariesResult struct {
-	NumLibraries int
-        LibraryList LibraryListType
+	NumLibraries int            `json:"numLibraries"`
+        LibraryList LibraryListType `json:"libraryList"`
 }
 func ROPMemoryLibrariesHandler(w http.ResponseWriter, r *http.Request) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
@@ -447,7 +482,9 @@ func ROPMemoryLibrariesHandler(w http.ResponseWriter, r *http.Request) {
                 return
         } // if
 
-	json.NewEncoder(w).Encode(LibrariesResult{NumLibraries: len(libraryList), LibraryList: libraryList})
+       	e := json.NewEncoder(w)
+	e.SetIndent("", "    ")
+	e.Encode(LibrariesResult{NumLibraries: len(libraryList), LibraryList: libraryList})
 } // ROPLibrariesHandler()
 
 func ROPMemoryOverflowHandler(w http.ResponseWriter, r *http.Request) {

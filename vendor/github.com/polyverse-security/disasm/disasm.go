@@ -4,9 +4,11 @@ package disasm
 // #cgo CFLAGS: -std=c99
 import "C"
 
+import "encoding/json"
 import "errors"
 import "runtime"
 import "strings"
+import "strconv"
 import "regexp"
 
 type Ptr uintptr
@@ -21,18 +23,44 @@ type Info struct {
 }
 
 type Instruction struct {
-	Address Ptr    //`json: "address"`
-	Octets  Len    //`json: "octets"`
-	DisAsm  string //`json: "disasm"`
+	Address Ptr    `json:"address,string"`
+	Octets  int    `json:"octets"`
+	DisAsm  string `json:"disasm"`
 }
 type InstructionList []Instruction
 
 type Gadget struct {
-	Address      Ptr             //`json: "address"`
-	Octets       Len             //`json: "octets"`
-	Instructions InstructionList //`json: "instructions"`
+	Address      Ptr             `json:"address,string"`
+	Octets       int             `json:"octets"`
+	Instructions InstructionList `json:"instructions"`
 }
 type GadgetList []Gadget
+
+func (p Ptr) String() string {
+	return "0x" + strconv.FormatUint(uint64(p), 16)
+}
+
+func (i *Instruction) MarshalJSON() ([]byte, error) {
+        type Alias Instruction
+        return json.Marshal(&struct {
+                Address string `json:"address"`
+                *Alias
+        }{
+                Address: i.Address.String(),
+                Alias:   (*Alias)(i),
+        })
+}
+
+func (g *Gadget) MarshalJSON() ([]byte, error) {
+        type Alias Gadget
+        return json.Marshal(&struct {
+                Address string `json:"address"`
+                *Alias
+        }{
+                Address: g.Address.String(),
+                Alias:   (*Alias)(g),
+        })
+}
 
 func SafeStartAddress() Ptr {
 	return Ptr(C.DisAsmSafeStartAddress())
@@ -54,7 +82,7 @@ func AccessByte(info Info, pc Ptr) (byte, error) {
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
 
-        octets := C.DisAsmDecodeInstruction(disAsmInfoPtr, pc)
+        octets := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, pc))
 	if octets > 0 {
 		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
 		if !strings.Contains(s, "(bad)") {
@@ -62,14 +90,14 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
 			r := regexp.MustCompile(" +")
 			s = r.ReplaceAllString(s, " ")
 
-        		return &Instruction{pc, Len(octets), s}, nil
+        		return &Instruction{pc, octets, s}, nil
 		} // if
 	} // if
 
 	return nil, errors.New("Error with disassembly")
 } // DecodeInstruction()
 
-func DecodeGadget(info Info, pc Ptr, instructions Len, octets Len) (gadget *Gadget, err error) {
+func DecodeGadget(info Info, pc Ptr, instructions int, octets int) (gadget *Gadget, err error) {
         disAsmInfoPtr := info.info.info
 	g := Gadget{Address: pc, Octets: 0, Instructions: nil}
 
@@ -86,7 +114,7 @@ func DecodeGadget(info Info, pc Ptr, instructions Len, octets Len) (gadget *Gadg
 		g.Octets += instruction.Octets
                 g.Instructions = append(g.Instructions, *instruction)
 
-		if (g.Octets > octets) || (Len(len(g.Instructions)) > instructions) {
+		if (g.Octets > octets) || (len(g.Instructions) > instructions) {
 			return nil, errors.New("Limits exceeded")
 		} // if
  

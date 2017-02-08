@@ -2,8 +2,10 @@
 package memaccess
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/polyverse-security/masche/process"
+	"strconv"
 )
 
 type Access uint8
@@ -16,7 +18,25 @@ const (
 )
 
 func (a Access) String() string {
-	return fmt.Sprintf("%03b", a)
+	var s string
+
+	if (a & Readable) == Readable {
+		s += "R"
+	} else {
+		s += "_"
+	} // else
+	if (a & Writable) == Writable {
+		s += "W"
+	} else {
+		s += "_"
+	} // else
+	if (a & Executable) == Executable {
+		s += "X"
+	} else {
+		s += "_"
+	} // else
+
+	return s
 }
 
 // MemoryRegion represents a region of readable contiguos memory of a process.
@@ -25,17 +45,32 @@ func (a Access) String() string {
 //
 // NOTE: This region is not necessary equivalent to the OS's region, if any.
 type MemoryRegion struct {
-	Address uintptr
-	Size    uint
-	Access	Access
-	Kind	string
+	Address uintptr `json:"address"`
+	Size    uint    `json:"size"`
+	Access	Access  `json:"access"`
+	Kind	string  `json:"kind"`
 }
 
 func (m MemoryRegion) String() string {
 	return fmt.Sprintf("MemoryRegion[%x-%x %v %v)", m.Address, m.Address+uintptr(m.Size), m.Access, m.Kind)
 }
 
-// A centinel value indicating that there is no more regions available.
+func (mr *MemoryRegion) MarshalJSON() ([]byte, error) {
+        type Alias MemoryRegion
+        return json.Marshal(&struct {
+                Address string `json:"address"`
+		Size    string `json:"size"`
+		Access  string `json:"access"`
+                *Alias
+        }{
+                Address: "0x" + strconv.FormatUint(uint64(mr.Address), 16),
+                Size   : "0x" + strconv.FormatUint(uint64(mr.Size), 16),
+		Access:  mr.Access.String(),
+                Alias:   (*Alias)(mr),
+        })
+}
+
+// A sentinel value indicating that there is no more regions available.
 var NoRegionAvailable MemoryRegion
 
 // NextMemoryRegion returns the next memory region at or after address
