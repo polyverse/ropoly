@@ -107,13 +107,11 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
         numOctets := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, pc))
 	if numOctets > 0 {
 		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
-		if !strings.Contains(s, "(bad)") {
-			s = strings.TrimRight(s, " ")
-			//r := regexp.MustCompile(" +")
-			//s = r.ReplaceAllString(s, " ")
+		s = strings.TrimRight(s, " ")
+		//r := regexp.MustCompile(" +")
+		//s = r.ReplaceAllString(s, " ")
 
-        		return &Instruction{pc, numOctets, s}, nil
-		} // if
+       		return &Instruction{pc, numOctets, s}, nil
 	} // if
 
 	return nil, errors.New("Error with disassembly")
@@ -132,6 +130,9 @@ func DecodeGadget(info Info, pc Ptr, instructions int, numOctets int) (gadget *G
 		if err != nil {
 			return nil, err
 		}
+		if strings.Contains(instruction.DisAsm, "(bad)") {
+                        return nil, errors.New("Encountered (bad) instruction")
+		} // if
 
 		g.NumInstructions++ 
 		g.NumOctets += instruction.NumOctets
