@@ -6,6 +6,7 @@ import "C"
 
 import "encoding/json"
 import "errors"
+import "hash/crc32"
 //import "regexp"
 import "runtime"
 import "strings"
@@ -21,6 +22,10 @@ type iInfo struct {
 
 type Info struct {
 	info *iInfo
+	start  Ptr
+	end    Ptr
+	length Len
+	memory []byte
 }
 
 type Instruction struct {
@@ -31,6 +36,7 @@ type Instruction struct {
 
 type Gadget struct {
 	Address         Ptr           `json:"address,string"`
+	Signature       uint32        `json:"signature"`
 	NumInstructions int           `json:"numInstructions"`
 	NumOctets       int           `json:"numOctets"`
 	Instructions    []Instruction `json:"instructions"`
@@ -88,18 +94,16 @@ func SafeStartAddress() Ptr {
 	return Ptr(C.DisAsmSafeStartAddress())
 } // SafeStartAddress()
 
-func InfoInit(start Ptr, end Ptr) Info {
-	cinfo := C.DisAsmInfoInit(start, C.DisAsmLen(end - start + 1))
+func InfoInit(s Ptr, e Ptr) Info {
+	l := Len(e - s + 1)
+
+	cinfo := C.DisAsmInfoInit(s, e)
 	iinfo := &iInfo{cinfo}
 	runtime.SetFinalizer(iinfo, InfoFree)
-	info := Info{iinfo}
+	info := Info{info: iinfo, start: s, end: e, length: l, memory: C.GoBytes(unsafe.Pointer(s), C.int(l))}
 
 	return info
 } // InfoInit()
-
-func AccessByte(info Info, pc Ptr) (byte, error) {
-	return byte(C.DisAsmAccessByte(info.info.info, pc)), nil
-} // AccessByte()
 
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
@@ -118,11 +122,10 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
 } // DecodeInstruction()
 
 func DecodeGadget(info Info, pc Ptr, instructions int, numOctets int) (gadget *Gadget, err error) {
-        disAsmInfoPtr := info.info.info
 	g := Gadget{Address: pc, NumInstructions: 0, NumOctets: 0, Instructions: nil}
 
-        for pc0 := pc; pc0 <= Ptr(disAsmInfoPtr.end); {
-                var b byte = byte(C.DisAsmAccessByte(disAsmInfoPtr, pc0))
+        for pc0 := pc; pc0 <= info.end; {
+		var b = info.memory[pc0-info.start]
                 var good bool = ((b == 0xC2) || (b == 0xC3) || (b == 0xCA) || (b == 0xCB) || (b == 0xEA))
                 var bad bool = ((b == 0xE8) || (b == 0xE9) || (b == 0xEA) || (b == 0xFF)) // CALL, JMP, JMP, 0xFF
 
@@ -145,6 +148,7 @@ func DecodeGadget(info Info, pc Ptr, instructions int, numOctets int) (gadget *G
                 pc0 = Ptr(uintptr(pc0) + uintptr(instruction.NumOctets))
 
                 if good {
+			g.Signature = crc32.ChecksumIEEE(C.GoBytes(unsafe.Pointer(g.Address), C.int(g.NumOctets)))
                         return &g, nil
                 } else if bad {
                         return nil, errors.New("Encountered jmp instruction")

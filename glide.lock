@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-08T16:23:26.522187364-08:00
+updated: 2017-02-09T13:56:41.949350363-08:00
 imports:
 - name: github.com/docker/distribution
   version: b1993c95303df3d0214129d85382c3c573e4df20
@@ -44,7 +44,7 @@ imports:
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
-  version: e3acfc61b55457efc61b2d3ef79d85dc953d6954
+  version: 67fd9a41179c0cfd23366fa49ca32750aeebb8cd
 - name: github.com/polyverse-security/framework
   version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:
@@ -66,7 +66,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: golang.org/x/net
-  version: 236b8f043b920452504e263bc21d354427127473
+  version: a689eb3bc4b53af70390acc3cf68c9f549b6b8d6
   subpackages:
   - context
   - context/ctxhttp

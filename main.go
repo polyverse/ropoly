@@ -1,27 +1,27 @@
 package main
 
 import (
-	"net/http"
-	"fmt"
 	"crypto/rand"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/polyverse-security/framework/monitoring/polyverse-log-formatter"
 	"github.com/polyverse-security/polysploit/handlers"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
 )
 
 func pseudo_uuid() (uuid string) {
 
-    b := make([]byte, 16)
-    _, err := rand.Read(b)
-    if err != nil {
-        fmt.Println("Error: ", err)
-        return
-    }
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
 
-    uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 
-    return
+	return
 }
 
 func main() {
@@ -50,12 +50,12 @@ func main() {
 	// Dump the actual routes that router know about
 	router.Walk(
 		func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-        		t, err := route.GetPathTemplate()
+			t, err := route.GetPathTemplate()
 			if err != nil {
-            			return err
-        		}
-        		fmt.Println(t)
-        		return nil
+				return err
+			}
+			fmt.Println(t)
+			return nil
 		})
 
 	log.Fatal(http.ListenAndServe(":8080", router))

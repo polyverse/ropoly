@@ -28,7 +28,7 @@ DisAsmPtr DisAsmSafeStartAddress(void)
 	return DisAsmInfoInit;
 } // DisAsmSafeStartAddress()
 
-DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmLen length)
+DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmPtr end)
 {
 	DisAsmInfoPtr disAsmInfoPtr = calloc(1, sizeof(*disAsmInfoPtr));
 
@@ -46,12 +46,9 @@ DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmLen length)
         disAsmInfoPtr->info.symbol_is_valid           = generic_symbol_is_valid;
         disAsmInfoPtr->info.display_endian            = BFD_ENDIAN_LITTLE;
         disAsmInfoPtr->info.buffer_vma                = (unsigned long) start;
-        disAsmInfoPtr->info.buffer_length             = length;
+        disAsmInfoPtr->info.buffer_length             = end - start + 1;
         disAsmInfoPtr->info.buffer                    = start;
 	
-	disAsmInfoPtr->start = start;
-	disAsmInfoPtr->end = start + length - 1;
-
 	return disAsmInfoPtr;
 } // DisAsmInfoInit()
 
