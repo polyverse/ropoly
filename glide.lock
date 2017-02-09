@@ -1,5 +1,5 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-08T11:32:55.731885368-08:00
+updated: 2017-02-08T15:58:23.592343657-08:00
 imports:
 - name: github.com/docker/distribution
   version: b1993c95303df3d0214129d85382c3c573e4df20
@@ -7,7 +7,7 @@ imports:
   - digestset
   - reference
 - name: github.com/docker/docker
-  version: 54f71fd84a0dabab9d45f5fe7543a028b1200ca1
+  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -44,7 +44,7 @@ imports:
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
-  version: 22c58faa183d8f5241c58520d4ae76be5e85b2cc
+  version: 46d92849eb81f45bbd3bf2f23e300663e45cc880
 - name: github.com/polyverse-security/framework
   version: 170a21f1edfa96253bfd273cdd9061fa7c25aca8
   subpackages:

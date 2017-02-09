@@ -21,9 +21,6 @@ import (
 	"github.com/polyverse-security/disasm"
 )
 
-type AddressType uintptr
-type AddressListType []AddressType
-
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
 		log.Fatal(hardError)
@@ -63,8 +60,8 @@ func ROPMemorySafeHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemorySafeHandler()
 
 type DisAsmResult struct {
-	NumInstructions disasm.Len             `json:"numInstructions"`
-        InstructionList disasm.InstructionList `json:"instructionList"`
+	NumInstructions disasm.Len           `json:"numInstructions"`
+        Instructions    []disasm.Instruction `json:"instructions"`
 }
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
@@ -106,12 +103,12 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
         	} // if
 	} // else if
 
-        var instructionList disasm.InstructionList
+        var instructions []disasm.Instruction
 
         process, hardError, softErrors := process.OpenFromPid(uint(os.Getpid()))
 	logErrors(hardError, softErrors)
 
-        for pc := startN; (pc <= endN) && (len(instructionList) < int(limitN)); {
+        for pc := startN; (pc <= endN) && (len(instructions) < int(limitN)); {
 		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(pc), memaccess.Readable + memaccess.Executable)
 		logErrors(hardError, softErrors)
 
@@ -129,26 +126,26 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 
 	        info := disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address + uintptr(region.Size) - 1))
 
-        	for ; (pc <= endN) && pc < uint64((region.Address + uintptr(region.Size))) && (len(instructionList) < int(limitN)); {
+        	for ; (pc <= endN) && pc < uint64((region.Address + uintptr(region.Size))) && (len(instructions) < int(limitN)); {
                 	instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
                 	if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
                 	} // if
 
-                	instructionList = append(instructionList, *instruction)
-			pc = pc + uint64(instruction.Octets)
+                	instructions = append(instructions, *instruction)
+			pc = pc + uint64(instruction.NumOctets)
         	} // for
 	} // for
 
        	e := json.NewEncoder(w)
 	e.SetIndent("", "    ")
-       	e.Encode(DisAsmResult{NumInstructions: disasm.Len(len(instructionList)), InstructionList: instructionList})
+       	e.Encode(DisAsmResult{NumInstructions: disasm.Len(len(instructions)), Instructions: instructions})
 } // ROPMemoryDisAsmHandler()
 
 type GadgetResult struct {
-	NumGadgets disasm.Len        `json:"numGadgets"`
-        GadgetList disasm.GadgetList `json:"gadgetList"`
+	NumGadgets disasm.Len      `json:"numGadgets"`
+        Gadgets    []disasm.Gadget `json:"gadgets"`
 }
 
 func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
@@ -214,12 +211,12 @@ func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
         	} // if
 	} // else if
 
-        var gadgetList disasm.GadgetList
+        var gadgets []disasm.Gadget
 
         process, hardError, softErrors := process.OpenFromPid(uint(os.Getpid()))
 	logErrors(hardError, softErrors)
 
-        for pc := startN; (pc <= endN) && (len(gadgetList) < int(limitN)); {
+        for pc := startN; (pc <= endN) && (len(gadgets) < int(limitN)); {
 		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(pc), memaccess.Readable + memaccess.Executable)
 		logErrors(hardError, softErrors)
 
@@ -239,21 +236,21 @@ func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Printf("Searching region: %v\n", region)
 
-        	for ; (pc <= endN) && pc < uint64((region.Address + uintptr(region.Size))) && (len(gadgetList) < int(limitN)); pc++ {
+        	for ; (pc <= endN) && pc < uint64((region.Address + uintptr(region.Size))) && (len(gadgets) < int(limitN)); pc++ {
 			if (pc % 0x100000) == 0 {
 				fmt.Printf("pc: %x\n", pc)
 			} // if
 
 	                gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc), int(instructionsN), int(octetsN))
 		 	if err == nil {
-                        	gadgetList = append(gadgetList, *gadget)
+                        	gadgets = append(gadgets, *gadget)
 			} // if
         	} // for
 	} // for
 
        	e := json.NewEncoder(w)
 	e.SetIndent("", "    ")
-       	e.Encode(&GadgetResult{NumGadgets: disasm.Len(len(gadgetList)), GadgetList: gadgetList})
+       	e.Encode(&GadgetResult{NumGadgets: disasm.Len(len(gadgets)), Gadgets: gadgets})
 } // ROPMemoryGadgetHandler()
 
 type RegionsResult struct {
@@ -309,7 +306,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 	var regions []memaccess.MemoryRegion
 	var size uint = 0
 
-	for address := AddressType(0);; {
+	for address := disasm.Ptr(0);; {
 		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(address), access)
 			logErrors(hardError, softErrors)
 
@@ -320,7 +317,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 		regions = append(regions, region)
 
 		size += region.Size
-		address = AddressType(region.Address + uintptr(region.Size))
+		address = disasm.Ptr(region.Address + uintptr(region.Size))
 	} // for
 
 	numRegions := len(regions)
@@ -341,12 +338,12 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
        	e.Encode(&regionsResult)
 } // ROPMemoryRegionsHandler()
 
-func ROPMemorySearch(p process.Process, search string, startN AddressType, endN AddressType, limitN uint, useRegexp bool) (AddressListType, error) {
-	var addressList AddressListType
+func ROPMemorySearch(p process.Process, search string, startN disasm.Ptr, endN disasm.Ptr, limitN uint, useRegexp bool) ([]string, error) {
+	var addresses []string
 
         for start, i := uintptr(startN), uint(0); i < limitN; {
 		var found bool
-		var address uintptr
+		var address uintptr 
 		var err error
 
 		if search == "" {
@@ -369,19 +366,19 @@ func ROPMemorySearch(p process.Process, search string, startN AddressType, endN 
 
                 if found && address <= uintptr(endN) {
                         start = address + 1
-			addressList = append(addressList, AddressType(address))
+			addresses = append(addresses, disasm.Ptr(address).String())
 			i = i + 1
                 } else {
                         i = limitN
                 } // else
         } // for
 
-	return addressList, nil
+	return addresses, nil
 } // ROPMemorySearch()
 
 type SearchResult struct {
-	NumAddresses int            `json:"numAddresses"`
-        AddressList AddressListType `json:"addressList"`
+	NumAddresses int      `json:"numAddresses"`
+        Addresses    []string `json:"addresses"`
 }
 
 func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -435,7 +432,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
                 return
         } // if
 
-	addressList, err := ROPMemorySearch(p, search, AddressType(startN), AddressType(endN), uint(limitN), r.FormValue("regexp") != "")
+	addresses, err := ROPMemorySearch(p, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.FormValue("regexp") != "")
         if err != nil {
                 http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -443,30 +440,28 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 
        	e := json.NewEncoder(w)
 	e.SetIndent("", "    ")
-        e.Encode(SearchResult{NumAddresses: len(addressList), AddressList: addressList})
+        e.Encode(SearchResult{NumAddresses: len(addresses), Addresses: addresses})
 } // ROPMemorySearchHandler()
 
-type LibraryListType []string
-
-func ROPMemoryLibraryList(p process.Process) (LibraryListType, error) {
+func ROPMemoryLibraries(p process.Process) ([]string, error) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
         logErrors(harderror, softerrors)
         if harderror != nil {
                 return nil, harderror
         } // if
 
-        libraryList, harderror, softerrors := listlibs.ListLoadedLibraries(p)
+        libraries, harderror, softerrors := listlibs.ListLoadedLibraries(p)
         logErrors(harderror, softerrors)
         if harderror != nil {
                 return nil, harderror
         } // if
 
-        return libraryList, nil
-} // ROPMemoryLibraryList()
+        return libraries, nil
+} // ROPMemoryLibraries()
 
 type LibrariesResult struct {
-	NumLibraries int            `json:"numLibraries"`
-        LibraryList LibraryListType `json:"libraryList"`
+	NumLibraries int      `json:"numLibraries"`
+        Libraries    []string `json:"libraries"`
 }
 func ROPMemoryLibrariesHandler(w http.ResponseWriter, r *http.Request) {
         p, harderror, softerrors := process.OpenFromPid(uint(os.Getpid()))
@@ -476,7 +471,7 @@ func ROPMemoryLibrariesHandler(w http.ResponseWriter, r *http.Request) {
                 return
         } // if
 
-        libraryList, err := ROPMemoryLibraryList(p)
+        libraries, err := ROPMemoryLibraries(p)
         if err != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)
                 return
@@ -484,7 +479,7 @@ func ROPMemoryLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 
        	e := json.NewEncoder(w)
 	e.SetIndent("", "    ")
-	e.Encode(LibrariesResult{NumLibraries: len(libraryList), LibraryList: libraryList})
+	e.Encode(LibrariesResult{NumLibraries: len(libraries), Libraries: libraries})
 } // ROPLibrariesHandler()
 
 func ROPMemoryOverflowHandler(w http.ResponseWriter, r *http.Request) {

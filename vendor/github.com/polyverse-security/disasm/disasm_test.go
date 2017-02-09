@@ -32,7 +32,7 @@ func TestDisAsm(t *testing.T) {
 
 	info := InfoInit(start, end)
 
-	var instructions InstructionList
+	var instructions []Instruction
 
 	for pc := start; pc <= end; {
 		instruction, err := DecodeInstruction(info, pc)
@@ -40,7 +40,7 @@ func TestDisAsm(t *testing.T) {
 			break;
 		} // if
 		instructions = append(instructions, *instruction)
-		pc = Ptr(uintptr(pc) + uintptr(instruction.Octets))
+		pc = Ptr(uintptr(pc) + uintptr(instruction.NumOctets))
 	} //for
 
 	numInstructions := len(instructions)
@@ -51,7 +51,7 @@ func TestDisAsm(t *testing.T) {
 		fmt.Printf("%s\n", is)
 	} // if
 
-	var gadgets GadgetList
+	var gadgets []Gadget
 
 	for pc := start; pc <= end; pc = pc + 1 {
 		gadget, err := DecodeGadget(info, pc, length, length)
