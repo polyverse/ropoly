@@ -1,0 +1,7 @@
+polyverse/config/scrambled_binaries: "true"
+polyverse/config/monitoring/log_container_changes: "true"
+polyverse/config/monitoring/log_metrics: "true"
+polyverse/config/monitoring/log_source_line: "true"
+polyverse/config/monitoring/docker_log_driver: "gelf"
+polyverse/config/monitoring/docker_log_opts: |
+ { "gelf-address":"udp://localhost:12201" }

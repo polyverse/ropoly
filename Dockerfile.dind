@@ -1,0 +1,25 @@
+#Fortunately for us, Docker ships an image called "docker" which does Docker in Docker (dind)
+FROM docker:dind
+
+# Install the tools we need
+RUN apk add --no-cache \
+               jq \
+               bash \
+               perl
+
+# Copy the files we want in there...
+COPY vfi.json /
+COPY appdef.js /
+COPY config.yml /
+COPY images.json /
+
+COPY entrypoint.sh /usr/local/bin
+
+COPY images.tar.gz /
+
+# Override entry point
+ENTRYPOINT ["entrypoint.sh"]
+
+CMD []
+
+EXPOSE 8080

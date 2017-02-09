@@ -52,8 +52,8 @@ Search executable memory between _start_ and _end_ and return up to _limit_ gadg
 ### /api/v0/memory/overflow?chain=_ropstring_
 Performs buffer overflow by passing _ropstring_ to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
 
-## Examples
-### /example2.htm
+## Docker-in-Docker
+A DinD version named `polysploit-dind` is available that runs the Polysploit container with Polyverse. This image can be built using the `build-dind.sh` script and will be pushed to `polyverse-tools.jfrog.io` and DockerHub repo with the `-p` option. You can specify the Polyverse containers to be used by specifying it in the `images.json` file.
 This page displays "widgets" that each represent a different Request. Starting a widget will continuously make async calls to `http://localhost:8080/infect` and each widget has a callback function that charts the resuts on a chart that is shared by all widgets.
 
 ## JavaScript libraries

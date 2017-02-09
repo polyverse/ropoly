@@ -1,0 +1,22 @@
+{
+  "etcd": {
+    "type": "dockerImage",
+    "address": "quay.io/coreos/etcd:v3.0.12"
+  },
+  "nsq": {
+    "type": "dockerImage",
+    "address": "nsqio/nsq:v0.3.8"
+  },
+  "supervisor": {
+    "type": "dockerImage",
+    "address": "polyverse-runtime.jfrog.io/supervisor:5070011dd2a34265121a960005e73a5a9fc3f914"
+  },
+  "router": {
+    "type": "dockerImage",
+    "address": "polyverse-runtime.jfrog.io/router:5453e8c9b2b7264b725f97297a078f4d47bfa71e"
+  },
+  "containerManager": {
+    "type": "dockerImage",
+    "address": "polyverse-runtime.jfrog.io/container-manager:64be36fd2ebe6091250603d937139991aa909538"
+  }
+}
