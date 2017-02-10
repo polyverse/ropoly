@@ -158,7 +158,12 @@ type GadgetResult struct {
 	Gadgets    []disasm.Gadget `json:"gadgets"`
 }
 
-func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
+type FingerprintResult struct {
+	NumGadgets disasm.Len `json:"numGadgets"`
+	Gadgets    []string   `json:"gadgets"`
+}
+
+func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool) {
 	var err error
 
 	var startN uint64 = 0
@@ -221,12 +226,14 @@ func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
 		} // if
 	} // else if
 
-	var gadgets []disasm.Gadget
+	var numGadgets int
+	var gadgetResult GadgetResult
+	var fingerprintResult FingerprintResult
 
 	process, hardError, softErrors := process.OpenFromPid(uint(os.Getpid()))
 	logErrors(hardError, softErrors)
 
-	for pc := startN; (pc <= endN) && (len(gadgets) < int(limitN)); {
+	for pc := startN; (pc <= endN) && (numGadgets < int(limitN)); {
 		region, hardError, softErrors := memaccess.NextMemoryRegionAccess(process, uintptr(pc), memaccess.Readable+memaccess.Executable)
 		logErrors(hardError, softErrors)
 
@@ -246,27 +253,49 @@ func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Printf("Searching region: %v\n", region)
 
-		for ; (pc <= endN) && pc < uint64((region.Address+uintptr(region.Size))) && (len(gadgets) < int(limitN)); pc++ {
+		for ; (pc <= endN) && pc < uint64((region.Address+uintptr(region.Size))) && (numGadgets < int(limitN)); pc++ {
 			if (pc % 0x100000) == 0 {
 				fmt.Printf("pc: %x\n", pc)
 			} // if
 
 			gadget, err := disasm.DecodeGadget(info, disasm.Ptr(pc), int(instructionsN), int(octetsN))
 			if err == nil {
-				gadgets = append(gadgets, *gadget)
+				if fingerprinting {
+					fingerprintResult.Gadgets = append(fingerprintResult.Gadgets, gadget.String())
+				} else {
+					gadgetResult.Gadgets = append(gadgetResult.Gadgets, *gadget)
+				} // else
+				numGadgets++
 			} // if
 		} // for
 	} // for
 
-	gadgetResult := GadgetResult{NumGadgets: disasm.Len(len(gadgets)), Gadgets: gadgets}
+	var b []byte
 
-	b, err := json.MarshalIndent(&gadgetResult, "", "    ")
+	if fingerprinting {
+		fingerprintResult.NumGadgets = disasm.Len(numGadgets)
+
+		b, err = json.MarshalIndent(&fingerprintResult, "", "    ")
+	} else {
+		gadgetResult.NumGadgets = disasm.Len(numGadgets)
+
+		b, err = json.MarshalIndent(&gadgetResult, "", "    ")
+	} // else
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} // if
 	w.Write(b)
 } // ROPMemoryGadgetHandler()
+
+func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
+	ROPMemoryGadgetHandler0(w, r, false)
+} // ROPMemoryGadgetHandler()
+
+func ROPMemoryFingerprintHandler(w http.ResponseWriter, r *http.Request) {
+	ROPMemoryGadgetHandler0(w, r, true)
+} // ROPMemoryFingerprintHandler()
 
 type RegionsResult struct {
 	Span       *memaccess.MemoryRegion  `json:"span"`

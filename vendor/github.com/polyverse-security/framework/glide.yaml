@@ -3,17 +3,13 @@ import:
 - package: github.com/Sirupsen/logrus
   version: ^0.10.0
 - package: github.com/coreos/etcd
-  version: v3.0.12
+  version: ^3.1.0
   subpackages:
   - client
   - etcdserver/etcdserverpb
-- package: github.com/golang/protobuf
-  version: 98fa357170587e470c5f27d3c3ea0947b71eb455
-- package: google.golang.org/grpc
-  version: v1.0.1-GA
 - package: golang.org/x/net
   subpackages:
   - context
 - package: github.com/polyverse-security/statter
 - package: github.com/docker/docker
-  version: ^1.13.0-rc3
+  version: ^1.13.0

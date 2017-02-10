@@ -49,6 +49,9 @@ Disassemble executable memory between _start_ and _end_ and return up to _limit_
 ### /api/v0/memory/gadget[start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
 Search executable memory between _start_ and _end_ and return up to _limit_ gadgets size limited to _instructions_ and _octets_. 
 
+### /api/v0/memory/fingerprint[start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
+Search executable memory between _start_ and _end_ and return up to _limit_ gadget fingerprints size limited to _instructions_ and _octets_. 
+
 ### /api/v0/memory/overflow?chain=_ropstring_
 Performs buffer overflow by passing _ropstring_ to an engineered overflow vulnerability. The return address begins after 24 bytes of preamble.
 

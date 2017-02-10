@@ -52,17 +52,24 @@ func TestDisAsm(t *testing.T) {
 	} // if
 
 	var gadgets []Gadget
+	var sGadgets []string
 
 	for pc := start; pc <= end; pc = pc + 1 {
 		gadget, err := DecodeGadget(info, pc, length, length)
 		if err == nil {
 			gadgets = append(gadgets, *gadget)
+			sGadgets = append(sGadgets, gadget.String())
 		} // if
 	} // for
 
 	numGadgets := len(gadgets)
 	fmt.Printf("GADGET COUNT BETWEEN %s and %s: %d (%d%%)\n", start, end, numGadgets, numGadgets*100/int((uintptr(end)-uintptr(start))))
 	gs, err := json.MarshalIndent(gadgets, "", "    ")
+	if err == nil {
+		fmt.Printf("%s\n", gs)
+	}
+
+	gs, err = json.MarshalIndent(sGadgets, "", "    ")
 	if err == nil {
 		fmt.Printf("%s\n", gs)
 	}

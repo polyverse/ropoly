@@ -136,6 +136,14 @@ func (e *etcdWrapper) KeepAlive(ctx context.Context, id etcd.LeaseID) (<-chan *e
 	return e.actualClient.KeepAlive(ctx, id)
 }
 
+// TimeToLive retrieves the lease information of the given lease ID.
+func (e *etcdWrapper) TimeToLive(ctx context.Context, id etcd.LeaseID, opts ...etcd.LeaseOption) (*etcd.LeaseTimeToLiveResponse, error) {
+	e.updateMutex.RLock()
+	defer e.updateMutex.RUnlock()
+
+	return e.actualClient.TimeToLive(ctx, id, opts...)
+}
+
 // KeepAliveOnce renews the lease once. In most of the cases, Keepalive
 // should be used instead of KeepAliveOnce.
 func (e *etcdWrapper) KeepAliveOnce(ctx context.Context, id etcd.LeaseID) (*etcd.LeaseKeepAliveResponse, error) {

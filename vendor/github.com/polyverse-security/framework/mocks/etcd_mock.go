@@ -59,6 +59,11 @@ func (e EtcdMock) Revoke(ctx context.Context, id etcd.LeaseID) (*etcd.LeaseRevok
 	return &etcd.LeaseRevokeResponse{}, nil
 }
 
+// TimeToLive retrieves the lease information of the given lease ID.
+func (e EtcdMock) TimeToLive(ctx context.Context, id etcd.LeaseID, opts ...etcd.LeaseOption) (*etcd.LeaseTimeToLiveResponse, error) {
+	return &etcd.LeaseTimeToLiveResponse{}, nil
+}
+
 // KeepAlive keeps the given lease alive forever.
 func (e EtcdMock) KeepAlive(ctx context.Context, id etcd.LeaseID) (<-chan *etcd.LeaseKeepAliveResponse, error) {
 	return make(<-chan *etcd.LeaseKeepAliveResponse), nil

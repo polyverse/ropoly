@@ -45,6 +45,7 @@ func main() {
 	api.HandleFunc("/memory/search", handlers.ROPMemorySearchHandler)
 	api.HandleFunc("/memory/disasm", handlers.ROPMemoryDisAsmHandler)
 	api.HandleFunc("/memory/gadget", handlers.ROPMemoryGadgetHandler)
+	api.HandleFunc("/memory/fingerprint", handlers.ROPMemoryFingerprintHandler)
 	api.HandleFunc("/memory/overflow", handlers.ROPMemoryOverflowHandler)
 
 	// Dump the actual routes that router know about
