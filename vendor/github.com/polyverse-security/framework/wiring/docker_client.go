@@ -61,6 +61,9 @@ type (
 	EventsAPI interface {
 		Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error)
 	}
+	SecretsAPI interface {
+		SecretInspectWithRaw(ctx context.Context, id string) (swarm.Secret, []byte, error)
+	}
 	DockerClient interface // http://play.golang.org/p/5zkJ1jTsJu
 	{
 		DockerSystemAPI
@@ -70,6 +73,7 @@ type (
 		DockerNetworkAPI
 		SwarmServiceAPI
 		EventsAPI
+		SecretsAPI
 	}
 	dockerFactory func() DockerClient
 )
@@ -105,7 +109,7 @@ func newDockerClient() DockerClient {
 }
 
 func exportEnvironment() {
-	log.Info("Info exporing any etcd-configured Docker-endpoint values, into the environment.")
+	log.Info("Exporting any etcd-configured Docker-endpoint values, into the environment.")
 	export(DockerHostname, "DOCKER_HOST")
 	export(DockerTlsVerify, "DOCKER_TLS_VERIFY")
 	export(DockerApiVersion, "DOCKER_API_VERSION")
@@ -116,7 +120,7 @@ func exportEnvironment() {
 	exportCertFile(DockerKey, "key.pem")
 }
 
-func export(key *EtcdKey, envName string) {
+func export(key *ConfigKey, envName string) {
 	if value, ok := os.LookupEnv(envName); ok {
 		log.WithField(envName, value).Info("This environment variable already set. Not overriding it.")
 		return
@@ -126,16 +130,16 @@ func export(key *EtcdKey, envName string) {
 	}
 }
 
-func exportCertFile(key *EtcdKey, fileName string) {
-	if certPath, ok := os.LookupEnv("DOCKER_CERT_PATH"); !ok {
-		log.Error("DOCKER_CERT_PATH not exported. Don't know where to save this file.")
-	} else {
-		if strings.LastIndex(certPath, "/") != len(certPath)-1 {
-			certPath = certPath + "/"
-		}
+func exportCertFile(key *ConfigKey, fileName string) {
+	if contents := key.StringValueWithFallback(); len(contents) > 0 { //only do this if the contents are non-empty.
+		if certPath, ok := os.LookupEnv("DOCKER_CERT_PATH"); !ok {
+			log.Error("DOCKER_CERT_PATH not exported. Don't know where to save this file.")
+		} else {
+			if strings.LastIndex(certPath, "/") != len(certPath)-1 {
+				certPath = certPath + "/"
+			}
 
-		certFile := certPath + fileName
-		if contents := key.StringValueWithFallback(); len(contents) > 0 {
+			certFile := certPath + fileName
 			ioutil.WriteFile(certFile, []byte(contents), 0)
 		}
 	}

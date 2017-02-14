@@ -32,6 +32,8 @@ type (
 	}
 	DockerEventsAPIMock struct {
 	}
+	DockerSecretsAPIMock struct {
+	}
 	DockerClientMock struct {
 		DockerSystemAPIMock
 		DockerImageAPIMock
@@ -40,6 +42,7 @@ type (
 		DockerNetworkAPIMock
 		DockerSwarmServiceAPIMock
 		DockerEventsAPIMock
+		DockerSecretsAPIMock
 	}
 )
 
@@ -155,4 +158,8 @@ func (sm DockerSwarmServiceAPIMock) TaskList(ctx context.Context, options types.
 
 func (em DockerEventsAPIMock) Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error) {
 	return make(chan events.Message), make(chan error)
+}
+
+func (sm DockerSecretsAPIMock) SecretInspectWithRaw(ctx context.Context, id string) (swarm.Secret, []byte, error) {
+	return swarm.Secret{}, []byte{}, nil
 }

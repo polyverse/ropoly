@@ -38,17 +38,22 @@ func main() {
 	router.HandleFunc("/panic", handlers.PanicHandler)
 
 	api := router.PathPrefix("/api/v0").Subrouter()
-	api.HandleFunc("/memory/test", handlers.ROPMemoryTestHandler)
-	api.HandleFunc("/memory/safe", handlers.ROPMemorySafeHandler)
-	api.HandleFunc("/memory/libraries", handlers.ROPMemoryLibrariesHandler)
-	api.HandleFunc("/memory/regions", handlers.ROPMemoryRegionsHandler)
-	api.HandleFunc("/memory/search", handlers.ROPMemorySearchHandler)
-	api.HandleFunc("/memory/disasm", handlers.ROPMemoryDisAsmHandler)
-	api.HandleFunc("/memory/gadget", handlers.ROPMemoryGadgetHandler)
-	api.HandleFunc("/memory/fingerprint", handlers.ROPMemoryFingerprintHandler)
-	api.HandleFunc("/memory/overflow", handlers.ROPMemoryOverflowHandler)
+	api.HandleFunc("/test", handlers.ROPTestHandler)
+	api.HandleFunc("/pids", handlers.ROPPIdsHandler)
 
-	// Dump the actual routes that router know about
+	pid := api.PathPrefix("/pid/{pid}").Subrouter()
+	pid.HandleFunc("/libraries", handlers.ROPLibrariesHandler)
+
+	mem := pid.PathPrefix("/memory").Subrouter()
+	mem.HandleFunc("/safe", handlers.ROPMemorySafeHandler)
+	mem.HandleFunc("/regions", handlers.ROPMemoryRegionsHandler)
+	mem.HandleFunc("/search", handlers.ROPMemorySearchHandler)
+	mem.HandleFunc("/disasm", handlers.ROPMemoryDisAsmHandler)
+	mem.HandleFunc("/gadget", handlers.ROPMemoryGadgetHandler)
+	mem.HandleFunc("/fingerprint", handlers.ROPMemoryFingerprintHandler)
+	mem.HandleFunc("/overflow", handlers.ROPMemoryOverflowHandler)
+
+	// Dump the actual routes that the router knows about
 	router.Walk(
 		func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 			t, err := route.GetPathTemplate()

@@ -1,8 +1,8 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-09T16:56:07.569653508-08:00
+updated: 2017-02-13T16:04:47.509907689-08:00
 imports:
 - name: github.com/docker/distribution
-  version: b1993c95303df3d0214129d85382c3c573e4df20
+  version: b38e5838b7b2f2ad48e06ec4b500011976080621
   subpackages:
   - digestset
   - reference
@@ -46,7 +46,7 @@ imports:
 - name: github.com/polyverse-security/disasm
   version: de9a9397262104d996e26b703cdaa4bdfaa9e2b7
 - name: github.com/polyverse-security/framework
-  version: d97b912ddff1640afce0e24032958c85d1f40370
+  version: 6d3566a3ad3e7ac6f7199e9e8f6998a3d6da8d7f
   subpackages:
   - monitoring/polyverse-log-formatter
   - strings
@@ -66,13 +66,13 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: golang.org/x/net
-  version: a689eb3bc4b53af70390acc3cf68c9f549b6b8d6
+  version: 61557ac0112b576429a0df080e1c2cef5dfbb642
   subpackages:
   - context
   - context/ctxhttp
   - proxy
 - name: golang.org/x/sys
-  version: 7a6e5648d140666db5d920909e082ca00a87ba2c
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
   - windows
