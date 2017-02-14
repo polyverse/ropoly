@@ -5,14 +5,15 @@
 
 #include "../cresponse/response.h"
 
-/**
- * Process ID type.
- **/
-typedef uint32_t pid_tt;
-
 #ifdef _WIN32
 
 #include <windows.h>
+
+/**
+ * Process ID type.
+ **/
+
+typedef uint32_t pid_tt;
 
 /**
  * Windows specific process handle.
@@ -43,7 +44,7 @@ typedef task_t process_handle_t;
  * If a fatal error ocurres the handle must not be used, but it must be closed
  * anyway to ensure that all resources are freed.
  **/
-response_t *open_process_handle(pid_tt pid, process_handle_t *handle);
+response_t *open_process_handle(pid_t pid, process_handle_t *handle);
 
 /**
  * Closes a specific process handle, freen all its resources.

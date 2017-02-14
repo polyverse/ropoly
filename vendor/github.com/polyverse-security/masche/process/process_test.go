@@ -14,7 +14,7 @@ func TestOpenFromPid(t *testing.T) {
 	}
 	defer cmd.Process.Kill()
 
-	pid := uint(cmd.Process.Pid)
+	pid := int(cmd.Process.Pid)
 	proc, err, softerrors := OpenFromPid(pid)
 	defer proc.Close()
 	test.PrintSoftErrors(softerrors)
@@ -30,7 +30,7 @@ func TestProcessName(t *testing.T) {
 	}
 	defer cmd.Process.Kill()
 
-	pid := uint(cmd.Process.Pid)
+	pid := int(cmd.Process.Pid)
 	proc, err, softerrors := OpenFromPid(pid)
 	defer proc.Close()
 	test.PrintSoftErrors(softerrors)

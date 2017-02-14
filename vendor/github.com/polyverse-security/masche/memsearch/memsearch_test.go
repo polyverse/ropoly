@@ -36,7 +36,7 @@ func TestSearchInOtherProcess(t *testing.T) {
 	}
 	defer cmd.Process.Kill()
 
-	pid := uint(cmd.Process.Pid)
+	pid := int(cmd.Process.Pid)
 	proc, err, softerrors := process.OpenFromPid(pid)
 	test.PrintSoftErrors(softerrors)
 	if err != nil {
@@ -71,7 +71,7 @@ func TestRegexpSearchInOtherProcess(t *testing.T) {
 	}
 	defer cmd.Process.Kill()
 
-	pid := uint(cmd.Process.Pid)
+	pid := int(cmd.Process.Pid)
 	proc, err, softerrors := process.OpenFromPid(pid)
 	test.PrintSoftErrors(softerrors)
 	if err != nil {

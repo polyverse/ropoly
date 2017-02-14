@@ -12,10 +12,10 @@ import (
 	"strings"
 )
 
-type proc uint
+type proc int
 
-func (p proc) Pid() uint {
-	return uint(p)
+func (p proc) Pid() int {
+	return int(p)
 }
 
 func (p proc) Name() (name string, harderror error, softerrors []error) {
@@ -62,28 +62,28 @@ func (p proc) Handle() uintptr {
 	return uintptr(p)
 }
 
-func getAllPids() (pids []uint, harderror error, softerrors []error) {
+func getAllPids() (pids []int, harderror error, softerrors []error) {
 	files, err := ioutil.ReadDir("/proc/")
 	if err != nil {
 		return nil, err, nil
 	}
 
-	pids = make([]uint, 0)
+	pids = make([]int, 0)
 
 	for _, f := range files {
 		pid, err := strconv.Atoi(f.Name())
 		if err != nil {
 			continue
 		}
-		pids = append(pids, uint(pid))
+		pids = append(pids, int(pid))
 	}
 
 	return pids, nil, nil
 }
 
-func openFromPid(pid uint) (p Process, harderror error, softerrors []error) {
+func openFromPid(pid int) (p Process, harderror error, softerrors []error) {
 	// Check if we have premissions to read the process memory
-	memPath := common.MemFilePathFromPid(pid)
+	memPath := common.MemFilePathFromPid(uint(pid))
 	memFile, err := os.Open(memPath)
 	if err != nil {
 		harderror = fmt.Errorf("Permission denied to access memory of process %v", pid)

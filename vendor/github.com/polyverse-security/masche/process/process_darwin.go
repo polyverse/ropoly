@@ -27,7 +27,7 @@ func (p process) Name() (name string, harderror error, softerrors []error) {
 	return
 }
 
-func getAllPids() (pids []uint, harderror error, softerrors []error) {
+func getAllPids() (pids []int, harderror error, softerrors []error) {
 	var pid C.pid_t
 	pidSize := unsafe.Sizeof(pid)
 	cpidsSize := pidSize * 1024 * 2
@@ -40,7 +40,7 @@ func getAllPids() (pids []uint, harderror error, softerrors []error) {
 	}
 
 	numberOfPids := uintptr(bytesUsed) / pidSize
-	pids = make([]uint, 0, numberOfPids)
+	pids = make([]int, 0, numberOfPids)
 	cpidsSlice := *(*[]C.pid_t)(unsafe.Pointer(
 		&reflect.SliceHeader{
 			Data: uintptr(unsafe.Pointer(cpids)),
@@ -52,7 +52,7 @@ func getAllPids() (pids []uint, harderror error, softerrors []error) {
 			continue
 		}
 
-		pids = append(pids, uint(cpidsSlice[i]))
+		pids = append(pids, int(cpidsSlice[i]))
 	}
 
 	return pids, nil, nil

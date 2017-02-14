@@ -6,13 +6,14 @@ package process
 import (
 	"fmt"
 	"regexp"
+	"sort"
 )
 
 // Process type represents a running processes that can be used by other modules.
 // In order to get a Process on of the Open* functions must be called, and once it's not needed it must be closed.
 type Process interface {
 	// Pid returns the process' pid.
-	Pid() uint
+	Pid() int
 
 	// Name returns the process' binary full path.
 	Name() (name string, harderror error, softerrors []error)
@@ -27,15 +28,23 @@ type Process interface {
 }
 
 // OpenFromPid opens a process by its pid.
-func OpenFromPid(pid uint) (p Process, harderror error, softerrors []error) {
+func OpenFromPid(pid int) (p Process, harderror error, softerrors []error) {
 	// This function is implemented by the OS-specific openFromPid function.
 	return openFromPid(pid)
 }
 
 // GetAllPids returns a slice with al the running processes' pids.
-func GetAllPids() (pids []uint, harderror error, softerrors []error) {
+func GetAllPids() (pids []int, harderror error, softerrors []error) {
 	// This function is implemented by the OS-specific getAllPids function.
-	return getAllPids()
+	allPids, harderror, softerrors := getAllPids()
+	if harderror != nil {
+		return nil, harderror, softerrors
+	} // if
+
+	sort.Ints(allPids)
+
+	return allPids, harderror, softerrors
+
 }
 
 // OpenAll opens all the running processes returning a slice of Process.

@@ -1,10 +1,7 @@
-FROM busybox
+FROM scratch
 
-COPY ./polysploit /
-COPY ./wwwroot/ /wwwroot
+COPY ./ropoly /
 
-CMD mkdir /tmp
+EXPOSE 8008
 
-EXPOSE 8080
-
-ENTRYPOINT ["./polysploit"]
+ENTRYPOINT ["./ropoly"]

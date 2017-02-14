@@ -4,7 +4,7 @@
 #include <tchar.h>
 #include <string.h>
 
-response_t *open_process_handle(pid_tt pid, process_handle_t *handle) {
+response_t *open_process_handle(pid_t pid, process_handle_t *handle) {
     response_t *res = response_create();
 
     *handle = (uintptr_t) OpenProcess(PROCESS_QUERY_INFORMATION |

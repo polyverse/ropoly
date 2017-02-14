@@ -10,7 +10,7 @@ import (
 
 func nextMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, harderror error, softerrors []error) {
 
-	mapsFile, harderror := os.Open(common.MapsFilePathFromPid(p.Pid()))
+	mapsFile, harderror := os.Open(common.MapsFilePathFromPid(uint(p.Pid())))
 	if harderror != nil {
 		return
 	}
@@ -52,7 +52,7 @@ func nextMemoryRegion(p process.Process, address uintptr) (region MemoryRegion, 
 }
 
 func copyMemory(p process.Process, address uintptr, buffer []byte) (harderror error, softerrors []error) {
-	mem, harderror := os.Open(common.MemFilePathFromPid(p.Pid()))
+	mem, harderror := os.Open(common.MemFilePathFromPid(uint(p.Pid())))
 
 	if harderror != nil {
 		harderror := fmt.Errorf("Error while reading %d bytes starting at %x: %s", len(buffer), address, harderror)

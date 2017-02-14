@@ -12,11 +12,11 @@ import (
 
 type process struct {
 	hndl C.process_handle_t
-	pid  uint
+	pid  C.pid_t
 }
 
-func (p process) Pid() uint {
-	return p.pid
+func (p process) Pid() int {
+	return int(p.pid)
 }
 
 func (p process) Handle() uintptr {
@@ -29,15 +29,15 @@ func (p process) Close() (harderror error, softerrors []error) {
 	return cresponse.GetResponsesErrors(unsafe.Pointer(resp))
 }
 
-func openFromPid(pid uint) (p Process, harderror error, softerrors []error) {
+func openFromPid(pid int) (p Process, harderror error, softerrors []error) {
 	var result process
 
-	resp := C.open_process_handle(C.pid_tt(pid), &result.hndl)
+	resp := C.open_process_handle(C.pid_t(pid), &result.hndl)
 	harderror, softerrors = cresponse.GetResponsesErrors(unsafe.Pointer(resp))
 	C.response_free(resp)
 
 	if harderror == nil {
-		result.pid = pid
+		result.pid = C.pid_t(pid)
 	} else {
 		resp = C.close_process_handle(result.hndl)
 		C.response_free(resp)

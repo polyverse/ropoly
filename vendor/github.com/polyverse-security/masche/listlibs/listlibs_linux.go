@@ -10,7 +10,7 @@ import (
 
 func listLoadedLibraries(p process.Process) (libraries []string, harderror error, softerrors []error) {
 
-	mapsFile, harderror := os.Open(common.MapsFilePathFromPid(p.Pid()))
+	mapsFile, harderror := os.Open(common.MapsFilePathFromPid(uint(p.Pid())))
 	if harderror != nil {
 		return
 	}

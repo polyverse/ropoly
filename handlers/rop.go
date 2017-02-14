@@ -38,8 +38,8 @@ func ROPTestHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPTestHandler()
 
 type PIdsResult struct {
-	NumPIds int    `json:"numPIds"`
-	PIds    []uint `json:"pIds"`
+	NumPIds int   `json:"numPIds"`
+	PIds    []int `json:"pIds"`
 }
 
 func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +78,7 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
                 } // if
         } // if
 
-        process, harderror, softerrors := process.OpenFromPid(uint(pidN))
+        process, harderror, softerrors := process.OpenFromPid(int(pidN))
         logErrors(nil, softerrors)
         if harderror != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -154,7 +154,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
                 } // if
         } // if
 
-        process, harderror, softerrors := process.OpenFromPid(uint(pidN))
+        process, harderror, softerrors := process.OpenFromPid(int(pidN))
         logErrors(nil, softerrors)
         if harderror != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -263,7 +263,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
                 } // if
         } // if
 
-        process, harderror, softerrors := process.OpenFromPid(uint(pidN))
+        process, harderror, softerrors := process.OpenFromPid(int(pidN))
         logErrors(nil, softerrors)
         if harderror != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -432,7 +432,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
                 } // if
         } // if
 
-        process, harderror, softerrors := process.OpenFromPid(uint(pidN))
+        process, harderror, softerrors := process.OpenFromPid(int(pidN))
         logErrors(nil, softerrors)
         if harderror != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -560,7 +560,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
                 } // if
         } // if
 
-        process, harderror, softerrors := process.OpenFromPid(uint(pidN))
+        process, harderror, softerrors := process.OpenFromPid(int(pidN))
         logErrors(nil, softerrors)
         if harderror != nil {
                 http.Error(w, harderror.Error(), http.StatusBadRequest)

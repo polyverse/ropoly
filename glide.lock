@@ -1,57 +1,18 @@
 hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-13T16:04:47.509907689-08:00
+updated: 2017-02-14T09:57:03.615124533-08:00
 imports:
-- name: github.com/docker/distribution
-  version: b38e5838b7b2f2ad48e06ec4b500011976080621
-  subpackages:
-  - digestset
-  - reference
-- name: github.com/docker/docker
-  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
-  subpackages:
-  - api/types
-  - api/types/blkiodev
-  - api/types/container
-  - api/types/events
-  - api/types/filters
-  - api/types/mount
-  - api/types/network
-  - api/types/reference
-  - api/types/registry
-  - api/types/strslice
-  - api/types/swarm
-  - api/types/time
-  - api/types/versions
-  - api/types/volume
-  - client
-  - pkg/tlsconfig
-- name: github.com/docker/go-connections
-  version: 7da10c8c50cad14494ec818dcdfb6506265c0086
-  subpackages:
-  - nat
-  - sockets
-  - tlsconfig
-- name: github.com/docker/go-units
-  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
-- name: github.com/Microsoft/go-winio
-  version: fff283ad5116362ca252298cfc9b95828956d85d
-- name: github.com/opencontainers/go-digest
-  version: aa2ec055abd10d26d539eb630a92241b781ce4bc
-- name: github.com/pkg/errors
-  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/polyverse-security/disasm
   version: de9a9397262104d996e26b703cdaa4bdfaa9e2b7
 - name: github.com/polyverse-security/framework
   version: 6d3566a3ad3e7ac6f7199e9e8f6998a3d6da8d7f
   subpackages:
   - monitoring/polyverse-log-formatter
-  - strings
 - name: github.com/polyverse-security/masche
-  version: 60718a549b0c53d9414e235922ba62b4f49d8fde
+  version: c078bbe2a04aecf9fdb6356a4c50f1cd3d32d5d5
   subpackages:
   - common
   - cresponse
@@ -61,19 +22,10 @@ imports:
   - process
 - name: github.com/russross/blackfriday
   version: 0b647d0506a698cca42caca173e55559b12a69f2
-- name: github.com/shurcooL/sanitized_anchor_name
-  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/Sirupsen/logrus
   version: c078b1e43f58d563c74cebe63c85789e76ddb627
-- name: golang.org/x/net
-  version: 61557ac0112b576429a0df080e1c2cef5dfbb642
-  subpackages:
-  - context
-  - context/ctxhttp
-  - proxy
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
-  - windows
 testImports: []
