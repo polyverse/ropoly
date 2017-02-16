@@ -2,17 +2,14 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"log"
 	"github.com/gorilla/mux"
-	"github.com/polyverse-security/framework/monitoring/polyverse-log-formatter"
 	"net/http"
 
 	"github.com/polyverse-security/ropoly/handlers"
 )
 
 func main() {
-	log.SetFormatter(polyverse_log_formatter.NewFormatter())
-
 	router := mux.NewRouter().StrictSlash(true)
 
 	api := router.PathPrefix("/api/v0").Subrouter()

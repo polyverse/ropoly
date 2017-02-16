@@ -1,16 +1,12 @@
-hash: b8118d001bb881d85e55b09aba879d45cf87d5b7bac05d208762ea8f9096d715
-updated: 2017-02-14T09:57:03.615124533-08:00
+hash: 06d0f5b7167028f0d39067e9ae10f3c4768c2bec93a381ae0f8eb21f0b287a8b
+updated: 2017-02-16T13:30:01.484648911-08:00
 imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/polyverse-security/disasm
-  version: de9a9397262104d996e26b703cdaa4bdfaa9e2b7
-- name: github.com/polyverse-security/framework
-  version: 6d3566a3ad3e7ac6f7199e9e8f6998a3d6da8d7f
-  subpackages:
-  - monitoring/polyverse-log-formatter
+  version: f836f1a9d43477172bf4c2106fbfc7ae4709dd1e
 - name: github.com/polyverse-security/masche
   version: c078bbe2a04aecf9fdb6356a4c50f1cd3d32d5d5
   subpackages:
@@ -20,12 +16,4 @@ imports:
   - memaccess
   - memsearch
   - process
-- name: github.com/russross/blackfriday
-  version: 0b647d0506a698cca42caca173e55559b12a69f2
-- name: github.com/Sirupsen/logrus
-  version: c078b1e43f58d563c74cebe63c85789e76ddb627
-- name: golang.org/x/sys
-  version: e24f485414aeafb646f6fca458b0bf869c0880a1
-  subpackages:
-  - unix
 testImports: []

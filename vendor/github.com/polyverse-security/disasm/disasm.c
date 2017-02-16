@@ -23,11 +23,6 @@ static int DisAsmPrintf(void *b, const char *fmt, ...)
 	return result;
 }
 
-DisAsmPtr DisAsmSafeStartAddress(void)
-{
-	return DisAsmInfoInit;
-} // DisAsmSafeStartAddress()
-
 DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmPtr end)
 {
 	DisAsmInfoPtr disAsmInfoPtr = calloc(1, sizeof(*disAsmInfoPtr));
@@ -75,8 +70,3 @@ void DisAsmInfoFree(DisAsmInfoPtr disAsmInfoPtr)
 {
 	free(disAsmInfoPtr);
 } // DisAsmInfoFree()
-
-DisAsmPtr DisAsmSafeEndAddress(void)
-{
-	return DisAsmInfoFree;
-} // DisAsmSafeEndAddress()

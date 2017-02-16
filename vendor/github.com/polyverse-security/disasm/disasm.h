@@ -13,13 +13,9 @@ typedef struct DisAsmPrintBuffer {
 typedef struct DisAsmInfo {
 	disassemble_info info;
 	DisAsmPrintBufferType disAsmPrintBuffer;
-	//DisAsmPtr start;
-	//DisAsmPtr end;
 } DisAsmInfoType, *DisAsmInfoPtr;
 
-extern DisAsmPtr DisAsmSafeStartAddress(void);
 extern DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmPtr end);
 extern unsigned char DisAsmAccessByte(DisAsmInfoPtr disAsmInfoPtr, DisAsmPtr pc);
 extern DisAsmLen DisAsmDecodeInstruction(DisAsmInfoPtr disAsmInfoPtr, DisAsmPtr pc);
 extern void DisAsmInfoFree(DisAsmInfoPtr disAsmInfoPtr);
-extern DisAsmPtr DisAsmSafeEndAddress(void);

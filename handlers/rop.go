@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -10,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"unsafe"
-
-	log "github.com/Sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 
@@ -107,6 +106,8 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("ROPMemoryHandler")
 } // ROPMemoryHandler()
 
+const safeStartAddress disasm.Ptr = 0
+const safeEndAddress disasm.Ptr = 0x7FFFFFFFFFFF
 type SafeResult struct {
 	StartAddress disasm.Ptr `json:"startAddress"`
 	EndAddress   disasm.Ptr `json:"endAddress"`
@@ -126,7 +127,7 @@ func (sr *SafeResult) MarshalJSON() ([]byte, error) {
 }
 
 func ROPMemorySafeHandler(w http.ResponseWriter, r *http.Request) {
-	safeResult := SafeResult{StartAddress: disasm.SafeStartAddress(), EndAddress: disasm.SafeEndAddress()}
+	safeResult := SafeResult{StartAddress: safeStartAddress, EndAddress: safeEndAddress}
 
 	b, err := json.MarshalIndent(&safeResult, "", "    ")
 	if err != nil {
@@ -165,7 +166,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	var startN uint64 = 0
 	start := r.FormValue("start")
 	if start == "start" {
-		startN = uint64(disasm.SafeStartAddress())
+		startN = 0
 	} else if start != "" {
 		startN, err = strconv.ParseUint(start, 0, 64)
 		if err != nil {
@@ -177,7 +178,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	var endN uint64 = math.MaxUint64
 	end := r.FormValue("end")
 	if end == "end" {
-		endN = uint64(disasm.SafeEndAddress())
+		endN = uint64(safeEndAddress)
 	} else if end != "" {
 		endN, err = strconv.ParseUint(end, 0, 64)
 		if err != nil {
@@ -274,7 +275,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	var startN uint64 = 0
 	start := r.FormValue("start")
 	if start == "start" {
-		startN = uint64(disasm.SafeStartAddress())
+		startN = 0
 	} else if start != "" {
 		startN, err = strconv.ParseUint(start, 0, 64)
 		if err != nil {
@@ -286,7 +287,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	var endN uint64 = math.MaxUint64
 	end := r.FormValue("end")
 	if end == "end" {
-		endN = uint64(disasm.SafeEndAddress())
+		endN = uint64(safeEndAddress)
 	} else if end != "" {
 		endN, err = strconv.ParseUint(end, 0, 64)
 		if err != nil {
@@ -571,7 +572,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 	var startN uint64 = 0
 	start := r.FormValue("start")
 	if start == "start" {
-		startN = uint64(disasm.SafeStartAddress())
+		startN = 0
 	} else if start != "" {
 		startN, err = strconv.ParseUint(start, 0, 64)
 		if err != nil {
@@ -583,7 +584,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 	var endN uint64 = math.MaxUint64
 	end := r.FormValue("end")
 	if end == "end" {
-		endN = uint64(disasm.SafeEndAddress())
+		endN = uint64(safeEndAddress)
 	} else if end != "" {
 		endN, err = strconv.ParseUint(end, 0, 64)
 		if err != nil {

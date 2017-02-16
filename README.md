@@ -9,7 +9,7 @@ Return list of all visible process ids.
 Return list of loaded libraries for the given _pid_. If_pid_ is 0, _pid_ refers to the introspcetion server process.
 
 ### /api/v0/pid/\<_pid_\>memory/safe
-Return safe start and end addresses of real code of the given _pid_. Useful to get started with the rest of the API.
+Return safe start and end addresses of real code of the given _pid_. Basically just returns 0 and maximum address.
 
 ### /api/v0/pid/\<_pid_\>memory/regions[?access=\<[_R_][_W_][_X_]|_None_\>]
 Return list of memory regions of the given _pid_ subject to at least access permissions (default _R_). Any combination of _R_, _W_ and _X_ is permitted as well as the token _None_ which will return all regions. (Case is not significant.)

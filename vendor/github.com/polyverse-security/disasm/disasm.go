@@ -106,10 +106,6 @@ func (g *Gadget) String() string {
 	return "0x" + strings.Repeat("0", 12-len(sAdr)) + sAdr + strings.Repeat("0", 4-len(sSig)) + sSig
 }
 
-func SafeStartAddress() Ptr {
-	return Ptr(C.DisAsmSafeStartAddress())
-} // SafeStartAddress()
-
 func InfoInit(s Ptr, e Ptr) Info {
 	l := Len(e - s + 1)
 
@@ -177,8 +173,3 @@ func InfoFree(i *iInfo) {
 	C.DisAsmInfoFree(i.info)
 	i.info = nil
 } // InfoFree()
-
-func SafeEndAddress() Ptr {
-	return Ptr(C.DisAsmSafeEndAddress())
-} // SafeEndAddress()
-
