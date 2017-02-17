@@ -20,13 +20,11 @@ func main() {
 	pid.HandleFunc("/libraries", handlers.ROPLibrariesHandler)
 
 	mem := pid.PathPrefix("/memory").Subrouter()
-	mem.HandleFunc("/safe", handlers.ROPMemorySafeHandler)
 	mem.HandleFunc("/regions", handlers.ROPMemoryRegionsHandler)
 	mem.HandleFunc("/search", handlers.ROPMemorySearchHandler)
 	mem.HandleFunc("/disasm", handlers.ROPMemoryDisAsmHandler)
 	mem.HandleFunc("/gadget", handlers.ROPMemoryGadgetHandler)
 	mem.HandleFunc("/fingerprint", handlers.ROPMemoryFingerprintHandler)
-	mem.HandleFunc("/overflow", handlers.ROPMemoryOverflowHandler)
 
 	// Dump the actual routes that the router knows about
 	router.Walk(

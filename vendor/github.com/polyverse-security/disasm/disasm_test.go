@@ -30,7 +30,8 @@ func TestDisAsm(t *testing.T) {
 	length := len(bytes)
 	end := Ptr(unsafe.Pointer(&bytes[length-1]))
 
-	info := InfoInit(start, end)
+	//info := InfoInit(start, end)
+	info := InfoInitBytes(start, end, bytes[:])
 
 	var instructions []Instruction
 

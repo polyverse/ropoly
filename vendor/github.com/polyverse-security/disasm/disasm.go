@@ -30,9 +30,10 @@ type Info struct {
 }
 
 type Instruction struct {
-	Address   Ptr    `json:"address,string"`
-	NumOctets int    `json:"numOctets"`
-	DisAsm    string `json:"disasm"`
+	Address   Ptr     `json:"address,string"`
+	NumOctets int     `json:"numOctets"`
+	Bytes     *[]byte `json:"bytes"`
+	DisAsm    string  `json:"disasm"`
 }
 
 type Gadget struct {
@@ -54,6 +55,7 @@ func (s Sig) String() string {
 }
 
 func (i *Instruction) String() string {
+/*
 	b := C.GoBytes(unsafe.Pointer(i.Address), C.int(i.NumOctets))
 	s := i.Address.String() + " "
 
@@ -69,6 +71,8 @@ func (i *Instruction) String() string {
 	} // for
 
         return s + " " + i.DisAsm
+*/
+	return i.DisAsm
 }
 
 /*
@@ -117,6 +121,20 @@ func InfoInit(s Ptr, e Ptr) Info {
 	return info
 } // InfoInit()
 
+func InfoInitBytes(s Ptr, e Ptr, b []byte) Info {
+	l := Len(e - s + 1)
+	if l != Len(len(b)) {
+		panic("Disallowed assertion")
+	}
+
+	cinfo := C.DisAsmInfoInitBytes(s, e, unsafe.Pointer(&b[0]))
+	iinfo := &iInfo{cinfo}
+	runtime.SetFinalizer(iinfo, InfoFree)
+	info := Info{info: iinfo, start: s, end: e, length: l, memory: b}
+
+	return info
+} // InfoInitBytes()
+
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
 
@@ -125,7 +143,7 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
 		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
 		s = strings.TrimRight(s, " ")
 
-       		return &Instruction{pc, numOctets, s}, nil
+       		return &Instruction{Address: pc, NumOctets: numOctets, Bytes: nil, DisAsm: s}, nil
 	} // if
 
 	return nil, errors.New("Error with disassembly")
@@ -158,7 +176,7 @@ func DecodeGadget(info Info, pc Ptr, instructions int, numOctets int) (gadget *G
                 pc0 = Ptr(uintptr(pc0) + uintptr(instruction.NumOctets))
 
                 if good {
-			signature := crc32.ChecksumIEEE(C.GoBytes(unsafe.Pointer(g.Address), C.int(g.NumOctets)))
+			signature := crc32.ChecksumIEEE(info.memory[pc-info.start:pc+Ptr(g.NumOctets)-info.start])
 			g.Signature = Sig((signature / math.MaxUint16) ^ (signature % math.MaxUint16))
                         return &g, nil
                 } else if bad {

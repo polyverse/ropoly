@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/gorilla/mux"
 
@@ -21,6 +20,9 @@ import (
 
 	"github.com/polyverse-security/disasm"
 )
+
+const safeStartAddress uint64 = 0
+const safeEndAddress uint64 = 0x7fffffffffff
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -65,7 +67,7 @@ type LibrariesResult struct {
 }
 
 func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
-        var err error
+	var err error
 
         var pidN uint64 = uint64(os.Getpid())
         pid := mux.Vars(r)["pid"]
@@ -106,46 +108,16 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("ROPMemoryHandler")
 } // ROPMemoryHandler()
 
-const safeStartAddress disasm.Ptr = 0
-const safeEndAddress disasm.Ptr = 0x7FFFFFFFFFFF
-type SafeResult struct {
-	StartAddress disasm.Ptr `json:"startAddress"`
-	EndAddress   disasm.Ptr `json:"endAddress"`
-}
-
-func (sr *SafeResult) MarshalJSON() ([]byte, error) {
-	type Alias SafeResult
-	return json.Marshal(&struct {
-		StartAddress string `json:"startAddress"`
-		EndAddress   string `json:"endAddress"`
-		*Alias
-	}{
-		StartAddress: "0x" + strconv.FormatUint(uint64(sr.StartAddress), 16),
-		EndAddress:   "0x" + strconv.FormatUint(uint64(sr.EndAddress), 16),
-		Alias:        (*Alias)(sr),
-	})
-}
-
-func ROPMemorySafeHandler(w http.ResponseWriter, r *http.Request) {
-	safeResult := SafeResult{StartAddress: safeStartAddress, EndAddress: safeEndAddress}
-
-	b, err := json.MarshalIndent(&safeResult, "", "    ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPMemorySafeHandler()
-
 type DisAsmResult struct {
 	NumInstructions disasm.Len           `json:"numInstructions"`
 	Instructions    []disasm.Instruction `json:"instructions"`
 }
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
+	var pidSelf = uint64(os.Getpid())
 	var err error
 
-        var pidN uint64 = uint64(os.Getpid())
+        pidN := pidSelf
         pid := mux.Vars(r)["pid"]
         if (pid != "") && (pid != "0") {
                 pidN, err = strconv.ParseUint(pid, 0, 64)
@@ -217,7 +189,16 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		} // if
 
-		info := disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
+		var info disasm.Info
+		var bytes []byte // Scope is important here. Unsafe pointers are taken in disasm.InfoInitBytes(). Store must survive next block.
+
+		if pid != "0" {
+			bytes = make([]byte, region.Size, region.Size)
+			memaccess.CopyMemory(process, region.Address, bytes)
+			info = disasm.InfoInitBytes(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1), bytes)
+		} else {
+			info = disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
+		} // else
 
 		for (pc <= endN) && pc < uint64((region.Address+uintptr(region.Size))) && (len(instructions) < int(limitN)) {
 			instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
@@ -252,9 +233,10 @@ type FingerprintResult struct {
 }
 
 func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool) {
+        var pidSelf = uint64(os.Getpid())
         var err error
 
-        var pidN uint64 = uint64(os.Getpid())
+        pidN := pidSelf
         pid := mux.Vars(r)["pid"]
         if (pid != "") && (pid != "0") {
                 pidN, err = strconv.ParseUint(pid, 0, 64)
@@ -352,7 +334,16 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 			break
 		} // if
 
-		info := disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
+		var info disasm.Info
+		var bytes []byte // Scope is important here. Unsafe pointers are taken in disasm.InfoInitBytes(). Store must survive next block.
+
+		if pid != "0" {
+			bytes = make([]byte, region.Size, region.Size)
+			memaccess.CopyMemory(process, region.Address, bytes)
+			info = disasm.InfoInitBytes(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1), bytes)
+		} else {
+			info = disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
+		} // else
 
 		fmt.Printf("Searching region: %v\n", region)
 
@@ -421,9 +412,10 @@ func (rr *RegionsResult) MarshalJSON() ([]byte, error) {
 }
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
+        var pidSelf = uint64(os.Getpid())
         var err error
 
-        var pidN uint64 = uint64(os.Getpid())
+        pidN := pidSelf
         pid := mux.Vars(r)["pid"]
         if (pid != "") && (pid != "0") {
                 pidN, err = strconv.ParseUint(pid, 0, 64)
@@ -549,9 +541,10 @@ type SearchResult struct {
 }
 
 func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
+        var pidSelf = uint64(os.Getpid())
         var err error
 
-        var pidN uint64 = uint64(os.Getpid())
+        pidN := pidSelf
         pid := mux.Vars(r)["pid"]
         if (pid != "") && (pid != "0") {
                 pidN, err = strconv.ParseUint(pid, 0, 64)
@@ -625,16 +618,3 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 	} // if
 	w.Write(b)
 } // ROPMemorySearchHandler()
-
-func ROPMemoryOverflowHandler(w http.ResponseWriter, r *http.Request) {
-	chain := r.FormValue("chain")
-
-	var u uint64 = 255
-	bytes := (*[100]byte)(unsafe.Pointer(&u))
-
-	fmt.Printf("before: %v\n", bytes)
-	for j, v := range chain {
-		bytes[j] = byte(v)
-	} // for
-	fmt.Printf("after: %v\n", bytes)
-} // ROPMemoryOverflowHandler()

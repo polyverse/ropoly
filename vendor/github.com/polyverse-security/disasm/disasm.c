@@ -47,10 +47,29 @@ DisAsmInfoPtr DisAsmInfoInit(DisAsmPtr start, DisAsmPtr end)
 	return disAsmInfoPtr;
 } // DisAsmInfoInit()
 
-unsigned char DisAsmAccessByte(DisAsmInfoType *disAsmInfoPtr, DisAsmPtr pc)
+DisAsmInfoPtr DisAsmInfoInitBytes(DisAsmPtr start, DisAsmPtr end, void *b)
 {
-	return *((unsigned char *) pc);
-} // DisAsmAccessByte()
+	DisAsmInfoPtr disAsmInfoPtr = calloc(1, sizeof(*disAsmInfoPtr));
+
+        disAsmInfoPtr->info.flavour                   = bfd_target_unknown_flavour;
+        disAsmInfoPtr->info.arch                      = bfd_arch_i386;
+        disAsmInfoPtr->info.mach                      = bfd_mach_x86_64_intel_syntax;
+        disAsmInfoPtr->info.endian                    = BFD_ENDIAN_LITTLE;
+        disAsmInfoPtr->info.octets_per_byte           = 1;
+        disAsmInfoPtr->info.fprintf_func              = DisAsmPrintf;
+        disAsmInfoPtr->info.stream                    = &disAsmInfoPtr->disAsmPrintBuffer;
+        disAsmInfoPtr->info.read_memory_func          = buffer_read_memory;
+        disAsmInfoPtr->info.memory_error_func         = perror_memory;
+        disAsmInfoPtr->info.print_address_func        = DisAsmPrintAddress;
+        disAsmInfoPtr->info.symbol_at_address_func    = generic_symbol_at_address;
+        disAsmInfoPtr->info.symbol_is_valid           = generic_symbol_is_valid;
+        disAsmInfoPtr->info.display_endian            = BFD_ENDIAN_LITTLE;
+        disAsmInfoPtr->info.buffer_vma                = (unsigned long) start;
+        disAsmInfoPtr->info.buffer_length             = end - start + 1;
+        disAsmInfoPtr->info.buffer                    = b;
+	
+	return disAsmInfoPtr;
+} // DisAsmInfoInitBytes()
 
 DisAsmLen DisAsmDecodeInstruction(DisAsmInfoType *disAsmInfoPtr, DisAsmPtr pc)
 {
