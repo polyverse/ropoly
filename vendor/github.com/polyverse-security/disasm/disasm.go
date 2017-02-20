@@ -32,7 +32,7 @@ type Info struct {
 type Instruction struct {
 	Address   Ptr     `json:"address,string"`
 	NumOctets int     `json:"numOctets"`
-	Bytes     *[]byte `json:"bytes"`
+	Octets    []byte  `json:"octets"`
 	DisAsm    string  `json:"disasm"`
 }
 
@@ -55,8 +55,8 @@ func (s Sig) String() string {
 }
 
 func (i *Instruction) String() string {
-/*
-	b := C.GoBytes(unsafe.Pointer(i.Address), C.int(i.NumOctets))
+
+	b := i.Octets
 	s := i.Address.String() + " "
 
 	for o := 0; o < 8; o++ {
@@ -71,7 +71,7 @@ func (i *Instruction) String() string {
 	} // for
 
         return s + " " + i.DisAsm
-*/
+
 	return i.DisAsm
 }
 
@@ -143,7 +143,8 @@ func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) 
 		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
 		s = strings.TrimRight(s, " ")
 
-       		return &Instruction{Address: pc, NumOctets: numOctets, Bytes: nil, DisAsm: s}, nil
+		octets := info.memory[pc-info.start:pc+Ptr(numOctets)-info.start]
+       		return &Instruction{Address: pc, NumOctets: numOctets, Octets: octets, DisAsm: s}, nil
 	} // if
 
 	return nil, errors.New("Error with disassembly")
