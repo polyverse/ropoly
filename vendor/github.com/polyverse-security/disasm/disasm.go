@@ -113,7 +113,7 @@ func (g *Gadget) String() string {
 func InfoInit(s Ptr, e Ptr) Info {
 	l := Len(e - s + 1)
 
-	cinfo := C.DisAsmInfoInit(s, e)
+	cinfo := C.DisAsmInfoInit(C.DisAsmPtr(s), C.DisAsmPtr(e))
 	iinfo := &iInfo{cinfo}
 	runtime.SetFinalizer(iinfo, InfoFree)
 	info := Info{info: iinfo, start: s, end: e, length: l, memory: C.GoBytes(unsafe.Pointer(s), C.int(l))}
@@ -127,7 +127,7 @@ func InfoInitBytes(s Ptr, e Ptr, b []byte) Info {
 		panic("Disallowed assertion")
 	}
 
-	cinfo := C.DisAsmInfoInitBytes(s, e, unsafe.Pointer(&b[0]))
+	cinfo := C.DisAsmInfoInitBytes(C.DisAsmPtr(s), C.DisAsmPtr(e), unsafe.Pointer(&b[0]))
 	iinfo := &iInfo{cinfo}
 	runtime.SetFinalizer(iinfo, InfoFree)
 	info := Info{info: iinfo, start: s, end: e, length: l, memory: b}
@@ -138,7 +138,7 @@ func InfoInitBytes(s Ptr, e Ptr, b []byte) Info {
 func DecodeInstruction(info Info, pc Ptr) (instruction *Instruction, err error) {
         disAsmInfoPtr := info.info.info
 
-        numOctets := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, pc))
+        numOctets := int(C.DisAsmDecodeInstruction(disAsmInfoPtr, C.DisAsmPtr(pc)))
 	if numOctets > 0 {
 		s := C.GoStringN(&disAsmInfoPtr.disAsmPrintBuffer.data[0], disAsmInfoPtr.disAsmPrintBuffer.index)
 		s = strings.TrimRight(s, " ")
