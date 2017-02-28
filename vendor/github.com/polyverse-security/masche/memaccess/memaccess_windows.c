@@ -63,17 +63,17 @@ response_t *get_next_memory_region(process_handle_t handle, memory_address_t add
             break;
         }
 
-/*
         if (info.State == MEM_FREE) {
             address = (memory_address_t) info.BaseAddress + info.RegionSize;
             continue;
         }
-*/
 
         memory_region->start_address = (memory_address_t) info.BaseAddress;
         memory_region->length = info.RegionSize;
         memory_region->access = access(info);
         memory_region->kind = 0;
+        *region_available = true;
+        break;
     }
 
     return response;
