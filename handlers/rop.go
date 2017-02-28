@@ -453,6 +453,10 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 			access |= memaccess.Executable
 			accessS = strings.Replace(accessS, "X", "", 1)
 		} // if
+		if i := strings.Index(accessS, "F"); i != -1 {
+			access |= memaccess.Free
+			accessS = strings.Replace(accessS, "F", "", 1)
+		} // if
 		if accessS != "" {
 			http.Error(w, "Improper Access specification.", http.StatusBadRequest)
 			return
