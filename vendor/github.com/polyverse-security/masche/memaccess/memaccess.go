@@ -15,6 +15,7 @@ const (
 	Readable = 1 
 	Writable = 2
 	Executable = 4
+	Free = 128
 )
 
 func (a Access) String() string {
@@ -32,6 +33,11 @@ func (a Access) String() string {
 	} // else
 	if (a & Executable) == Executable {
 		s += "X"
+	} else {
+		s += "_"
+	} // else
+	if (a & Free) == Free {
+		s += "F"
 	} else {
 		s += "_"
 	} // else

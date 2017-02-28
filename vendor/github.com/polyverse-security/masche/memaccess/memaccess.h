@@ -24,7 +24,7 @@ typedef uintptr_t memory_address_t;
  *
  * Note that this region is not necessary equivalent to the OS's region, if any.
  **/
-typedef enum {a_none, a_readable=1, a_writable=2, a_executable=4} access_t;
+typedef enum {a_none, a_readable=1, a_writable=2, a_executable=4, a_free = 128} access_t;
 typedef struct {
     memory_address_t start_address;
     size_t length;

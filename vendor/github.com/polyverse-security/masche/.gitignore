@@ -29,3 +29,6 @@ _testmain.go
 #vagrant
 Vagrantfile
 .vagrant
+
+#Spotlight indices
+.DS_Store

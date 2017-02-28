@@ -3,6 +3,82 @@
 
 #include "memaccess.h"
 
+inline static access_t access(MEMORY_BASIC_INFORMATION info)
+{
+    access_t a = a_none;
+
+    if (info.State == MEM_FREE)
+        a = a_free;
+
+    switch (info.Protect) {
+	case 0:
+        case PAGE_NOACCESS:
+            return a + a_none;
+
+        case PAGE_READONLY:
+            return a + a_readable;
+
+        case PAGE_READWRITE:
+            return a + a_readable + a_writable;
+
+        case PAGE_WRITECOPY:
+            return a + a_readable + a_writable;
+
+	case PAGE_EXECUTE:
+            return a + a_executable;
+
+        case PAGE_EXECUTE_READ:
+            return a + a_readable + a_executable;
+
+        case PAGE_EXECUTE_READWRITE:
+            return a + a_readable + a_writable + a_executable;
+
+        case PAGE_EXECUTE_WRITECOPY:
+            return a + a_readable + a_writable + a_executable;
+
+        default:
+            return a_readable + a_writable + a_executable + a_free;
+    }
+}
+
+response_t *get_next_memory_region(process_handle_t handle, memory_address_t address, bool *region_available, memory_region_t *memory_region) {
+    response_t *response = response_create();
+
+    memory_region->start_address = 0x0;
+    memory_region->length = 0;
+    *region_available = false;
+
+    // Get all the contiguous readable memory regions starting from address.
+    MEMORY_BASIC_INFORMATION info;
+
+    while (TRUE) {
+        SIZE_T r = VirtualQueryEx((HANDLE) handle, (void *) address, &info, sizeof(info));
+        if (r == 0) {
+            DWORD err = GetLastError();
+            if (err == ERROR_INVALID_PARAMETER) {
+                // This means that the address we are using is invalid, i.e: no more addresses left!
+                break;
+            }
+            response->fatal_error = error_create(err);
+            break;
+        }
+
+/*
+        if (info.State == MEM_FREE) {
+            address = (memory_address_t) info.BaseAddress + info.RegionSize;
+            continue;
+        }
+*/
+
+        memory_region->start_address = (memory_address_t) info.BaseAddress;
+        memory_region->length = info.RegionSize;
+        memory_region->access = access(info);
+        memory_region->kind = 0;
+    }
+
+    return response;
+}
+
 inline static BOOL is_readable(MEMORY_BASIC_INFORMATION info);
 
 response_t *get_next_readable_memory_region(process_handle_t handle,
