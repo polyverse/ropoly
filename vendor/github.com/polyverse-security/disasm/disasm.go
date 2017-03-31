@@ -155,8 +155,8 @@ func DecodeGadget(info Info, pc Ptr, instructions int, numOctets int) (gadget *G
 
         for pc0 := pc; pc0 <= info.end; {
 		var b = info.memory[pc0-info.start]
-                var good bool = ((b == 0xC2) || (b == 0xC3) || (b == 0xCA) || (b == 0xCB) || (b == 0xEA))
-                var bad bool = ((b == 0xE8) || (b == 0xE9) || (b == 0xEA) || (b == 0xFF)) // CALL, JMP, JMP, 0xFF
+                var good bool = ((b == 0xC2) || (b == 0xC3) || (b == 0xCA) || (b == 0xCB))
+                var bad bool = ((b == 0xE9) || (b == 0xEA) || (b == 0xEB) || (b == 0xFF)) // JMP, JMP, JMP, 0xFF
 
                 instruction, err := DecodeInstruction(info, pc0)
 		if err != nil {
