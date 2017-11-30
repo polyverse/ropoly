@@ -72,7 +72,7 @@ func (i *Instruction) String() string {
 
         return s + " " + i.DisAsm
 
-	return i.DisAsm
+	//return i.DisAsm
 }
 
 /*
@@ -112,11 +112,12 @@ func (g *Gadget) String() string {
 
 func InfoInit(s Ptr, e Ptr) Info {
 	l := Len(e - s + 1)
+	b := (*[1 << 46]byte)(unsafe.Pointer(&s))[:8:8]
 
 	cinfo := C.DisAsmInfoInit(C.DisAsmPtr(s), C.DisAsmPtr(e))
 	iinfo := &iInfo{cinfo}
 	runtime.SetFinalizer(iinfo, InfoFree)
-	info := Info{info: iinfo, start: s, end: e, length: l, memory: C.GoBytes(unsafe.Pointer(s), C.int(l))}
+	info := Info{info: iinfo, start: s, end: e, length: l, memory: b}
 
 	return info
 } // InfoInit()

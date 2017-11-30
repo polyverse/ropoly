@@ -34,3 +34,5 @@ disasm
 # Debug files
 *.dSYM/
 *.su
+
+.DS_Store
