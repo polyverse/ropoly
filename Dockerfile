@@ -1,7 +1,9 @@
 FROM busybox
 
+WORKDIR /
+
 COPY ./ropoly /
 
 EXPOSE 8008
 
-ENTRYPOINT ["./ropoly"]
+ENTRYPOINT ["/ropoly"]

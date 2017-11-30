@@ -6,5 +6,5 @@
 # This is the build for a dynamic binary on linux
 # CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo .
 
-# ... which is approximately equivalent to this on a linux box
-ENABLE_CGO=1 GOOS=linux go build .
+# Use pv to build
+pv run maketool .
