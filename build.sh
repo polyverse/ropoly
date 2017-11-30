@@ -7,5 +7,4 @@
 # CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo .
 
 # ... which is approximately equivalent to this on a linux box
-CGO_ENABLED=1 GOOS=linux go build .
-
+ENABLE_CGO=1 GOOS=linux go build .
