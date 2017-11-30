@@ -58,7 +58,7 @@ type MemoryRegion struct {
 }
 
 func (m MemoryRegion) String() string {
-	return fmt.Sprintf("MemoryRegion[%x-%x %v %v)", m.Address, m.Address+uintptr(m.Size), m.Access, m.Kind)
+	return fmt.Sprintf("MemoryRegion[%x-%x %v %v]", m.Address, m.Address+uintptr(m.Size), m.Access, m.Kind)
 }
 
 func (mr *MemoryRegion) MarshalJSON() ([]byte, error) {
