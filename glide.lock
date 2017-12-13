@@ -1,12 +1,12 @@
 hash: 06d0f5b7167028f0d39067e9ae10f3c4768c2bec93a381ae0f8eb21f0b287a8b
-updated: 2017-11-30T14:30:38.487923-08:00
+updated: 2017-12-13T13:23:35.246991-08:00
 imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 65ec7248c53f499f6b480655e019e0b9d7a6ce11
+  version: 5ab525f4fb1678e197ae59401e9050fa0b6cb5fd
 - name: github.com/polyverse-security/disasm
-  version: 60a2960001851dc29554f533fb991183d22577a2
+  version: c648b01a66bdc8e5c45dd2793ea4f2bae2d222a7
 - name: github.com/polyverse-security/masche
   version: 787a6f6b37b860e8764e29ab605d3d203ea6b7af
   subpackages:
