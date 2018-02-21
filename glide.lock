@@ -1,14 +1,14 @@
-hash: 06d0f5b7167028f0d39067e9ae10f3c4768c2bec93a381ae0f8eb21f0b287a8b
-updated: 2017-12-13T13:23:35.246991-08:00
+hash: dad966529e696e8ceca12505b01e6320c7234b0d8049a269929ac76a60064842
+updated: 2018-02-21T09:09:57.752339-08:00
 imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 5ab525f4fb1678e197ae59401e9050fa0b6cb5fd
-- name: github.com/polyverse-security/disasm
-  version: c648b01a66bdc8e5c45dd2793ea4f2bae2d222a7
-- name: github.com/polyverse-security/masche
-  version: 787a6f6b37b860e8764e29ab605d3d203ea6b7af
+  version: c0091a029979286890368b4c7b301261e448e242
+- name: github.com/polyverse/disasm
+  version: 4943d5df63ce355b76cf720ae3eb3493cfdd8c1b
+- name: github.com/polyverse/masche
+  version: 422c17ba3f7fc0f835bba8d144a96b8cff90ef64
   subpackages:
   - common
   - cresponse

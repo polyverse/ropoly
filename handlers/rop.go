@@ -13,12 +13,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/polyverse-security/masche/listlibs"
-	"github.com/polyverse-security/masche/memaccess"
-	"github.com/polyverse-security/masche/memsearch"
-	"github.com/polyverse-security/masche/process"
+	"github.com/polyverse/masche/listlibs"
+	"github.com/polyverse/masche/memaccess"
+	"github.com/polyverse/masche/memsearch"
+	"github.com/polyverse/masche/process"
 
-	"github.com/polyverse-security/disasm"
+	"github.com/polyverse/disasm"
 )
 
 const safeStartAddress uint64 = 0

@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 
-	"github.com/polyverse-security/ropoly/handlers"
+	"github.com/polyverse/ropoly/handlers"
 )
 
 func main() {
