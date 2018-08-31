@@ -10,7 +10,7 @@ import (
 func ServeOverHttp(address string) error {
 	router := mux.NewRouter().StrictSlash(true)
 
-	api := router.PathPrefix("/api/v0").Subrouter()
+	api := router.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/test", handlers.ROPTestHandler)
 	api.HandleFunc("/pids", handlers.ROPPIdsHandler)
 
