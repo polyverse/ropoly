@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 
 	"github.com/polyverse/ropoly/handlers"
