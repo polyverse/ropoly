@@ -6,8 +6,8 @@ import (
 	"github.com/polyverse/ropoly/handlers"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 	"sort"
+	"strings"
 )
 
 func ServeOverHttp(address string) error {
@@ -17,18 +17,18 @@ func ServeOverHttp(address string) error {
 	api := subLister(root, "/api")
 	v1 := subLister(api, "/v1")
 
-	addHandleFunc(v1,"/health", handlers.ROPHealthHandler)
+	addHandleFunc(v1, "/health", handlers.ROPHealthHandler)
 	addHandleFunc(v1, "/pids", handlers.ROPPIdsHandler)
 
 	pid := subLister(v1, "/pids/{pid}")
 	addHandleFunc(pid, "/libraries", handlers.ROPLibrariesHandler)
 
 	mem := subLister(pid, "/memory")
-	addHandleFunc(mem,"/regions", handlers.ROPMemoryRegionsHandler)
-	addHandleFunc(mem,"/search", handlers.ROPMemorySearchHandler)
-	addHandleFunc(mem,"/disasm", handlers.ROPMemoryDisAsmHandler)
-	addHandleFunc(mem,"/gadget", handlers.ROPMemoryGadgetHandler)
-	addHandleFunc(mem,"/fingerprint", handlers.ROPMemoryFingerprintHandler)
+	addHandleFunc(mem, "/regions", handlers.ROPMemoryRegionsHandler)
+	addHandleFunc(mem, "/search", handlers.ROPMemorySearchHandler)
+	addHandleFunc(mem, "/disasm", handlers.ROPMemoryDisAsmHandler)
+	addHandleFunc(mem, "/gadget", handlers.ROPMemoryGadgetHandler)
+	addHandleFunc(mem, "/fingerprint", handlers.ROPMemoryFingerprintHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
@@ -61,7 +61,7 @@ func subLister(router *mux.Router, path string) *mux.Router {
 func addHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
 	path = strings.TrimSuffix(path, "/")
 	router.HandleFunc(path, handlerFunc)
-	router.HandleFunc(path + "/", handlerFunc)
+	router.HandleFunc(path+"/", handlerFunc)
 }
 
 func subHandler(router *mux.Router) http.HandlerFunc {
