@@ -1,3 +1,0 @@
-package: github.com/polyverse/ropoly
-import:
-- package: github.com/gorilla/mux
