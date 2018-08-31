@@ -1,3 +1,7 @@
+# Current Status
+
+[![CircleCI](https://circleci.com/gh/polyverse/ropoly.svg?style=svg)](https://circleci.com/gh/polyverse/ropoly)
+
 # polyverse/ropoly
 
 ## ROPoly API Endpoints
