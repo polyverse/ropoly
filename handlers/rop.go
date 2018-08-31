@@ -30,8 +30,8 @@ func logErrors(hardError error, softErrors []error) {
 	}
 } // logErrors
 
-func ROPTestHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Test")
+func ROPHealthHandler(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode("Ropoly API Healthy")
 } // ROPTestHandler()
 
 func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {

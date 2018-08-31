@@ -1,28 +1,34 @@
 package server
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/polyverse/ropoly/handlers"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
+	"sort"
 )
 
 func ServeOverHttp(address string) error {
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter()
+	root := subLister(router, "")
 
-	api := router.PathPrefix("/api/v1").Subrouter()
-	api.HandleFunc("/test", handlers.ROPTestHandler)
-	api.HandleFunc("/pids", handlers.ROPPIdsHandler)
+	api := subLister(root, "/api")
+	v1 := subLister(api, "/v1")
 
-	pid := api.PathPrefix("/pid/{pid}").Subrouter()
-	pid.HandleFunc("/libraries", handlers.ROPLibrariesHandler)
+	addHandleFunc(v1,"/health", handlers.ROPHealthHandler)
+	addHandleFunc(v1, "/pids", handlers.ROPPIdsHandler)
 
-	mem := pid.PathPrefix("/memory").Subrouter()
-	mem.HandleFunc("/regions", handlers.ROPMemoryRegionsHandler)
-	mem.HandleFunc("/search", handlers.ROPMemorySearchHandler)
-	mem.HandleFunc("/disasm", handlers.ROPMemoryDisAsmHandler)
-	mem.HandleFunc("/gadget", handlers.ROPMemoryGadgetHandler)
-	mem.HandleFunc("/fingerprint", handlers.ROPMemoryFingerprintHandler)
+	pid := subLister(v1, "/pids/{pid}")
+	addHandleFunc(pid, "/libraries", handlers.ROPLibrariesHandler)
+
+	mem := subLister(pid, "/memory")
+	addHandleFunc(mem,"/regions", handlers.ROPMemoryRegionsHandler)
+	addHandleFunc(mem,"/search", handlers.ROPMemorySearchHandler)
+	addHandleFunc(mem,"/disasm", handlers.ROPMemoryDisAsmHandler)
+	addHandleFunc(mem,"/gadget", handlers.ROPMemoryGadgetHandler)
+	addHandleFunc(mem,"/fingerprint", handlers.ROPMemoryFingerprintHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
@@ -38,4 +44,59 @@ func ServeOverHttp(address string) error {
 		})
 
 	return http.ListenAndServe(address, router)
+}
+
+func subLister(router *mux.Router, path string) *mux.Router {
+	subrouter := router
+	if path != "" && path != "/" {
+		subrouter = router.PathPrefix(path).Subrouter()
+	}
+
+	handler := subHandler(subrouter)
+	subrouter.HandleFunc("", handler)
+	subrouter.HandleFunc("/", handler)
+	return subrouter
+}
+
+func addHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
+	path = strings.TrimSuffix(path, "/")
+	router.HandleFunc(path, handlerFunc)
+	router.HandleFunc(path + "/", handlerFunc)
+}
+
+func subHandler(router *mux.Router) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		paths := map[string]string{}
+
+		router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+			t, err := route.GetPathTemplate()
+			if err != nil {
+				return err
+			}
+			path := strings.TrimSuffix(t, "/")
+			if path != "" {
+				paths[path] = ""
+			}
+
+			return nil
+		})
+
+		list := make([]string, 0, len(paths))
+		for path, _ := range paths {
+			list = append(list, path)
+		}
+
+		sort.Strings(list)
+
+		liststr, err := json.MarshalIndent(list, "", "  ")
+		if err != nil {
+			writer.WriteHeader(500)
+			writer.Write([]byte(err.Error()))
+			return
+		}
+
+		writer.WriteHeader(200)
+		writer.Write(liststr)
+
+	}
 }
