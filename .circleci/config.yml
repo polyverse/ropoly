@@ -24,3 +24,33 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: dep ensure -v 
       - run: go test -v ./...
+      - run: mkdir dist 
+      - run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/ropoly-linux-amd64
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ./dist
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./dist/
+
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^release-\d+\.\d+\.\d+$/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^release-\d+\.\d+\.\d+$/
