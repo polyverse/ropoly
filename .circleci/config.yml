@@ -19,13 +19,14 @@ jobs:
     ####   /go/src/bitbucket.org/circleci/go-tool
     working_directory: /go/src/github.com/polyverse/ropoly
     steps:
+      - attach_workspace:
+          at: ./dist
       - checkout
 
       # specify any bash command here prefixed with `run: `
       - run: dep ensure -v 
       - run: go test -v ./...
-      - run: mkdir dist 
-      - run: go build -o dist/ropoly-linux-amd64
+      - run: go build -o ./dist/ropoly-linux-amd64
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
