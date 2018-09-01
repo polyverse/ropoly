@@ -25,7 +25,7 @@ jobs:
       - run: dep ensure -v 
       - run: go test -v ./...
       - run: mkdir dist 
-      - run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/ropoly-linux-amd64
+      - run: go build -o dist/ropoly-linux-amd64
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
