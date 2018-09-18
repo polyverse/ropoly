@@ -29,6 +29,10 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(mem, "/disasm", handlers.ROPMemoryDisAsmHandler)
 	addHandleFunc(mem, "/gadget", handlers.ROPMemoryGadgetHandler)
 	addHandleFunc(mem, "/fingerprint", handlers.ROPMemoryFingerprintHandler)
+	addHandleFunc(mem, "/isPolyverseBin", handlers.ROPMemoryIsPolyverseBinHandler)
+
+	directoryLister(v1, "/files", handlers.ROPFileHandler)
+	directoryLister(v1, "/is-file-polyverse", handlers.ROPIsPolyverseFileHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
@@ -44,6 +48,16 @@ func ServeOverHttp(address string) error {
 		})
 
 	return http.ListenAndServe(address, router)
+}
+
+func directoryLister(router *mux.Router, path string, handlerFunc http.HandlerFunc) *mux.Router {
+	subrouter := router
+	if path != "" && path != "/" {
+		subrouter = router.PathPrefix(path).Subrouter()
+	}
+	subrouter.HandleFunc("/{path:.*}", handlerFunc)
+	subrouter.HandleFunc("", handlerFunc)
+	return subrouter
 }
 
 func subLister(router *mux.Router, path string) *mux.Router {

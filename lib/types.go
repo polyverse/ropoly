@@ -7,8 +7,45 @@ import (
 	"strconv"
 )
 
+type SignatureResult struct {
+	Signature bool `json:signature`
+}
+
+type Timestamp struct {
+	Year string `json:year`
+	Month string `json:month`
+	Day string `json:day`
+	Time string `json:time`
+}
+
+type File struct {
+	Permissions string `json:permissions`
+	NumLink string `json:numLink`
+	Owner string `json:owner`
+	Group string `json:group`
+	Size string `json:size`
+	DateTime Timestamp `json:dateTime`
+	Filename string `json:filename`
+}
+
+type FilesResult struct {
+	Files []File `json:files`
+}
+
+type PIdsResultEntry struct {
+    PId int `json:pId`
+    PName string `json:pName`
+    UId int `json:uId`
+    UName string `json:uName`
+    GId int `json:gId`
+    GName string `json:gName`
+    PpId int `json:ppId`
+    TId int `json:tId`
+    SId int `json:sId`
+}
+
 type PIdsResult struct {
-	PIds []int `json:"pIds"`
+    Processes []PIdsResultEntry `json:processes`
 }
 
 type LibrariesResult struct {

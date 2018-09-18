@@ -2,25 +2,32 @@
 
 
 [[projects]]
+  digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
   name = "github.com/gorilla/context"
   packages = ["."]
+  pruneopts = "UT"
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:e73f5b0152105f18bc131fba127d9949305c8693f8a762588a82a48f61756f5f"
   name = "github.com/gorilla/mux"
   packages = ["."]
+  pruneopts = "UT"
   revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
   version = "v1.6.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:997a871c4a085fec4e4fa4671d8f53aa51c1ac4ccab38865fd60343abe191bfc"
   name = "github.com/polyverse/disasm"
   packages = ["."]
+  pruneopts = "UT"
   revision = "4943d5df63ce355b76cf720ae3eb3493cfdd8c1b"
 
 [[projects]]
   branch = "master"
+  digest = "1:b155bae912cb7851316ac8b837fbeca7a483824e6baa233f852309cd5ff2d478"
   name = "github.com/polyverse/masche"
   packages = [
     "common",
@@ -28,34 +35,49 @@
     "listlibs",
     "memaccess",
     "memsearch",
-    "process"
+    "process",
   ]
+  pruneopts = "UT"
   revision = "422c17ba3f7fc0f835bba8d144a96b8cff90ef64"
 
 [[projects]]
+  digest = "1:d867dfa6751c8d7a435821ad3b736310c2ed68945d05b50fb9d23aee0540c8cc"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
+  pruneopts = "UT"
   revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
   version = "v1.0.6"
 
 [[projects]]
   branch = "master"
+  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
+  pruneopts = "UT"
   revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
 
 [[projects]]
   branch = "master"
+  digest = "1:629034aef6b53eb8ea737e6d82cb5402907e2757fbab5ddf5e74c08b4c6473af"
   name = "golang.org/x/sys"
   packages = [
     "unix",
-    "windows"
+    "windows",
   ]
+  pruneopts = "UT"
   revision = "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0ae018e8318bbabaf19aaa3802770aa6009f65c4cc575e15a17eaae8da1cdb05"
+  input-imports = [
+    "github.com/gorilla/mux",
+    "github.com/polyverse/disasm",
+    "github.com/polyverse/masche/listlibs",
+    "github.com/polyverse/masche/memaccess",
+    "github.com/polyverse/masche/memsearch",
+    "github.com/polyverse/masche/process",
+    "github.com/sirupsen/logrus",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
