@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-const signature string = "\\-PV\\-"
+const signature string = "-PV-"
 
 func DiskSignatureSearch(path string) (SignatureResult, error) {
 	objdump := exec.Command("objdump", "-s", "-j", ".comment", path)
