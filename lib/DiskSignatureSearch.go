@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"os/exec"
+	"strings"
 )
 
-const signature string = "-PV-"
+const signature = "-PV-"
+const objdumpStartJunkLines = 4
+const objdumpEndJunkLines = 1
+const objdumpTextStart = 43
 
 func DiskSignatureSearch(path string) (SignatureResult, error) {
 	objdump := exec.Command("objdump", "-s", "-j", ".comment", path)
@@ -18,11 +22,19 @@ func DiskSignatureSearch(path string) (SignatureResult, error) {
 		return SignatureResult{}, errors.New(stderr.String())
 	}
 
+	/* objdumpText is just the text portion of the result of the objdump command, the portion
+	displayed on the right. All the hex and newlines are stripped out. */
+	objdumpText := ""
+	objdumpLines := strings.Split(string(objdumpResult), "\n")
+	for i := objdumpStartJunkLines; i < len(objdumpLines) - objdumpEndJunkLines; i++ {
+		objdumpText += objdumpLines[i][objdumpTextStart:]
+	}
+
 	found := false
-	for i := 0; i < len(objdumpResult) - len(signature) + 1; i++ {
+	for i := 0; i < len(objdumpText) - len(signature) + 1; i++ {
 		match := true
 		for char := 0; char < len(signature); char++ {
-			if objdumpResult[i+char] != signature[char] {
+			if objdumpText[i+char] != signature[char] {
 				match = false
 				break
 			}
