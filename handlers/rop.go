@@ -50,7 +50,7 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&filesResult, "", "	")
+	b, err := json.MarshalIndent(&filesResult, "", "	  ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -66,7 +66,7 @@ func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&signatureResult, "", "	")
+	b, err := json.MarshalIndent(&signatureResult, "", "    ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -411,13 +411,3 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 	} // if
 	w.Write(b)
 } // ROPMemorySearchHandler()
-
-func ROPMemoryIsPolyverseBinHandler(w http.ResponseWriter, r *http.Request) {
-	/*pidN, err := getPid(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}*/
-
-
-}

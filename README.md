@@ -10,7 +10,7 @@
 Return list of all visible process ids and information about each process.
 
 ### /api/v1/pid/\<_pid_\>/libraries
-Return list of loaded libraries for the given _pid_. If _pid_ is 0, _pid_ refers to the ROPoly process itself.
+Return list of loaded libraries for the given _pid_. If _pid_ is 0, _pid_ refers to the ROPoly process itself. Lists whether or not each library has a Polyverse signature.
 
 ### /api/v1/pid/\<_pid_\>/memory/regions[?access=\<[_R_][_W_][_X_][_F_]|_None_\>]
 Return list of memory regions of the given _pid_ subject to at least access permissions (default _R_). Any combination of _R_, _W_, _X_ and _F (Windows only)_ is permitted as well as the token _None_ which will return all regions. (Case is not significant.)

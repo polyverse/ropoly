@@ -48,8 +48,13 @@ type PIdsResult struct {
     Processes []PIdsResultEntry `json:processes`
 }
 
+type Library struct {
+	Filepath string `json:filepath`
+	Polyverse bool `json:polyverse`
+}
+
 type LibrariesResult struct {
-	Libraries []string `json:"libraries"`
+	Libraries []Library `json:"libraries"`
 }
 
 type GadgetResult struct {

@@ -29,7 +29,6 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(mem, "/disasm", handlers.ROPMemoryDisAsmHandler)
 	addHandleFunc(mem, "/gadget", handlers.ROPMemoryGadgetHandler)
 	addHandleFunc(mem, "/fingerprint", handlers.ROPMemoryFingerprintHandler)
-	addHandleFunc(mem, "/isPolyverseBin", handlers.ROPMemoryIsPolyverseBinHandler)
 
 	directoryLister(v1, "/files", handlers.ROPFileHandler)
 	directoryLister(v1, "/is-file-polyverse", handlers.ROPIsPolyverseFileHandler)
