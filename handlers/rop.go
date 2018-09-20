@@ -15,6 +15,8 @@ import (
 
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/ropoly/lib"
+    
+    "errors"
 )
 
 const safeStartAddress uint64 = 0
@@ -22,7 +24,8 @@ const safeEndAddress uint64 = 0x7fffffffffff
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
-		log.Fatal(hardError)
+		//log.Fatal(hardError)
+        log.Print(hardError)
 	}
 
 	for _, softError := range softErrors {
@@ -33,6 +36,43 @@ func logErrors(hardError error, softErrors []error) {
 func ROPHealthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Ropoly API Healthy")
 } // ROPTestHandler()
+
+func getFilepath(r *http.Request, uri string) (string) {
+	splitUri := strings.Split(r.RequestURI, uri)
+	return splitUri[len(splitUri)-1]
+}
+
+func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
+	filesResult, harderror := lib.GetFiles(getFilepath(r, "api/v1/files"))
+	logErrors(harderror, make([]error, 0))
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(&filesResult, "", "	  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+	w.Write(b)
+} // ROPFileHandler
+
+func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request) {
+	signatureResult, harderror := lib.DiskSignatureSearch(getFilepath(r, "api/v1/is-file-polyverse"))
+	logErrors(harderror, make([]error, 0))
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(&signatureResult, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+	w.Write(b)
+}
 
 func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
@@ -50,7 +90,7 @@ func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // ROPPIdsHandler()
 
-func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
+func getPid(r *http.Request) (uint64, error) {
 	var err error
 
 	var pidN uint64 = uint64(os.Getpid())
@@ -58,10 +98,18 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 	if (pid != "") && (pid != "0") {
 		pidN, err = strconv.ParseUint(pid, 0, 64)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // if
+			err = errors.New("Cannot parse PID.")
+		}
+	}
+	return pidN, err
+}
+
+func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
+	pidN, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	librariesResult, harderror, softerrors := lib.GetLibrariesForPid(int(pidN))
 
@@ -84,18 +132,11 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemoryHandler()
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
-	var pidSelf = uint64(os.Getpid())
-	var err error
-
-	pidN := pidSelf
-	pid := mux.Vars(r)["pid"]
-	if (pid != "") && (pid != "0") {
-		pidN, err = strconv.ParseUint(pid, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // if
+	pidN, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var startN uint64 = 0
 	start := r.FormValue("start")
@@ -149,18 +190,11 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemoryDisAsmHandler()
 
 func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool) {
-	var pidSelf = uint64(os.Getpid())
-	var err error
-
-	pidN := pidSelf
-	pid := mux.Vars(r)["pid"]
-	if (pid != "") && (pid != "0") {
-		pidN, err = strconv.ParseUint(pid, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // if
+	pidN, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var startN uint64 = 0
 	start := r.FormValue("start")
@@ -259,18 +293,11 @@ func ROPMemoryFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemoryFingerprintHandler()
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
-	var pidSelf = uint64(os.Getpid())
-	var err error
-
-	pidN := pidSelf
-	pid := mux.Vars(r)["pid"]
-	if (pid != "") && (pid != "0") {
-		pidN, err = strconv.ParseUint(pid, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // if
+	pidN, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var access memaccess.Access = memaccess.None
 
@@ -318,18 +345,11 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPMemoryRegionsHandler()
 
 func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
-	var pidSelf = uint64(os.Getpid())
-	var err error
-
-	pidN := pidSelf
-	pid := mux.Vars(r)["pid"]
-	if (pid != "") && (pid != "0") {
-		pidN, err = strconv.ParseUint(pid, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // if
+	pidN, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var startN uint64 = 0
 	start := r.FormValue("start")
@@ -370,6 +390,11 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
 	search := r.FormValue("string")
 	if search == "" {
 		search = r.FormValue("regexp")
+        if search == "" {
+            err := errors.New("Search with no or empty target given.")
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+        }
 	} // if
 
 	searchResult, harderror, softerrors := lib.ROPMemorySearch(int(pidN), search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.FormValue("regexp") != "")
