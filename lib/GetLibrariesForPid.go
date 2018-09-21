@@ -31,7 +31,6 @@ func GetLibrariesForPid(pidN int) (LibrariesResult, error, []error) {
 			softerrors3 = append(softerrors3, error)
 			continue
 		}
-		/*DEBUG*/ println(string(stringsOutput))
 		found := false
 		for i := 0; i < len(stringsOutput) - len(signature) + 1; i++ {
 			match := true

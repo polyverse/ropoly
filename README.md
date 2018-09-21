@@ -31,4 +31,4 @@ Search executable memory of the given _pid_ between _start_ and _end_ and return
 View information about the files and directories in the given directory on the server.
 
 ### /api/v1/is-file-polyverse/\<_path_\>
-Check whether or not the given file has a Polyverse signature.
+Check whether or not the given file has a Polyverse signature. If the file does not exist, will only report that the signature is not found; use /files/ endpoint to determine if file exists.
