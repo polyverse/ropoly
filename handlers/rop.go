@@ -59,12 +59,8 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPFileHandler
 
 func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request) {
-	signatureResult, harderror := lib.DiskSignatureSearch(getFilepath(r, "api/v1/is-file-polyverse"))
-	logErrors(harderror, make([]error, 0))
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
+	signatureResult, err := lib.DiskSignatureSearch(getFilepath(r, "api/v1/is-file-polyverse"))
+	logErrors(err, make([]error, 0))
 
 	b, err := json.MarshalIndent(&signatureResult, "", "    ")
 	if err != nil {

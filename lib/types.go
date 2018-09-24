@@ -5,7 +5,35 @@ import (
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
 	"strconv"
+	"time"
 )
+
+type ScanResult struct {
+	Root DirectoryScanResult `json:file scan`
+	Running ProcessScanResult `json:library scan`
+}
+
+type FileScan struct {
+	Path string `json:path`
+	Signature bool `json:signature`
+}
+
+type DirectoryScanResult struct {
+	Start time.Time `json:start`
+	End time.Time `json:end`
+	Files []FileScan `json:files`
+}
+
+type ProcessScanEntry struct {
+	Process PIdsResultEntry `json:process`
+	Libraries []Library `json:libraries`
+}
+
+type ProcessScanResult struct {
+	Start time.Time `json:start`
+	End time.Time `json:end`
+	Processes []ProcessScanEntry `json:processes`
+}
 
 type SignatureResult struct {
 	Signature bool `json:signature`

@@ -1,14 +1,15 @@
 package lib
 
 import (
-    "github.com/polyverse/masche/process"
+	"github.com/polyverse/masche/process"
     "os/exec"
     "strconv"
+	"strings"
 )
 
 func attributeByPid(pid int, attribute string) (string) {
     ret, _ := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", attribute+"=").Output()
-    return string(ret)[:len(ret)-1]
+    return strings.Replace(string(ret), "\n", "", 1)
 }
 
 func intAttributeByPid(pid int, attribute string) (int) {

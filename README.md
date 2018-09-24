@@ -4,6 +4,26 @@
 
 # polyverse/ropoly
 
+## Build Instructions with Docker
+From the project directory, run the following:
+$ docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang bash
+$ cd /go/src/github.com/polyverse/ropoly
+$ go build
+
+## Command Line Options
+
+### server
+Runs as a server exposing the API described under "Ropoly API Endpoints." Use this option, "scan", or both.
+
+### scan
+Runs as a daemon that repeatedly scans the server's file system and the libraries of its running processes to check for Polyverse signatures. Use this option, "server", or both.
+
+### log
+Use only with "scan". Logs the results of scanning for signatures.
+
+### prometheus
+Use only with "scan". Not yet implemented, and doesn't do anything useful.
+
 ## ROPoly API Endpoints
 
 ### /api/v1/pids
@@ -31,4 +51,4 @@ Search executable memory of the given _pid_ between _start_ and _end_ and return
 View information about the files and directories in the given directory on the server.
 
 ### /api/v1/is-file-polyverse/\<_path_\>
-Check whether or not the given file has a Polyverse signature.
+Check whether or not the given file has a Polyverse signature. If the file does not exist, will only report that the signature is not found; use /files/ endpoint to determine if file exists.
