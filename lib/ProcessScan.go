@@ -1,8 +1,11 @@
 package lib
 
-import "time"
+import (
+	"time"
+	log "github.com/sirupsen/logrus"
+)
 
-func ProcessScan() (ProcessScanResult, error, []error) {
+func ProcessScan() (ProcessScanResult) {
 	ret := ProcessScanResult{
 		Processes: make([]ProcessScanEntry, 0),
 	}
@@ -10,16 +13,22 @@ func ProcessScan() (ProcessScanResult, error, []error) {
 
 	pidsResult, harderror, softerrors := GetAllPids()
 	if harderror != nil {
-		return ProcessScanResult{}, harderror, softerrors
+		log.Error(harderror)
+		return ProcessScanResult{}
+	}
+	for i := 0; i < len(softerrors); i++ {
+		log.Error(softerrors[i])
 	}
 
 	for i := 0; i < len(pidsResult.Processes); i++ {
 		process := pidsResult.Processes[i]
-		librariesResult, error, softerrors2 := GetLibrariesForPid(process.PId)
+		librariesResult, error, softerrors := GetLibrariesForPid(process.PId)
 		if error != nil {
-			softerrors = append(softerrors, error)
+			log.Error(error)
 		}
-		softerrors = append(softerrors, softerrors2...)
+		for i := 0; i < len(softerrors); i++ {
+			log.Error(softerrors[i])
+		}
 
 		ret.Processes = append(ret.Processes, ProcessScanEntry {
 			Process: process,
@@ -28,5 +37,5 @@ func ProcessScan() (ProcessScanResult, error, []error) {
 	}
 
 	ret.End = time.Now()
-	return ret, harderror, softerrors
+	return ret
 }

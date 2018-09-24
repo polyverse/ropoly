@@ -1,7 +1,10 @@
 package lib
 
 import (
+	"os"
+	"path/filepath"
 	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type file struct {
@@ -9,41 +12,34 @@ type file struct {
 	Name string
 }
 
-func DirectoryScan() (DirectoryScanResult, []error) {
+func DirectoryScan() (DirectoryScanResult) {
 	ret := DirectoryScanResult{
 		Files: make([]FileScan, 0),
 	}
 	ret.Start = time.Now()
 
-	stack := make([]file, 1)
-	stack[0] = file {
-		Dir: "",
-		Name: "",
-	}
-
-	errors := make([]error, 0)
-	for len(stack) > 0 {
-		next := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		filesResult, _ := GetFiles(next.Dir + next.Name)
-		for i := 0; i < len(filesResult.Files); i++ {
-			stack = append(stack, file {
-				Dir: next.Dir + next.Name + "/",
-				Name: filesResult.Files[i].Filename,
-			})
+	filepath.Walk("/", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Error(err)
 		}
-		signatureResult, error := DiskSignatureSearch(next.Dir + next.Name)
-		if error == nil {
-			ret.Files = append(ret.Files, FileScan{
-				Path:      next.Dir + next.Name,
+
+		if path == "/proc" {
+			return filepath.SkipDir
+		}
+
+		if !info.IsDir() {
+			signatureResult, sigErr := DiskSignatureSearch(path)
+			if err != nil {
+				log.Error(sigErr)
+			}
+			ret.Files = append(ret.Files, FileScan {
+				Path: path,
 				Signature: signatureResult.Signature,
 			})
-		} else {
-			errors = append(errors, error)
 		}
-	}
+		return err
+	})
 
 	ret.End = time.Now()
-	return ret, errors
+	return ret
 }
