@@ -9,6 +9,7 @@ import (
 
 const objdumpAddressStart = 2
 const objdumpInstructionStart = 32
+const addressDisplaySpace = 12
 
 type binary struct {
 	Addresses []int64
@@ -22,6 +23,9 @@ func instructions(command *exec.Cmd) (binary, error) {
 	}
 
 	objdumpResult, error := command.Output()
+	if error != nil {
+		return ret, error
+	}
 	objdumpDisasm := string(bytes.Split(bytes.Split(objdumpResult, []byte("Disassembly of section .text:\n\n"))[1], []byte("<_start>:\n"))[1])
 	objdumpLines := strings.Split(objdumpDisasm, "\n")
 	for i := 0; i < len(objdumpLines); i++ {
@@ -52,7 +56,10 @@ func disAsmResult(bin binary) DiskDisAsmResult {
 	}
 
 	for i := 0; i < len(bin.Addresses); i++ {
-		ret.Instructions = append(ret.Instructions, strconv.Itoa(int(bin.Addresses[i])) + "\t" + bin.Instructions[i])
+		line := strconv.Itoa(int(bin.Addresses[i]))
+		line += strings.Repeat(" ", addressDisplaySpace - len(line))
+		line += bin.Instructions[i]
+		ret.Instructions = append(ret.Instructions, line)
 	}
 
 	return ret

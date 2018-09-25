@@ -32,7 +32,7 @@ func ServeOverHttp(address string) error {
 
 	directoryLister(v1, "/files", handlers.ROPFileHandler)
 	directoryLister(v1, "/is-file-polyverse", handlers.ROPIsPolyverseFileHandler)
-	directoryLister(v1, "disasm", handlers.DiskDisAsmHandler)
+	directoryLister(v1, "/disasm", handlers.DiskDisAsmHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
