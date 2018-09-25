@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+type DiskDisAsmResult struct {
+	Instructions []string `json:instructions`
+}
+
 type ScanResult struct {
 	Root DirectoryScanResult `json:file scan`
 	Running ProcessScanResult `json:library scan`
