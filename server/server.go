@@ -22,17 +22,9 @@ func ServeOverHttp(address string) error {
 
 	pid := subLister(v1, "/pids/{pid}")
 	addHandleFunc(pid, "/libraries", handlers.ROPLibrariesHandler)
-
-	mem := subLister(pid, "/memory")
-	addHandleFunc(mem, "/regions", handlers.ROPMemoryRegionsHandler)
-	addHandleFunc(mem, "/search", handlers.ROPMemorySearchHandler)
-	addHandleFunc(mem, "/disasm", handlers.ROPMemoryDisAsmHandler)
-	addHandleFunc(mem, "/gadget", handlers.ROPMemoryGadgetHandler)
-	addHandleFunc(mem, "/fingerprint", handlers.ROPMemoryFingerprintHandler)
+	addHandleFunc(pid, "/memory", handlers.ROPMemoryHandler)
 
 	directoryLister(v1, "/files", handlers.ROPFileHandler)
-	directoryLister(v1, "/is-file-polyverse", handlers.ROPIsPolyverseFileHandler)
-	directoryLister(v1, "/disasm", handlers.DiskDisAsmHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func GetLibrariesForPid(pidN int) (LibrariesResult, error, []error) {
+func GetLibrariesForPid(pidN int, checkSignatures bool) (LibrariesResult, error, []error) {
 	process, harderror1, softerrors1 := process.OpenFromPid(pidN)
 	if harderror1 != nil {
 		return LibrariesResult{}, harderror1, softerrors1
@@ -26,23 +26,25 @@ func GetLibrariesForPid(pidN int) (LibrariesResult, error, []error) {
 	for i := 0; i < len(libraries); i++ {
 		librariesResult.Libraries[i].Filepath = libraries[i]
 
-		stringsOutput, error := exec.Command("strings", libraries[i]).Output()
-		if error != nil {
-			softerrors3 = append(softerrors3, error)
-			continue
-		}
 		found := false
-		for i := 0; i < len(stringsOutput) - len(signature) + 1; i++ {
-			match := true
-			for char := 0; char < len(signature); char++ {
-				if stringsOutput[i+char] != signature[char] {
-					match = false
+		if checkSignatures {
+			stringsOutput, error := exec.Command("strings", libraries[i]).Output()
+			if error != nil {
+				softerrors3 = append(softerrors3, error)
+				continue
+			}
+			for i := 0; i < len(stringsOutput)-len(signature)+1; i++ {
+				match := true
+				for char := 0; char < len(signature); char++ {
+					if stringsOutput[i+char] != signature[char] {
+						match = false
+						break
+					}
+				}
+				if match {
+					found = true
 					break
 				}
-			}
-			if match {
-				found = true
-				break
 			}
 		}
 		librariesResult.Libraries[i].Polyverse = found

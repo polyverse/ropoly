@@ -54,5 +54,5 @@ func DiskSignatureSearch(path string) (SignatureResult, error) {
 	result := SignatureResult {
 		Signature: found,
 	}
-	return result, error
+	return result, nil
 }

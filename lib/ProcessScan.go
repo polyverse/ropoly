@@ -22,7 +22,7 @@ func ProcessScan() (ProcessScanResult) {
 
 	for i := 0; i < len(pidsResult.Processes); i++ {
 		process := pidsResult.Processes[i]
-		librariesResult, error, softerrors := GetLibrariesForPid(process.PId)
+		librariesResult, error, softerrors := GetLibrariesForPid(process.PId, true)
 		if error != nil {
 			log.Error(error)
 		}
