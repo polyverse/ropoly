@@ -10,6 +10,7 @@ func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64) (Di
 	softerrors := []error{}
 	process, harderror1, softerrors1 := process.OpenFromPid(int(pidN))
 	if harderror1 != nil {
+		/*DEBUG*/ println(harderror1.Error())
 		return DisAsmResult{}, harderror1, softerrors1
 	} // if
 	defer process.Close()

@@ -68,7 +68,7 @@ func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} // if
 	w.Write(b)
-}
+} // ROPisPolyverseFileHandler
 
 func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
@@ -126,6 +126,21 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("ROPMemoryHandler")
 } // ROPMemoryHandler()
+
+func DiskDisAsmHandler(w http.ResponseWriter, r *http.Request) {
+	disAsmResult, harderror := lib.DisAsmForFile(getFilepath(r, "api/v1/disasm"))
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(&disAsmResult, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+	w.Write(b)
+} // DiskDisAsmHandler
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	pidN, err := getPid(r)
