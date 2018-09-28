@@ -10,6 +10,10 @@ $ docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang bash
 $ cd /go/src/github.com/polyverse/ropoly
 $ go build
 
+## Run Instructions for Docker
+The container must be run with --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged
+Port 8008 must be mapped to a port on the host with -p in order to view output.
+
 ## Command Line Options
 
 ### server
