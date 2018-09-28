@@ -39,13 +39,54 @@ func ROPHealthHandler(w http.ResponseWriter, r *http.Request) {
 
 func getFilepath(r *http.Request, uri string) (string) {
 	splitUri := strings.Split(r.RequestURI, uri)
-	return splitUri[len(splitUri)-1]
+	return strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
 }
 
 func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
-	filesResult, harderror := lib.GetFiles(getFilepath(r, "api/v1/files"))
-	logErrors(harderror, make([]error, 0))
+	filepath := getFilepath(r, "api/v1/files")
+
+	mode := r.FormValue("mode")
+	switch mode {
+	case "directory":
+		ROPDirectoryHandler(w, r, filepath)
+	case "signature":
+		ROPIsPolyverseFileHandler(w, r, filepath)
+	case "disasm":
+		ROPDiskDisAsmHandler(w, r, filepath)
+	default:
+		http.Error(w, "Mode should be directory, signature, or disasm.", http.StatusBadRequest)
+	} // switch
+}
+
+func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
+	pid, err := getPid(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	pidN := int(pid)
+
+	mode := r.FormValue("mode")
+	switch mode {
+	case "regions":
+		ROPMemoryRegionsHandler(w, r, pidN)
+	case "search":
+		ROPMemorySearchHandler(w, r, pidN)
+	case "disasm":
+		ROPMemoryDisAsmHandler(w, r, pidN)
+	case "gadget":
+		ROPMemoryGadgetHandler(w, r, pidN)
+	case "fingerprint":
+		ROPMemoryFingerprintHandler(w, r, pidN)
+	default:
+		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
+	}
+} // ROPMemoryHandler()
+
+func ROPDirectoryHandler(w http.ResponseWriter, r *http.Request, filepath string) {
+	filesResult, harderror := lib.GetFiles(filepath)
 	if harderror != nil {
+		logErrors(harderror, make([]error, 0))
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return
 	} // if
@@ -58,9 +99,12 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // ROPFileHandler
 
-func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request) {
-	signatureResult, err := lib.DiskSignatureSearch(getFilepath(r, "api/v1/is-file-polyverse"))
-	logErrors(err, make([]error, 0))
+func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath string) {
+	signatureResult, err := lib.DiskSignatureSearch(filepath)
+	if err != nil {
+		logErrors(err, make([]error, 0))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 
 	b, err := json.MarshalIndent(&signatureResult, "", "    ")
 	if err != nil {
@@ -107,7 +151,13 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	librariesResult, harderror, softerrors := lib.GetLibrariesForPid(int(pidN))
+	checkSignatures := false
+	signatures := r.FormValue("signatures")
+	if signatures == "true" {
+		checkSignatures = true
+	}
+
+	librariesResult, harderror, softerrors := lib.GetLibrariesForPid(int(pidN), checkSignatures)
 
 	logErrors(harderror, softerrors)
 	if harderror != nil {
@@ -123,12 +173,8 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // ROPLibrariesHandler()
 
-func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("ROPMemoryHandler")
-} // ROPMemoryHandler()
-
-func DiskDisAsmHandler(w http.ResponseWriter, r *http.Request) {
-	disAsmResult, harderror := lib.DisAsmForFile(getFilepath(r, "api/v1/disasm"))
+func ROPDiskDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath string) {
+	disAsmResult, harderror := lib.DisAsmForFile(filepath)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return
@@ -142,18 +188,13 @@ func DiskDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // DiskDisAsmHandler
 
-func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
-	pidN, err := getPid(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
+func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var startN uint64 = 0
 	start := r.FormValue("start")
 	if start == "start" {
 		startN = 0
 	} else if start != "" {
+		var err error
 		startN, err = strconv.ParseUint(start, 0, 64)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -166,6 +207,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	if end == "end" {
 		endN = uint64(safeEndAddress)
 	} else if end != "" {
+		var err error
 		endN, err = strconv.ParseUint(end, 0, 64)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -178,6 +220,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	if limit == "limit" {
 		limitN = 100
 	} else if limit != "" {
+		var err error
 		limitN, err = strconv.ParseUint(limit, 0, 32)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -185,7 +228,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 		} // if
 	} // else if
 
-	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(int(pidN), startN, endN, limitN)
+	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(pidN, startN, endN, limitN)
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -200,15 +243,10 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // ROPMemoryDisAsmHandler()
 
-func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool) {
-	pidN, err := getPid(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
+func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool, pidN int) {
 	var startN uint64 = 0
 	start := r.FormValue("start")
+	var err error
 	if start == "start" {
 		startN = 0
 	} else if start != "" {
@@ -269,7 +307,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 
 	var b []byte
 	if fingerprinting {
-		fingerprintResult, harderror, softerrors := lib.GadgetFingerprintssInMemoryForPid(int(pidN), instructions, startN, endN, limitN, instructionsN, octetsN)
+		fingerprintResult, harderror, softerrors := lib.GadgetFingerprintssInMemoryForPid(pidN, instructions, startN, endN, limitN, instructionsN, octetsN)
 		logErrors(harderror, softerrors)
 		if harderror != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -278,7 +316,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 
 		b, err = json.MarshalIndent(&fingerprintResult, "", "    ")
 	} else {
-		gadgetResult, harderror, softerrors := lib.GadgetsInMemoryForPid(int(pidN), instructions, startN, endN, limitN, instructionsN, octetsN)
+		gadgetResult, harderror, softerrors := lib.GadgetsInMemoryForPid(pidN, instructions, startN, endN, limitN, instructionsN, octetsN)
 		logErrors(harderror, softerrors)
 		if harderror != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -295,21 +333,15 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	w.Write(b)
 } // ROPMemoryGadgetHandler()
 
-func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request) {
-	ROPMemoryGadgetHandler0(w, r, false)
+func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
+	ROPMemoryGadgetHandler0(w, r, false, pidN)
 } // ROPMemoryGadgetHandler()
 
-func ROPMemoryFingerprintHandler(w http.ResponseWriter, r *http.Request) {
-	ROPMemoryGadgetHandler0(w, r, true)
+func ROPMemoryFingerprintHandler(w http.ResponseWriter, r *http.Request, pidN int) {
+	ROPMemoryGadgetHandler0(w, r, true, pidN)
 } // ROPMemoryFingerprintHandler()
 
-func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
-	pidN, err := getPid(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
+func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var access memaccess.Access = memaccess.None
 
 	accessS := strings.ToUpper(r.FormValue("access"))
@@ -340,7 +372,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 		} // if
 	} // else
 
-	regionsResult, harderror, softerrors := lib.ROPMemoryRegions(int(pidN), access)
+	regionsResult, harderror, softerrors := lib.ROPMemoryRegions(pidN, access)
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
@@ -355,15 +387,10 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 } // ROPMemoryRegionsHandler()
 
-func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
-	pidN, err := getPid(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
+func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var startN uint64 = 0
 	start := r.FormValue("start")
+	var err error
 	if start == "start" {
 		startN = 0
 	} else if start != "" {
@@ -408,7 +435,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request) {
         }
 	} // if
 
-	searchResult, harderror, softerrors := lib.ROPMemorySearch(int(pidN), search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.FormValue("regexp") != "")
+	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.FormValue("regexp") != "")
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return
