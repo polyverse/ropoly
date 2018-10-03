@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"math"
@@ -53,8 +54,10 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 		ROPIsPolyverseFileHandler(w, r, filepath)
 	case "disasm":
 		ROPDiskDisAsmHandler(w, r, filepath)
+	case "gadget":
+		ROPFileGadgetHandler(w, r, filepath)
 	default:
-		http.Error(w, "Mode should be directory, signature, or disasm.", http.StatusBadRequest)
+		http.Error(w, "Mode should be directory, signature, gadget, or disasm.", http.StatusBadRequest)
 	} // switch
 }
 
@@ -76,8 +79,6 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 		ROPMemoryDisAsmHandler(w, r, pidN)
 	case "gadget":
 		ROPMemoryGadgetHandler(w, r, pidN)
-	case "fingerprint":
-		ROPMemoryFingerprintHandler(w, r, pidN)
 	default:
 		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	}
@@ -152,7 +153,7 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	checkSignatures := false
-	signatures := r.FormValue("signatures")
+	signatures := r.Form.Get("signatures")
 	if signatures == "true" {
 		checkSignatures = true
 	}
@@ -190,7 +191,7 @@ func ROPDiskDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath strin
 
 func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var startN uint64 = 0
-	start := r.FormValue("start")
+	start := r.Form.Get("start")
 	if start == "start" {
 		startN = 0
 	} else if start != "" {
@@ -203,7 +204,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	} // else if
 
 	var endN uint64 = math.MaxUint64
-	end := r.FormValue("end")
+	end := r.Form.Get("end")
 	if end == "end" {
 		endN = uint64(safeEndAddress)
 	} else if end != "" {
@@ -216,7 +217,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	} // else if
 
 	var limitN uint64 = math.MaxInt32
-	limit := r.FormValue("limit")
+	limit := r.Form.Get("limit")
 	if limit == "limit" {
 		limitN = 100
 	} else if limit != "" {
@@ -243,9 +244,17 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	w.Write(b)
 } // ROPMemoryDisAsmHandler()
 
-func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprinting bool, pidN int) {
+func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
+	GadgetHandler(true, w, r, pidN, "")
+} //ROPMemoryGadgetHandler
+
+func ROPFileGadgetHandler(w http.ResponseWriter, r *http.Request, filepath string) {
+	GadgetHandler(false, w, r, 0, filepath)
+}
+
+func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
 	var startN uint64 = 0
-	start := r.FormValue("start")
+	start := r.Form.Get("start")
 	var err error
 	if start == "start" {
 		startN = 0
@@ -258,7 +267,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	} // else if
 
 	var endN uint64 = math.MaxUint64
-	end := r.FormValue("end")
+	end := r.Form.Get("end")
 	if end == "end" {
 		endN = uint64(safeEndAddress)
 	} else if end != "" {
@@ -270,7 +279,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	} // else if
 
 	var limitN uint64 = math.MaxInt32
-	limit := r.FormValue("limit")
+	limit := r.Form.Get("limit")
 	if limit == "limit" {
 		limitN = 100
 	} else if limit != "" {
@@ -282,7 +291,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	} // if
 
 	var instructionsN uint64 = math.MaxInt32
-	instructions := r.FormValue("instructions")
+	instructions := r.Form.Get("instructions")
 	if instructions == "instructions" {
 		instructionsN = 5
 	} else if instructions != "" {
@@ -294,7 +303,7 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 	} // else if
 
 	var octetsN uint64 = math.MaxInt32
-	octets := r.FormValue("octets")
+	octets := r.Form.Get("octets")
 	if octets == "octets" {
 		octetsN = 100
 	} else if octets != "" {
@@ -305,18 +314,18 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 		} // if
 	} // else if
 
-	var b []byte
-	if fingerprinting {
-		fingerprintResult, harderror, softerrors := lib.GadgetFingerprintssInMemoryForPid(pidN, instructions, startN, endN, limitN, instructionsN, octetsN)
-		logErrors(harderror, softerrors)
-		if harderror != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-
-		b, err = json.MarshalIndent(&fingerprintResult, "", "    ")
-	} else {
-		gadgetResult, harderror, softerrors := lib.GadgetsInMemoryForPid(pidN, instructions, startN, endN, limitN, instructionsN, octetsN)
+	gadgetsPerWrite := safeNumGadgets(instructionsN)
+	var disasmInstructions []disasm.Instruction
+	firstTime := true
+	var numGadgetsReturned uint64
+	var numGadgetsTotal uint64 = 0
+	address := startN
+	for numGadgetsTotal < limitN && (firstTime || numGadgetsReturned == gadgetsPerWrite) {
+		var b []byte
+		var gadgetResult lib.GadgetResult
+		var harderror error
+		var softerrors []error
+		gadgetResult, disasmInstructions, harderror, softerrors = lib.Gadgets(disasmInstructions, inMemory, pidN, filepath, address, endN, limitN, instructionsN, octetsN)
 		logErrors(harderror, softerrors)
 		if harderror != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -324,27 +333,39 @@ func ROPMemoryGadgetHandler0(w http.ResponseWriter, r *http.Request, fingerprint
 		} // if
 
 		b, err = json.MarshalIndent(&gadgetResult, "", "    ")
-	} // else
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
+		if !firstTime {
+			b = bytes.SplitN(b, []byte("[\n"), 2)[1]
+			b = append([]byte(",\n"), b...)
+		} else {
+			firstTime = false
+		}
+
+		numGadgetsReturned = uint64(len(gadgetResult.Gadgets))
+		numGadgetsTotal += numGadgetsReturned
+		if numGadgetsReturned == gadgetsPerWrite && numGadgetsTotal < limitN {
+			b = bytes.Replace(b, []byte("]\n}"), []byte(""), 1)
+		} // if
+
+		w.Write(b)
+
+		lastGadget := gadgetResult.Gadgets[len(gadgetResult.Gadgets)-1]
+		address = uint64(lastGadget.Address) + 1
+	} // for
 } // ROPMemoryGadgetHandler()
 
-func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	ROPMemoryGadgetHandler0(w, r, false, pidN)
-} // ROPMemoryGadgetHandler()
-
-func ROPMemoryFingerprintHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	ROPMemoryGadgetHandler0(w, r, true, pidN)
-} // ROPMemoryFingerprintHandler()
+func safeNumGadgets(instructionsN uint64) uint64 {
+	return 1
+}
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var access memaccess.Access = memaccess.None
 
-	accessS := strings.ToUpper(r.FormValue("access"))
+	accessS := strings.ToUpper(r.Form.Get("access"))
 	if accessS == "NONE" {
 		access = memaccess.None
 	} else if accessS == "" {
@@ -389,7 +410,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 
 func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var startN uint64 = 0
-	start := r.FormValue("start")
+	start := r.Form.Get("start")
 	var err error
 	if start == "start" {
 		startN = 0
@@ -402,7 +423,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	} // else if
 
 	var endN uint64 = math.MaxUint64
-	end := r.FormValue("end")
+	end := r.Form.Get("end")
 	if end == "end" {
 		endN = uint64(safeEndAddress)
 	} else if end != "" {
@@ -414,7 +435,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	} // else if
 
 	var limitN uint64 = math.MaxInt32
-	limit := r.FormValue("limit")
+	limit := r.Form.Get("limit")
 	if limit == "limit" {
 		limitN = 100
 	} else if limit != "" {
@@ -425,9 +446,9 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 		} // if
 	} // else if
 
-	search := r.FormValue("string")
+	search := r.Form.Get("string")
 	if search == "" {
-		search = r.FormValue("regexp")
+		search = r.Form.Get("regexp")
         if search == "" {
             err := errors.New("Search with no or empty target given.")
             http.Error(w, err.Error(), http.StatusBadRequest)
@@ -435,7 +456,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
         }
 	} // if
 
-	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.FormValue("regexp") != "")
+	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.Form.Get("regexp") != "")
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return

@@ -9,76 +9,76 @@ import (
 )
 
 type ScanResult struct {
-	Root DirectoryScanResult `json:file scan`
-	Running ProcessScanResult `json:library scan`
+	Root DirectoryScanResult `json:"file scan"`
+	Running ProcessScanResult `json:"library scan"`
 }
 
 type FileScan struct {
-	Path string `json:path`
-	Signature bool `json:signature`
+	Path string `json:"path"`
+	Signature bool `json:"signature"`
 }
 
 type DirectoryScanResult struct {
-	Start time.Time `json:start`
-	End time.Time `json:end`
-	Files []FileScan `json:files`
+	Start time.Time `json:"start"`
+	End time.Time `json:"end"`
+	Files []FileScan `json:"files"`
 }
 
 type ProcessScanEntry struct {
-	Process PIdsResultEntry `json:process`
-	Libraries []Library `json:libraries`
+	Process PIdsResultEntry `json:"process"`
+	Libraries []Library `json:"libraries"`
 }
 
 type ProcessScanResult struct {
-	Start time.Time `json:start`
-	End time.Time `json:end`
-	Processes []ProcessScanEntry `json:processes`
+	Start time.Time `json:"start"`
+	End time.Time `json:"end"`
+	Processes []ProcessScanEntry `json:"processes"`
 }
 
 type SignatureResult struct {
-	Signature bool `json:signature`
+	Signature bool `json:"signature"`
 }
 
 type Timestamp struct {
-	Year string `json:year`
-	Month string `json:month`
-	Day string `json:day`
-	Time string `json:time`
+	Year string `json:"year"`
+	Month string `json:"month"`
+	Day string `json:"day"`
+	Time string `json:"time"`
 }
 
 type File struct {
-	Permissions string `json:permissions`
-	NumLink string `json:numLink`
-	Owner string `json:owner`
-	Group string `json:group`
-	Size string `json:size`
-	DateTime Timestamp `json:dateTime`
-	Filename string `json:filename`
+	Permissions string `json:"permissions"`
+	NumLink string `json:"numLink"`
+	Owner string `json:"owner"`
+	Group string `json:"group"`
+	Size string `json:"size"`
+	DateTime Timestamp `json:"dateTime"`
+	Filename string `json:"filename"`
 }
 
 type FilesResult struct {
-	Files []File `json:files`
+	Files []File `json:"files"`
 }
 
 type PIdsResultEntry struct {
-    PId int `json:pId`
-    PName string `json:pName`
-    UId int `json:uId`
-    UName string `json:uName`
-    GId int `json:gId`
-    GName string `json:gName`
-    PpId int `json:ppId`
-    TId int `json:tId`
-    SId int `json:sId`
+    PId int `json:"pId"`
+    PName string `json:"pName"`
+    UId int `json:"uId"`
+    UName string `json:"uName"`
+    GId int `json:"gId"`
+    GName string `json:"gName"`
+    PpId int `json:"ppId"`
+    TId int `json:"tId"`
+    SId int `json:"sId"`
 }
 
 type PIdsResult struct {
-    Processes []PIdsResultEntry `json:processes`
+    Processes []PIdsResultEntry `json:"processes"`
 }
 
 type Library struct {
-	Filepath string `json:filepath`
-	Polyverse bool `json:polyverse`
+	Filepath string `json:"filepath"`
+	Polyverse bool `json:"polyverse"`
 }
 
 type LibrariesResult struct {
@@ -86,7 +86,14 @@ type LibrariesResult struct {
 }
 
 type GadgetResult struct {
-	Gadgets []disasm.Gadget `json:"gadgets"`
+	Gadgets []Gadget `json:"gadgets"`
+}
+
+type Gadget struct {
+	Address disasm.Ptr `json:"address"`
+	NumInstructions int `json:"numInstructions"`
+	NumOctets int `json:"numOctets"`
+	Instructions []disasm.Instruction `json:"instructions"`
 }
 
 type FingerprintResult struct {
