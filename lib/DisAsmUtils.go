@@ -96,21 +96,24 @@ func disAsmResult(instructions []disasm.Instruction) DisAsmResult {
 	}
 }
 
-func gadgets(instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) []Gadget {
+func gadgets(instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) ([]Gadget, int) {
 	ret := make([]Gadget, 0)
 
+	lastStartingIndex := 0
 	for i := 0; i < len(instructions) && len(ret) < limit; i++ {
 		if isControlInstruction(instructions[i]) {
-			gadgets := gadgetsEndingWith(i, instructions, maxLength, maxOctets, limit-len(ret))
+			var gadgets []Gadget
+			gadgets, lastStartingIndex = gadgetsEndingWith(i, instructions, maxLength, maxOctets, limit-len(ret))
 			ret = append(ret, gadgets...)
 		}
 	}
 
-	return ret
+	return ret, lastStartingIndex
 }
 
-func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) []Gadget {
+func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) ([]Gadget, int) {
 	ret := make([]Gadget, 0)
+	startingIndices := make([]int, 0)
 
 	numOctets := 0
 	for length := 0; length < maxLength && instructionIndex - length >= 0; length++ {
@@ -142,13 +145,19 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 			NumOctets: numOctets,
 			Instructions: gadgetInstructions,
 		}}, ret...)
+		startingIndices = append(startingIndices, index)
 
 		if len(ret) > limit {
 			ret = ret[:len(ret)-1]
+			startingIndices = startingIndices[1:]
 		}
 	}
 
-	return ret
+	if len(startingIndices) == 0 {
+		return ret, 0
+	} else {
+		return ret, startingIndices[0] + 1
+	}
 }
 
 func isControlInstruction(instruction disasm.Instruction) bool {

@@ -49,10 +49,7 @@ Search executable memory of the given _pid_ between _start_ and _end_ and return
 Disassemble executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ instructions. 
 
 #### gadget
-Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ gadgets size limited to _instructions_ and _octets_. 
-
-#### fingerprint
-Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ gadget fingerprints size limited to _instructions_ and _octets_.
+Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
 
 ### /api/v1/files/\<_path_\>
 View information about the files and directories in the given directory on the server according to the option provided in _mode_.
@@ -65,3 +62,6 @@ Looks for the Polyverse signature, "-PV-", in the given file, and returns based 
 
 #### disasm
 Disassembles the .text section of the given ELF binary. Fails if given a directory, or if the given file is not an ELF binary.
+
+#### gadget
+Search executable memory of the given ELF binary and return up to _limit_ gadgets size limited to _instructions_ and _octets_.

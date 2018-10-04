@@ -20,8 +20,8 @@ import (
     "errors"
 )
 
-const safeStartAddress uint64 = 0
 const safeEndAddress uint64 = 0x7fffffffffff
+const safeNumInstructions = 100000
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -252,6 +252,8 @@ func ROPFileGadgetHandler(w http.ResponseWriter, r *http.Request, filepath strin
 	GadgetHandler(false, w, r, 0, filepath)
 }
 
+const jsonGadgetsEnd = "\n    ]\n}"
+
 func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
 	var startN uint64 = 0
 	start := r.Form.Get("start")
@@ -319,13 +321,13 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 	firstTime := true
 	var numGadgetsReturned uint64
 	var numGadgetsTotal uint64 = 0
-	address := startN
+	lastIndex := 0
 	for numGadgetsTotal < limitN && (firstTime || numGadgetsReturned == gadgetsPerWrite) {
 		var b []byte
 		var gadgetResult lib.GadgetResult
 		var harderror error
 		var softerrors []error
-		gadgetResult, disasmInstructions, harderror, softerrors = lib.Gadgets(disasmInstructions, inMemory, pidN, filepath, address, endN, limitN, instructionsN, octetsN)
+		gadgetResult, disasmInstructions, lastIndex, harderror, softerrors = lib.Gadgets(disasmInstructions[lastIndex:], inMemory, pidN, filepath, startN, endN, gadgetsPerWrite, instructionsN, octetsN)
 		logErrors(harderror, softerrors)
 		if harderror != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -339,27 +341,35 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		} // if
 
 		if !firstTime {
-			b = bytes.SplitN(b, []byte("[\n"), 2)[1]
-			b = append([]byte(",\n"), b...)
+			split := bytes.SplitN(b, []byte("[\n"), 2)
+			if len(split) == 2 {
+				b = split[1]
+				b = append([]byte(",\n"), b...)
+			} else {
+				b = []byte(jsonGadgetsEnd)
+			}
 		} else {
 			firstTime = false
 		}
 
 		numGadgetsReturned = uint64(len(gadgetResult.Gadgets))
 		numGadgetsTotal += numGadgetsReturned
+		/*DEBUG*/ println(strconv.FormatUint(numGadgetsReturned, 10) + "/" + strconv.FormatUint(gadgetsPerWrite, 10))
+		/*DEBUG*/ println(string(b))
 		if numGadgetsReturned == gadgetsPerWrite && numGadgetsTotal < limitN {
-			b = bytes.Replace(b, []byte("]\n}"), []byte(""), 1)
+			b = bytes.Replace(b, []byte(jsonGadgetsEnd), []byte(""), 1)
 		} // if
 
 		w.Write(b)
-
-		lastGadget := gadgetResult.Gadgets[len(gadgetResult.Gadgets)-1]
-		address = uint64(lastGadget.Address) + 1
 	} // for
 } // ROPMemoryGadgetHandler()
 
 func safeNumGadgets(instructionsN uint64) uint64 {
-	return 1
+	if safeNumInstructions / instructionsN > 1 {
+		return safeNumInstructions / instructionsN
+	} else {
+		return 1
+	}
 }
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
