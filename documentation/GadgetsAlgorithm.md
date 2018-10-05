@@ -27,3 +27,8 @@ Otherwise, prepend the gadget consisting of the found range of adjacent instruct
 Check if over the total number of gadgets allowed to be returned (for the entire gadget search).
 If over the limit, drop the least recently added gadget from the list of gadgets (with the same final instruction that we're checking for) from the list.
 
+# Finding gadgets for client request
+Under certain circumstances (high max number of gadgets, high max number of instructions per gadget), there can be a very large number of gadgets. Storing all gadgets found in memory at once can cause problems, so the server needs to do several small writes instead of storing all the gadgets for one write in order to do a single write.
+Get a limited number of gadgets for each write, and do as many writes as necessary until all gadgets within the scope of the request have been found.
+In order to start where we left off from the last write for each new write, keep track of the index of the starting instruction of the last gadget added.
+Number of gadgets per write is limited to a constant divided by the maximum number of gadgets per instruction.
