@@ -330,7 +330,14 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		gadgetResult, disasmInstructions, lastIndex, harderror, softerrors = lib.Gadgets(disasmInstructions[lastIndex:], inMemory, pidN, filepath, startN, endN, gadgetsPerWrite, instructionsN, octetsN)
 		logErrors(harderror, softerrors)
 		if harderror != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			var errorMessage string
+			defer func() {
+				if recover() != nil {
+					errorMessage = "Cannot read error message."
+				}
+			}()
+			errorMessage = err.Error()
+			http.Error(w, errorMessage, http.StatusBadRequest)
 			return
 		} // if
 
@@ -354,8 +361,6 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 
 		numGadgetsReturned = uint64(len(gadgetResult.Gadgets))
 		numGadgetsTotal += numGadgetsReturned
-		/*DEBUG*/ println(strconv.FormatUint(numGadgetsReturned, 10) + "/" + strconv.FormatUint(gadgetsPerWrite, 10))
-		/*DEBUG*/ println(string(b))
 		if numGadgetsReturned == gadgetsPerWrite && numGadgetsTotal < limitN {
 			b = bytes.Replace(b, []byte(jsonGadgetsEnd), []byte(""), 1)
 		} // if

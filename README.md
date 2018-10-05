@@ -4,7 +4,7 @@
 
 # polyverse/ropoly
 
-## Build Instructions with Docker
+## Build Instructions for Ubuntu with Docker
 From the project directory, run the following:
 $ docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang bash
 $ cd /go/src/github.com/polyverse/ropoly
@@ -13,6 +13,12 @@ $ go build
 ## Run Instructions for Docker
 The container must be run with --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged
 Port 8008 must be mapped to a port on the host with -p in order to view output.
+
+## Build Instructions for Alpine with Docker
+docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang:1.8-alpine /bin/ash
+cd /go/src/github.com/polyverse/ropoly
+apk add --no-cache make build-base
+go build
 
 ## Command Line Options
 
