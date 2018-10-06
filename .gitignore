@@ -4,3 +4,4 @@ ropoly
 .DS_Store
 *.swp
 vendor
+bin
