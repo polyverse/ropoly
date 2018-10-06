@@ -1,0 +1,9 @@
+FROM golang
+
+COPY . /go/src/github.com/polyverse/ropoly
+WORKDIR /go/src/github.com/polyverse/ropoly
+
+RUN dep ensure
+RUN go build
+
+RUN cp ropoly /output
