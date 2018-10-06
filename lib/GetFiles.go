@@ -1,10 +1,10 @@
 package lib
 
 import (
+	"errors"
 	"os/exec"
 	"strconv"
 	"strings"
-	"errors"
 	"time"
 )
 
@@ -13,7 +13,7 @@ type noEmptiesQueue struct {
 	Index int
 }
 
-func dequeue(queue *noEmptiesQueue) (string) {
+func dequeue(queue *noEmptiesQueue) string {
 	ret := ""
 	for ret == "" {
 		ret = queue.Items[queue.Index]
@@ -31,13 +31,13 @@ func GetFiles(dir string) (FilesResult, error) {
 		return FilesResult{}, errors.New("File or directory not found.")
 	}
 	lsEntriesRaw := strings.Split(string(lsResult), "\n")
-	lsEntries := lsEntriesRaw[1:len(lsEntriesRaw)-1]
-	filesresult := FilesResult {
+	lsEntries := lsEntriesRaw[1 : len(lsEntriesRaw)-1]
+	filesresult := FilesResult{
 		Files: make([]File, len(lsEntries)),
 	}
 	for i := 0; i < len(lsEntries); i++ {
 		splitStrings := strings.Split(lsEntries[i], " ")
-		queue := noEmptiesQueue {
+		queue := noEmptiesQueue{
 			Items: splitStrings,
 			Index: 0,
 		}

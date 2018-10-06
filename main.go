@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/polyverse/ropoly/lib"
 	"github.com/polyverse/ropoly/server"
 	"github.com/polyverse/ropoly/wiring"
-	"github.com/polyverse/ropoly/lib"
-	"os"
 	log "github.com/sirupsen/logrus"
+	"os"
 )
 
 const webServerArg = "server"
@@ -21,7 +21,7 @@ func webServer() {
 }
 
 func directoryScan(logging bool, prometheus bool) {
-	for (true) {
+	for true {
 		b, err := json.MarshalIndent(lib.DirectoryScan(), "", "    ")
 		if logging {
 			if err != nil {
@@ -33,7 +33,7 @@ func directoryScan(logging bool, prometheus bool) {
 }
 
 func processScan(logging bool, prometheus bool) {
-	for (true) {
+	for true {
 		b, err := json.MarshalIndent(lib.ProcessScan(), "", "    ")
 		if logging {
 			if err != nil {

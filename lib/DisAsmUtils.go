@@ -2,42 +2,42 @@ package lib
 
 import (
 	"bytes"
+	"github.com/polyverse/disasm"
 	"os/exec"
 	"strconv"
 	"strings"
-	"github.com/polyverse/disasm"
 )
 
 type position int
 
 const (
-	adjacent position = 1
+	adjacent    position = 1
 	overlapping position = 2
-	apart position = 3
+	apart       position = 3
 )
 
-var controlInstructions = map[string]bool {
-	"jmp":true,
-	"je":true,
-	"jne":true,
-	"jg":true,
-	"jge":true,
-	"ja":true,
-	"jae":true,
-	"jl":true,
-	"jle":true,
-	"jb":true,
-	"jbe":true,
-	"jo":true,
-	"jno":true,
-	"jz":true,
-	"jnz":true,
-	"js":true,
-	"jns":true,
-	"call":true,
-	"ret":true,
-	"loop":true,
-	"loopcc":true,
+var controlInstructions = map[string]bool{
+	"jmp":    true,
+	"je":     true,
+	"jne":    true,
+	"jg":     true,
+	"jge":    true,
+	"ja":     true,
+	"jae":    true,
+	"jl":     true,
+	"jle":    true,
+	"jb":     true,
+	"jbe":    true,
+	"jo":     true,
+	"jno":    true,
+	"jz":     true,
+	"jnz":    true,
+	"js":     true,
+	"jns":    true,
+	"call":   true,
+	"ret":    true,
+	"loop":   true,
+	"loopcc": true,
 }
 
 func parseInstruction(line string) (bool, disasm.Instruction) {
@@ -48,11 +48,11 @@ func parseInstruction(line string) (bool, disasm.Instruction) {
 	addressString := strings.Replace(strings.Replace(lineSections[0], " ", "", -1), ":", "", 1)
 	address, _ := strconv.ParseInt(addressString, 16, 64)
 	bytes := parseBytes(lineSections[1])
-	return true, disasm.Instruction {
-		Address: disasm.Ptr(address),
+	return true, disasm.Instruction{
+		Address:   disasm.Ptr(address),
 		NumOctets: len(bytes),
-		Octets: bytes,
-		DisAsm: lineSections[2],
+		Octets:    bytes,
+		DisAsm:    lineSections[2],
 	}
 }
 
@@ -91,7 +91,7 @@ func diskInstructions(filepath string) ([]disasm.Instruction, error) {
 }
 
 func disAsmResult(instructions []disasm.Instruction) DisAsmResult {
-	return DisAsmResult {
+	return DisAsmResult{
 		Instructions: instructions,
 	}
 }
@@ -116,7 +116,7 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 	startingIndices := make([]int, 0)
 
 	numOctets := 0
-	for length := 0; length < maxLength && instructionIndex - length >= 0; length++ {
+	for length := 0; length < maxLength && instructionIndex-length >= 0; length++ {
 		index := instructionIndex - length
 		instruction := instructions[index]
 
@@ -125,7 +125,7 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 				break
 			}
 
-			pos := relativePosition(instruction, instructions[index + 1])
+			pos := relativePosition(instruction, instructions[index+1])
 			if pos == overlapping {
 				continue
 			} else if pos == apart {
@@ -138,12 +138,12 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 			break
 		}
 
-		gadgetInstructions := instructions[instructionIndex - length:instructionIndex + 1]
-		ret = append([]Gadget{Gadget {
-			Address: gadgetInstructions[0].Address,
+		gadgetInstructions := instructions[instructionIndex-length : instructionIndex+1]
+		ret = append([]Gadget{Gadget{
+			Address:         gadgetInstructions[0].Address,
 			NumInstructions: len(gadgetInstructions),
-			NumOctets: numOctets,
-			Instructions: gadgetInstructions,
+			NumOctets:       numOctets,
+			Instructions:    gadgetInstructions,
 		}}, ret...)
 		startingIndices = append(startingIndices, index)
 

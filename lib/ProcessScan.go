@@ -1,11 +1,11 @@
 package lib
 
 import (
-	"time"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
-func ProcessScan() (ProcessScanResult) {
+func ProcessScan() ProcessScanResult {
 	ret := ProcessScanResult{
 		Processes: make([]ProcessScanEntry, 0),
 	}
@@ -30,8 +30,8 @@ func ProcessScan() (ProcessScanResult) {
 			log.Error(softerrors[i])
 		}
 
-		ret.Processes = append(ret.Processes, ProcessScanEntry {
-			Process: process,
+		ret.Processes = append(ret.Processes, ProcessScanEntry{
+			Process:   process,
 			Libraries: librariesResult.Libraries,
 		})
 	}

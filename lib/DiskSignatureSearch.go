@@ -36,7 +36,7 @@ func DiskSignatureSearch(path string) (SignatureResult, error) {
 		for i := objdumpContentStart; i < objdumpContentEnd; i++ {
 			objdumpText += objdumpLines[i][objdumpTextStart:]
 		}
-		for i := 0; i < len(objdumpText) - len(signature) + 1; i++ {
+		for i := 0; i < len(objdumpText)-len(signature)+1; i++ {
 			match := true
 			for char := 0; char < len(signature); char++ {
 				if objdumpText[i+char] != signature[char] {
@@ -51,7 +51,7 @@ func DiskSignatureSearch(path string) (SignatureResult, error) {
 		}
 	}
 
-	result := SignatureResult {
+	result := SignatureResult{
 		Signature: found,
 	}
 	return result, nil

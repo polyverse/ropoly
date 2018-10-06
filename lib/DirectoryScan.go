@@ -1,18 +1,18 @@
 package lib
 
 import (
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"time"
-	log "github.com/sirupsen/logrus"
 )
 
 type file struct {
-	Dir string
+	Dir  string
 	Name string
 }
 
-func DirectoryScan() (DirectoryScanResult) {
+func DirectoryScan() DirectoryScanResult {
 	ret := DirectoryScanResult{
 		Files: make([]FileScan, 0),
 	}
@@ -32,8 +32,8 @@ func DirectoryScan() (DirectoryScanResult) {
 			if err != nil {
 				log.Error(sigErr)
 			}
-			ret.Files = append(ret.Files, FileScan {
-				Path: path,
+			ret.Files = append(ret.Files, FileScan{
+				Path:      path,
 				Signature: signatureResult.Signature,
 			})
 		}

@@ -16,8 +16,8 @@ import (
 
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/ropoly/lib"
-    
-    "errors"
+
+	"errors"
 )
 
 const safeEndAddress uint64 = 0x7fffffffffff
@@ -26,7 +26,7 @@ const safeNumInstructions = 100000
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
 		//log.Fatal(hardError)
-        log.Print(hardError)
+		log.Print(hardError)
 	}
 
 	for _, softError := range softErrors {
@@ -38,7 +38,7 @@ func ROPHealthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Ropoly API Healthy")
 } // ROPTestHandler()
 
-func getFilepath(r *http.Request, uri string) (string) {
+func getFilepath(r *http.Request, uri string) string {
 	splitUri := strings.Split(r.RequestURI, uri)
 	return strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
 }
@@ -370,7 +370,7 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 } // ROPMemoryGadgetHandler()
 
 func safeNumGadgets(instructionsN uint64) uint64 {
-	if safeNumInstructions / instructionsN > 1 {
+	if safeNumInstructions/instructionsN > 1 {
 		return safeNumInstructions / instructionsN
 	} else {
 		return 1
@@ -464,11 +464,11 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	search := r.Form.Get("string")
 	if search == "" {
 		search = r.Form.Get("regexp")
-        if search == "" {
-            err := errors.New("Search with no or empty target given.")
-            http.Error(w, err.Error(), http.StatusBadRequest)
-            return
-        }
+		if search == "" {
+			err := errors.New("Search with no or empty target given.")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	} // if
 
 	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.Form.Get("regexp") != "")

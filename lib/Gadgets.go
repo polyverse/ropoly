@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"math"
 	"github.com/polyverse/disasm"
+	"math"
 )
 
 func Gadgets(instructions []disasm.Instruction, inMemory bool, pidN int, filepath string, startN uint64, endN uint64, limitN uint64, instructionsN uint64, octetsN uint64) (GadgetResult, []disasm.Instruction, int, error, []error) {
@@ -16,7 +16,7 @@ func Gadgets(instructions []disasm.Instruction, inMemory bool, pidN int, filepat
 	}
 
 	gadgetsFound, count := gadgets(instructions, int(instructionsN), int(octetsN), int(limitN))
-	return GadgetResult {
+	return GadgetResult{
 		Gadgets: gadgetsFound,
 	}, instructions, count, nil, softerrors
 }
