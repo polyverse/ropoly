@@ -6,6 +6,7 @@ import (
 	"github.com/polyverse/masche/memaccess"
 	"strconv"
 	"time"
+	"strings"
 )
 
 type ScanResult struct {
@@ -89,11 +90,32 @@ type GadgetResult struct {
 	Gadgets []Gadget `json:"gadgets"`
 }
 
+type Sig uint16
+
+func (s Sig) String() string {
+	str := strconv.FormatUint(uint64(s), 16)
+	return "0x" + strings.Repeat("0", 4-len(str)) + str
+}
+
 type Gadget struct {
 	Address         disasm.Ptr           `json:"address"`
 	NumInstructions int                  `json:"numInstructions"`
 	NumOctets       int                  `json:"numOctets"`
+	Signature       Sig                  `json:"signature"`
 	Instructions    []disasm.Instruction `json:"instructions"`
+}
+
+func (g *Gadget) MarshalJSON() ([]byte, error) {
+	type Alias Gadget
+	return json.Marshal(&struct {
+		Address   string `json:"address"`
+		Signature string `json:"signature"`
+		*Alias
+	}{
+		Address:   g.Address.String(),
+		Signature: g.Signature.String(),
+		Alias:     (*Alias)(g),
+	})
 }
 
 type FingerprintResult struct {

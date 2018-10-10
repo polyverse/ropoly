@@ -1,5 +1,3 @@
-WIP
-
 # Algorithm for finding gadgets
 Given a list of instructions making up a binary, return a list of gadgets.
 List is assumed to be sorted by address. Output will also be sorted by address.
@@ -30,5 +28,7 @@ If over the limit, drop the least recently added gadget from the list of gadgets
 # Finding gadgets for client request
 Under certain circumstances (high max number of gadgets, high max number of instructions per gadget), there can be a very large number of gadgets. Storing all gadgets found in memory at once can cause problems, so the server needs to do several small writes instead of storing all the gadgets for one write in order to do a single write.
 Get a limited number of gadgets for each write, and do as many writes as necessary until all gadgets within the scope of the request have been found.
-In order to start where we left off from the last write for each new write, keep track of the index of the starting instruction of the last gadget added.
 Number of gadgets per write is limited to a constant divided by the maximum number of gadgets per instruction.
+In order to start where we left off from the last write for each new write, keep track of the index of the starting instruction of the last gadget added, and use only the portion of the list after that index as the input for the next time looking for gadgets.
+To keep track of the index, keep a queue of indices when finding the gadgets ending at a given instruction. Enqueue the starting instruction index each time a gadget is added, and if any gadgets are removed dequeue to remove their entries.
+At the end, take the least recently added entry and update the index to that value.

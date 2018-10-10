@@ -25,7 +25,7 @@ func getInstructions(inMemory bool, pidN int, filepath string, startN uint64, en
 	if inMemory {
 		return memoryInstructions(pidN, startN, endN)
 	} else {
-		ret, err := diskInstructions(filepath)
+		ret, err := diskInstructions(filepath, startN, endN, endN - startN, true)
 		return ret, err, make([]error, 0)
 	}
 }
@@ -35,7 +35,7 @@ func memoryInstructions(pidN int, startN uint64, endN uint64) ([]disasm.Instruct
 	if instructionLimit > math.MaxInt32 {
 		instructionLimit = math.MaxInt32
 	}
-	disasmResult, harderror, softerrors := MemoryDisAsmForPid(pidN, startN, endN, uint64(instructionLimit))
+	disasmResult, harderror, softerrors := MemoryDisAsmForPid(pidN, startN, endN, uint64(instructionLimit), true)
 	if harderror != nil {
 		return make([]disasm.Instruction, 0), harderror, softerrors
 	}

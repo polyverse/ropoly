@@ -6,7 +6,7 @@ import (
 	"github.com/polyverse/masche/process"
 )
 
-func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64) (DisAsmResult, error, []error) {
+func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64, disassembleAll bool) (DisAsmResult, error, []error) {
 	softerrors := []error{}
 	process, harderror1, softerrors1 := process.OpenFromPid(int(pidN))
 	if harderror1 != nil {
@@ -48,15 +48,17 @@ func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64) (Di
 			info = disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
 		} // else
 
-		for (pc <= endN) && pc < uint64((region.Address+uintptr(region.Size))) && (len(instructions) < int(limitN)) {
-			instruction, harderror3 := disasm.DecodeInstruction(info, disasm.Ptr(pc))
-			if harderror3 != nil {
-				return DisAsmResult{}, harderror3, joinerrors(softerrors1, softerrors2)
-			} // if
+		end := uint64((region.Address+uintptr(region.Size)))
+		if end > endN {
+			end = endN
+		}
 
-			instructions = append(instructions, *instruction)
-			pc = pc + uint64(instruction.NumOctets)
-		} // for
+		regionInstructions, harderror3 := disassemble(info, pc, end, limitN, disassembleAll)
+		if harderror3 != nil {
+			return DisAsmResult{}, harderror3, joinerrors(softerrors1, softerrors2)
+		}
+		instructions = append(instructions, regionInstructions...)
+		pc = end
 	} // for
 
 	disAsmResult := DisAsmResult{Instructions: instructions}

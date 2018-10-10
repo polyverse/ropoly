@@ -8,20 +8,6 @@ import (
 	"time"
 )
 
-type noEmptiesQueue struct {
-	Items []string
-	Index int
-}
-
-func dequeue(queue *noEmptiesQueue) string {
-	ret := ""
-	for ret == "" {
-		ret = queue.Items[queue.Index]
-		queue.Index++
-	}
-	return ret
-}
-
 func GetFiles(dir string) (FilesResult, error) {
 	if dir == "" {
 		dir = "/"
@@ -37,25 +23,25 @@ func GetFiles(dir string) (FilesResult, error) {
 	}
 	for i := 0; i < len(lsEntries); i++ {
 		splitStrings := strings.Split(lsEntries[i], " ")
-		queue := noEmptiesQueue{
+		queue := noEmptyStringsQueue{
 			Items: splitStrings,
 			Index: 0,
 		}
-		filesresult.Files[i].Permissions = dequeue(&queue)
-		filesresult.Files[i].NumLink = dequeue(&queue)
-		filesresult.Files[i].Owner = dequeue(&queue)
-		filesresult.Files[i].Group = dequeue(&queue)
-		filesresult.Files[i].Size = dequeue(&queue)
-		filesresult.Files[i].DateTime.Month = dequeue(&queue)
-		filesresult.Files[i].DateTime.Day = dequeue(&queue)
-		rawTime := dequeue(&queue)
+		filesresult.Files[i].Permissions = dequeueString(&queue)
+		filesresult.Files[i].NumLink = dequeueString(&queue)
+		filesresult.Files[i].Owner = dequeueString(&queue)
+		filesresult.Files[i].Group = dequeueString(&queue)
+		filesresult.Files[i].Size = dequeueString(&queue)
+		filesresult.Files[i].DateTime.Month = dequeueString(&queue)
+		filesresult.Files[i].DateTime.Day = dequeueString(&queue)
+		rawTime := dequeueString(&queue)
 		if strings.Contains(rawTime, ":") {
 			filesresult.Files[i].DateTime.Year = strconv.Itoa(time.Now().Year())
 			filesresult.Files[i].DateTime.Time = rawTime
 		} else {
 			filesresult.Files[i].DateTime.Year = rawTime
 		}
-		filesresult.Files[i].Filename = dequeue(&queue)
+		filesresult.Files[i].Filename = dequeueString(&queue)
 	}
 	return filesresult, error
 }
