@@ -175,7 +175,48 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 } // ROPLibrariesHandler()
 
 func ROPDiskDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	disAsmResult, harderror := lib.DisAsmForFile(filepath)
+	var startN uint64 = 0
+	start := r.Form.Get("start")
+	if start == "start" {
+		startN = 0
+	} else if start != "" {
+		var err error
+		startN, err = strconv.ParseUint(start, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	var endN uint64 = math.MaxUint64
+	end := r.Form.Get("end")
+	if end == "end" {
+		endN = uint64(safeEndAddress)
+	} else if end != "" {
+		var err error
+		endN, err = strconv.ParseUint(end, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	var limitN uint64 = math.MaxInt32
+	limit := r.Form.Get("limit")
+	if limit == "limit" {
+		limitN = 100
+	} else if limit != "" {
+		var err error
+		limitN, err = strconv.ParseUint(limit, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	all := r.Form.Get("all") == "true"
+
+	disAsmResult, harderror := lib.DisAsmForFile(filepath, startN, endN, limitN, all)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return
@@ -229,7 +270,9 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 		} // if
 	} // else if
 
-	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(pidN, startN, endN, limitN)
+	all := r.Form.Get("all") == "true"
+
+	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(pidN, startN, endN, limitN, all)
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)

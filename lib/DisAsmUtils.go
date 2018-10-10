@@ -6,6 +6,10 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"errors"
+	"os"
+	"hash/crc32"
+	"math"
 )
 
 type position int
@@ -15,6 +19,8 @@ const (
 	overlapping position = 2
 	apart       position = 3
 )
+
+const section = ".text"
 
 var controlInstructions = map[string]bool{
 	"jmp":    true,
@@ -69,25 +75,105 @@ func parseBytes(line string) []byte {
 	return ret
 }
 
-func diskInstructions(filepath string) ([]disasm.Instruction, error) {
-	command := exec.Command("objdump", "-s", "-d", "-j", ".text", filepath)
-
-	ret := make([]disasm.Instruction, 0)
-
-	objdumpResult, error := command.Output()
+func diskInstructions(filepath string, startN uint64, endN uint64, limitN uint64, disassembleAll bool) ([]disasm.Instruction, error) {
+	command := exec.Command("readelf", "--section-details", filepath)
+	readelfResult, error := command.Output()
 	if error != nil {
-		return ret, error
+		return []disasm.Instruction{}, error
 	}
-	objdumpDisasm := string(bytes.Split(objdumpResult, []byte("Disassembly of section .text:\n\n"))[1])
-	objdumpLines := strings.Split(objdumpDisasm, "\n")
-	for i := 0; i < len(objdumpLines); i++ {
-		success, instruction := parseInstruction(objdumpLines[i])
-		if success {
-			ret = append(ret, instruction)
+
+	sectionInfo := bytes.Split(readelfResult, []byte("] "))
+	for i := 0; i < len(sectionInfo); i++ {
+		found, sectionStart, sectionLength := sectionLocation(sectionInfo[i], []byte(".text"))
+		if found {
+			return disassembleFile(filepath, startN, endN, limitN, disassembleAll, sectionStart, sectionLength)
+		}
+	}
+	return make([]disasm.Instruction, 0), errors.New(".text section not found or could not be parsed")
+}
+
+const (
+	readelfOffsetLine = 1
+	readelfOffsetToken = 2
+	readelfSizeLine = 2
+	//readelfSizeToken = 0
+)
+
+func sectionLocation(header []byte, target []byte) (bool, uint64, uint64) {
+	if len(header) < len(target) {
+		return false, 0, 0
+	}
+	for i := 0; i < len(target); i++ {
+		if header[i] != target[i] {
+			return false, 0, 0
 		}
 	}
 
-	return ret, error
+	headerLines := bytes.Split(header, []byte("\n"))
+
+	offsetQueue := noEmptyByteArraysQueue {
+		Items: bytes.Split(headerLines[readelfOffsetLine], []byte(" ")),
+		Index: 0,
+	}
+	for i := 0; i < readelfOffsetToken; i++ {
+		dequeueByteArray(&offsetQueue)
+	}
+	offset, err := strconv.ParseUint(string(dequeueByteArray(&offsetQueue)), 16, 64)
+	if err != nil {
+		return false, 0, 0
+	}
+
+	sizeQueue := noEmptyByteArraysQueue {
+		Items: bytes.Split(headerLines[readelfSizeLine], []byte(" ")),
+		Index: 0,
+	}
+	size, err := strconv.ParseUint(string(dequeueByteArray(&sizeQueue)), 16, 64)
+	if err != nil {
+		return false, 0, 0
+	}
+
+	return true, offset, size
+}
+
+func disassembleFile(filepath string, startN uint64, endN uint64, limitN uint64, disassembleAll bool, sectionStart uint64, sectionLength uint64) ([]disasm.Instruction, error) {
+	binary := make([]byte, sectionLength)
+	file, err := os.Open(filepath)
+	if err != nil {
+		return []disasm.Instruction{}, err
+	}
+	file.ReadAt(binary, int64(sectionStart))
+	file.Close()
+
+	start := startN
+	if start < sectionStart {
+		start = sectionStart
+	}
+
+	end := endN
+	if end > sectionStart + sectionLength {
+		end = sectionStart + sectionLength
+	}
+
+	info := disasm.InfoInitBytes(disasm.Ptr(sectionStart), disasm.Ptr(sectionStart + sectionLength - 1), binary)
+	instructions, err := disassemble(info, start, end, limitN, disassembleAll)
+	return instructions, err
+}
+
+func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disassembleAll bool) ([]disasm.Instruction, error) {
+	instructions := make([]disasm.Instruction, 0)
+	for pc := start; pc < end && uint64(len(instructions)) < limit; {
+		instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
+		if err != nil {
+			return instructions, err
+		}
+		instructions = append(instructions, *instruction)
+		if disassembleAll {
+			pc++
+		} else {
+			pc += uint64(instruction.NumOctets)
+		}
+	}
+	return instructions, nil
 }
 
 func disAsmResult(instructions []disasm.Instruction) DisAsmResult {
@@ -114,6 +200,7 @@ func gadgets(instructions []disasm.Instruction, maxLength int, maxOctets int, li
 func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) ([]Gadget, int) {
 	ret := make([]Gadget, 0)
 	startingIndices := make([]int, 0)
+	gadgetInstructions := make([]disasm.Instruction, 0)
 
 	numOctets := 0
 	for length := 0; length < maxLength && instructionIndex-length >= 0; length++ {
@@ -125,7 +212,7 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 				break
 			}
 
-			pos := relativePosition(instruction, instructions[index+1])
+			pos := relativePosition(instruction, gadgetInstructions[0])
 			if pos == overlapping {
 				continue
 			} else if pos == apart {
@@ -138,13 +225,9 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 			break
 		}
 
-		gadgetInstructions := instructions[instructionIndex-length : instructionIndex+1]
-		ret = append([]Gadget{Gadget{
-			Address:         gadgetInstructions[0].Address,
-			NumInstructions: len(gadgetInstructions),
-			NumOctets:       numOctets,
-			Instructions:    gadgetInstructions,
-		}}, ret...)
+		gadgetInstructions = append([]disasm.Instruction{instruction}, gadgetInstructions...)
+
+		ret = append([]Gadget{gadget(gadgetInstructions)}, ret...)
 		startingIndices = append(startingIndices, index)
 
 		if len(ret) > limit {
@@ -157,6 +240,21 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 		return ret, 0
 	} else {
 		return ret, startingIndices[0] + 1
+	}
+}
+
+func gadget(instructions []disasm.Instruction) Gadget {
+	octets := make([]byte, 0)
+	for i := 0; i < len(instructions); i++ {
+		octets = append(octets, instructions[i].Octets...)
+	}
+	signature := crc32.ChecksumIEEE(octets)
+	return Gadget {
+		Address:            instructions[0].Address,
+		NumInstructions:    len(instructions),
+		NumOctets:          len(octets),
+		Signature:          Sig((signature / math.MaxUint16) ^ (signature % math.MaxUint16)),
+		Instructions:       instructions,
 	}
 }
 
