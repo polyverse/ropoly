@@ -21,7 +21,6 @@ import (
 )
 
 const safeEndAddress uint64 = 0x7fffffffffff
-const safeNumInstructions = 100000
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -359,35 +358,21 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		} // if
 	} // else if
 
-	gadgetsPerWrite := safeNumGadgets(instructionsN)
-	var disasmInstructions []disasm.Instruction
-	firstTime := true
-	var numGadgetsReturned uint64
-	var numGadgetsTotal uint64 = 0
-	lastIndex := 0
-	for numGadgetsTotal < limitN && (firstTime || numGadgetsReturned == gadgetsPerWrite) {
-		var b []byte
-		var gadgetResult lib.GadgetResult
-		var harderror error
-		var softerrors []error
-		gadgetResult, disasmInstructions, lastIndex, harderror, softerrors = lib.Gadgets(disasmInstructions[lastIndex:], inMemory, pidN, filepath, startN, endN, gadgetsPerWrite, instructionsN, octetsN)
-		logErrors(harderror, softerrors)
-		if harderror != nil {
-			var errorMessage string
-			defer func() {
-				if recover() != nil {
-					errorMessage = "Cannot read error message."
-				}
-			}()
-			errorMessage = err.Error()
-			http.Error(w, errorMessage, http.StatusBadRequest)
-			return
-		} // if
+	spec := lib.GadgetSearchSpec {
+		InMemory:       inMemory,
+		PidN:           pidN,
+		Filepath:       filepath,
+		StartN:         startN,
+		EndN:           endN,
+		LimitN:         limitN,
+		InstructionsN:  instructionsN,
+		OctetsN:        octetsN,
+	}
 
-		b, err = json.MarshalIndent(&gadgetResult, "", "    ")
+	lib.OperateOnGadgets(spec, func(gadgetResult lib.GadgetResult, firstTime bool, lastTime bool)(error) {
+		b, err := json.MarshalIndent(&gadgetResult, "", "    ")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+			return err
 		} // if
 
 		if !firstTime {
@@ -397,28 +382,17 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 				b = append([]byte(",\n"), b...)
 			} else {
 				b = []byte(jsonGadgetsEnd)
-			}
-		} else {
-			firstTime = false
-		}
+			} // else
+		} // if
 
-		numGadgetsReturned = uint64(len(gadgetResult.Gadgets))
-		numGadgetsTotal += numGadgetsReturned
-		if numGadgetsReturned == gadgetsPerWrite && numGadgetsTotal < limitN {
+		if !lastTime {
 			b = bytes.Replace(b, []byte(jsonGadgetsEnd), []byte(""), 1)
 		} // if
 
 		w.Write(b)
-	} // for
+		return nil
+	}) //lib.OperateOnGadgets
 } // ROPMemoryGadgetHandler()
-
-func safeNumGadgets(instructionsN uint64) uint64 {
-	if safeNumInstructions/instructionsN > 1 {
-		return safeNumInstructions / instructionsN
-	} else {
-		return 1
-	}
-}
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var access memaccess.Access = memaccess.None

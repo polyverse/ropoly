@@ -9,6 +9,17 @@ import (
 	"strings"
 )
 
+type GadgetSearchSpec struct {
+	InMemory        bool
+	PidN            int
+	Filepath        string
+	StartN          uint64
+	EndN            uint64
+	LimitN          uint64
+	InstructionsN   uint64
+	OctetsN         uint64
+}
+
 type ScanResult struct {
 	Root    DirectoryScanResult `json:"file scan"`
 	Running ProcessScanResult   `json:"library scan"`
