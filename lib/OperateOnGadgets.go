@@ -9,16 +9,18 @@ func OperateOnGadgets(spec GadgetSearchSpec, operation func(GadgetResult, bool, 
 	perWriteSpec := spec
 	gadgetsPerWrite := SafeNumGadgets(spec.InstructionsN + 1)
 	perWriteSpec.LimitN = gadgetsPerWrite
-	var disasmInstructions []disasm.Instruction
+	var disasmInstructions *[]disasm.Instruction
 	firstTime := true
 	var numGadgetsReturned uint64
 	var numGadgetsTotal uint64 = 0
 	var softerrors []error
+
 	for numGadgetsTotal < spec.LimitN && (firstTime || numGadgetsReturned == gadgetsPerWrite) {
 		var gadgetResult GadgetResult
 		var harderror error
 		var gadgetsSofterrors []error
 		gadgetResult, disasmInstructions, harderror, gadgetsSofterrors = Gadgets(disasmInstructions, perWriteSpec)
+
 		softerrors = append(softerrors, gadgetsSofterrors...)
 		if harderror != nil {
 			var errorMessage string

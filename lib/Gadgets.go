@@ -6,20 +6,23 @@ import (
 )
 
 // Returns found gadgets, remaining instructions to search, hard error, soft errors
-func Gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) (GadgetResult, []disasm.Instruction, error, []error) {
+func Gadgets(instructions *[]disasm.Instruction, spec GadgetSearchSpec) (GadgetResult, *[]disasm.Instruction, error, []error) {
 	var harderror error
 	var softerrors []error
-	if len(instructions) == 0 {
-		instructions, harderror, softerrors = getInstructions(spec.InMemory, spec.PidN, spec.Filepath, spec.StartN, spec.EndN)
+	if instructions == nil {
+		instructions = new([]disasm.Instruction)
+		*instructions, harderror, softerrors = getInstructions(spec.InMemory, spec.PidN, spec.Filepath, spec.StartN, spec.EndN)
 		if harderror != nil {
 			return GadgetResult{}, instructions, harderror, softerrors
 		}
 	}
 
-	gadgetsFound, lastIndex := gadgets(instructions, spec)
+	gadgetsFound, lastIndex := gadgets(*instructions, spec)
+	var newInstructions []disasm.Instruction
+	newInstructions = (*instructions)[lastIndex:]
 	return GadgetResult{
 		Gadgets: gadgetsFound,
-	}, instructions[lastIndex:], nil, softerrors
+	}, &newInstructions, nil, softerrors
 }
 
 func getInstructions(inMemory bool, pidN int, filepath string, startN uint64, endN uint64) ([]disasm.Instruction, error, []error) {

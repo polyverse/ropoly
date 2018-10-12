@@ -96,7 +96,7 @@ const (
 	readelfOffsetLine = 1
 	readelfOffsetToken = 2
 	readelfSizeLine = 2
-	//readelfSizeToken = 0
+	// readelfSizeToken = 0
 )
 
 func sectionLocation(header []byte, target []byte) (bool, uint64, uint64) {
@@ -188,10 +188,10 @@ func gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) ([]Gadget
 
 	foundEarly := map[int]*Gadget{}
 
-	var i int
-	for i = 0; i < len(instructions) && uint64(len(gadgets)) < spec.LimitN; i++ {
-		if foundEarly[i] == nil {
-			found, gadgetInstructions := gadgetAtIndex(i, instructions, spec)
+	var index int
+	for index = 0; index < len(instructions) && uint64(len(gadgets)) < spec.LimitN; index++ {
+		if foundEarly[index] == nil {
+			found, gadgetInstructions := gadgetAtIndex(index, instructions, spec)
 			if found {
 				gadgets = append(gadgets, gadget(gadgetInstructions))
 				for i := 1; i < len(gadgetInstructions) && uint64(len(gadgets) + len(foundEarly)) < spec.LimitN; i++ {
@@ -200,12 +200,12 @@ func gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) ([]Gadget
 				}
 			}
 		} else {
-			gadgets = append(gadgets, *foundEarly[i])
-			delete(foundEarly, i)
+			gadgets = append(gadgets, *foundEarly[index])
+			delete(foundEarly, index)
 		}
 	}
 
-	return gadgets, i
+	return gadgets, index
 }
 
 func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
