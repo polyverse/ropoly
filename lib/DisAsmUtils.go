@@ -182,37 +182,40 @@ func disAsmResult(instructions []disasm.Instruction) DisAsmResult {
 	}
 }
 
-func gadgets(instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) ([]Gadget, int) {
-	ret := make([]Gadget, 0)
+// Returns found gadgets, index of first instruction of last gadget
+func gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) ([]Gadget, int) {
+	gadgets := make([]Gadget, 0)
 
-	lastStartingIndex := 0
-	for i := 0; i < len(instructions) && len(ret) < limit; i++ {
-		if isControlInstruction(instructions[i]) {
-			var gadgets []Gadget
-			gadgets, lastStartingIndex = gadgetsEndingWith(i, instructions, maxLength, maxOctets, limit-len(ret))
-			ret = append(ret, gadgets...)
+	foundEarly := map[int]*Gadget{}
+
+	var i int
+	for i = 0; i < len(instructions) && uint64(len(gadgets)) < spec.LimitN; i++ {
+		if foundEarly[i] == nil {
+			found, gadgetInstructions := gadgetAtIndex(i, instructions, spec)
+			if found {
+				gadgets = append(gadgets, gadget(gadgetInstructions))
+				for i := 1; i < len(gadgetInstructions) && uint64(len(gadgets) + len(foundEarly)) < spec.LimitN; i++ {
+					subgadgetInstructions := gadget(gadgetInstructions[i:])
+					foundEarly[i] = &subgadgetInstructions
+				}
+			}
+		} else {
+			gadgets = append(gadgets, *foundEarly[i])
+			delete(foundEarly, i)
 		}
 	}
 
-	return ret, lastStartingIndex
+	return gadgets, i
 }
 
-func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, maxLength int, maxOctets int, limit int) ([]Gadget, int) {
-	ret := make([]Gadget, 0)
-	startingIndices := make([]int, 0)
+func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
 	gadgetInstructions := make([]disasm.Instruction, 0)
+	numOctets := uint64(0)
+	for i := index; i < len(instructions) && uint64(len(gadgetInstructions)) <= spec.InstructionsN && numOctets < spec.OctetsN; i++ {
+		instruction := instructions[i]
 
-	numOctets := 0
-	for length := 0; length < maxLength && instructionIndex-length >= 0; length++ {
-		index := instructionIndex - length
-		instruction := instructions[index]
-
-		if length != 0 {
-			if isControlInstruction(instruction) {
-				break
-			}
-
-			pos := relativePosition(instruction, gadgetInstructions[0])
+		if len(gadgetInstructions) != 0 {
+			pos := relativePosition(gadgetInstructions[len(gadgetInstructions)-1], instruction)
 			if pos == overlapping {
 				continue
 			} else if pos == apart {
@@ -220,27 +223,18 @@ func gadgetsEndingWith(instructionIndex int, instructions []disasm.Instruction, 
 			}
 		}
 
-		numOctets += instruction.NumOctets
-		if numOctets > maxOctets {
+		numOctets += uint64(instruction.NumOctets)
+		if numOctets > spec.OctetsN {
 			break
 		}
 
-		gadgetInstructions = append([]disasm.Instruction{instruction}, gadgetInstructions...)
+		gadgetInstructions = append(gadgetInstructions, instruction)
 
-		ret = append([]Gadget{gadget(gadgetInstructions)}, ret...)
-		startingIndices = append(startingIndices, index)
-
-		if len(ret) > limit {
-			ret = ret[:len(ret)-1]
-			startingIndices = startingIndices[1:]
+		if isControlInstruction(instruction) {
+			return true, gadgetInstructions
 		}
 	}
-
-	if len(startingIndices) == 0 {
-		return ret, 0
-	} else {
-		return ret, startingIndices[0] + 1
-	}
+	return false, gadgetInstructions
 }
 
 func gadget(instructions []disasm.Instruction) Gadget {
@@ -260,13 +254,13 @@ func gadget(instructions []disasm.Instruction) Gadget {
 
 func isControlInstruction(instruction disasm.Instruction) bool {
 	tokens := strings.Split(instruction.DisAsm, " ")
-	pneumonic := tokens[0]
-	return controlInstructions[pneumonic]
+	mnemonic := tokens[0]
+	return controlInstructions[mnemonic]
 }
 
 // first must precede second
 func relativePosition(first disasm.Instruction, second disasm.Instruction) position {
-	firstEnd := disasm.Ptr(int(first.Address) + first.NumOctets)
+	firstEnd := disasm.Ptr(first.Address + disasm.Ptr(first.NumOctets))
 	if firstEnd == second.Address {
 		return adjacent
 	} else if firstEnd < second.Address {

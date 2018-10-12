@@ -9,6 +9,17 @@ import (
 	"strings"
 )
 
+type GadgetSearchSpec struct {
+	InMemory        bool
+	PidN            int
+	Filepath        string
+	StartN          uint64
+	EndN            uint64
+	LimitN          uint64
+	InstructionsN   uint64
+	OctetsN         uint64
+}
+
 type ScanResult struct {
 	Root    DirectoryScanResult `json:"file scan"`
 	Running ProcessScanResult   `json:"library scan"`
@@ -119,7 +130,33 @@ func (g *Gadget) MarshalJSON() ([]byte, error) {
 }
 
 type FingerprintResult struct {
-	Gadgets []string `json:"gadgets"`
+	Gadgets     map[Sig][]disasm.Ptr
+}
+
+func Printable(f *FingerprintResult) []FingerprintGadget {
+	ret :=  make([]FingerprintGadget, 0)
+
+	for signature, addresses := range f.Gadgets {
+		addressStrings := make([]string, len(addresses))
+		for i := 0; i < len(addresses); i++ {
+			addressStrings[i] = addresses[i].String()
+		}
+		ret = append(ret, FingerprintGadget {
+			Signature: signature.String(),
+			Addresses: addressStrings,
+		})
+	}
+
+	return ret
+}
+
+type PrintableFingerprintResult struct {
+	Gadgets     FingerprintResult   `json:"gadgets"`
+}
+
+type FingerprintGadget struct {
+	Signature   string      `json:"signature"`
+	Addresses   []string    `json:"addresses"`
 }
 
 type DisAsmResult struct {

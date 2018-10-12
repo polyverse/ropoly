@@ -21,7 +21,6 @@ import (
 )
 
 const safeEndAddress uint64 = 0x7fffffffffff
-const safeNumInstructions = 100000
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -56,6 +55,8 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 		ROPDiskDisAsmHandler(w, r, filepath)
 	case "gadget":
 		ROPFileGadgetHandler(w, r, filepath)
+	case "fingerprint":
+		FingerprintHandler(false, w, r, 0, filepath)
 	default:
 		http.Error(w, "Mode should be directory, signature, gadget, or disasm.", http.StatusBadRequest)
 	} // switch
@@ -79,6 +80,8 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 		ROPMemoryDisAsmHandler(w, r, pidN)
 	case "gadget":
 		ROPMemoryGadgetHandler(w, r, pidN)
+	case "fingerprint":
+		FingerprintHandler(true, w, r, pidN, "")
 	default:
 		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	}
@@ -359,35 +362,21 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		} // if
 	} // else if
 
-	gadgetsPerWrite := safeNumGadgets(instructionsN)
-	var disasmInstructions []disasm.Instruction
-	firstTime := true
-	var numGadgetsReturned uint64
-	var numGadgetsTotal uint64 = 0
-	lastIndex := 0
-	for numGadgetsTotal < limitN && (firstTime || numGadgetsReturned == gadgetsPerWrite) {
-		var b []byte
-		var gadgetResult lib.GadgetResult
-		var harderror error
-		var softerrors []error
-		gadgetResult, disasmInstructions, lastIndex, harderror, softerrors = lib.Gadgets(disasmInstructions[lastIndex:], inMemory, pidN, filepath, startN, endN, gadgetsPerWrite, instructionsN, octetsN)
-		logErrors(harderror, softerrors)
-		if harderror != nil {
-			var errorMessage string
-			defer func() {
-				if recover() != nil {
-					errorMessage = "Cannot read error message."
-				}
-			}()
-			errorMessage = err.Error()
-			http.Error(w, errorMessage, http.StatusBadRequest)
-			return
-		} // if
+	spec := lib.GadgetSearchSpec {
+		InMemory:       inMemory,
+		PidN:           pidN,
+		Filepath:       filepath,
+		StartN:         startN,
+		EndN:           endN,
+		LimitN:         limitN,
+		InstructionsN:  instructionsN,
+		OctetsN:        octetsN,
+	} // spec
 
-		b, err = json.MarshalIndent(&gadgetResult, "", "    ")
+	harderror, softerrors := lib.OperateOnGadgets(spec, func(gadgetResult lib.GadgetResult, firstTime bool, lastTime bool)(error) {
+		b, err := json.MarshalIndent(&gadgetResult, "", "    ")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+			return err
 		} // if
 
 		if !firstTime {
@@ -397,28 +386,105 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 				b = append([]byte(",\n"), b...)
 			} else {
 				b = []byte(jsonGadgetsEnd)
-			}
-		} else {
-			firstTime = false
-		}
+			} // else
+		} // if
 
-		numGadgetsReturned = uint64(len(gadgetResult.Gadgets))
-		numGadgetsTotal += numGadgetsReturned
-		if numGadgetsReturned == gadgetsPerWrite && numGadgetsTotal < limitN {
+		if !lastTime {
 			b = bytes.Replace(b, []byte(jsonGadgetsEnd), []byte(""), 1)
 		} // if
 
 		w.Write(b)
-	} // for
-} // ROPMemoryGadgetHandler()
+		return nil
+	}) //lib.OperateOnGadgets
+	logErrors(harderror, softerrors)
+} // GadgetHandler()
 
-func safeNumGadgets(instructionsN uint64) uint64 {
-	if safeNumInstructions/instructionsN > 1 {
-		return safeNumInstructions / instructionsN
-	} else {
-		return 1
+func FingerprintHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
+	var startN uint64 = 0
+	start := r.Form.Get("start")
+	var err error
+	if start == "start" {
+		startN = 0
+	} else if start != "" {
+		startN, err = strconv.ParseUint(start, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	var endN uint64 = math.MaxUint64
+	end := r.Form.Get("end")
+	if end == "end" {
+		endN = uint64(safeEndAddress)
+	} else if end != "" {
+		endN, err = strconv.ParseUint(end, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	var limitN uint64 = math.MaxInt32
+	limit := r.Form.Get("limit")
+	if limit == "limit" {
+		limitN = 100
+	} else if limit != "" {
+		limitN, err = strconv.ParseUint(limit, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // else if
+	} // if
+
+	var instructionsN uint64 = math.MaxInt32
+	instructions := r.Form.Get("instructions")
+	if instructions == "instructions" {
+		instructionsN = 5
+	} else if instructions != "" {
+		instructionsN, err = strconv.ParseUint(instructions, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	var octetsN uint64 = math.MaxInt32
+	octets := r.Form.Get("octets")
+	if octets == "octets" {
+		octetsN = 100
+	} else if octets != "" {
+		octetsN, err = strconv.ParseUint(octets, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	spec := lib.GadgetSearchSpec {
+		InMemory:       inMemory,
+		PidN:           pidN,
+		Filepath:       filepath,
+		StartN:         startN,
+		EndN:           endN,
+		LimitN:         limitN,
+		InstructionsN:  instructionsN,
+		OctetsN:        octetsN,
+	} // spec
+
+	fingerprintResult, harderror, softerrors := lib.Fingerprint(spec)
+	logErrors(harderror, softerrors)
+	if harderror != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(lib.Printable(&fingerprintResult), "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-}
+	w.Write(b)
+} // FingerprintHandler()
 
 func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	var access memaccess.Access = memaccess.None

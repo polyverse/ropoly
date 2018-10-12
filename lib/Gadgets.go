@@ -5,20 +5,21 @@ import (
 	"math"
 )
 
-func Gadgets(instructions []disasm.Instruction, inMemory bool, pidN int, filepath string, startN uint64, endN uint64, limitN uint64, instructionsN uint64, octetsN uint64) (GadgetResult, []disasm.Instruction, int, error, []error) {
+// Returns found gadgets, remaining instructions to search, hard error, soft errors
+func Gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) (GadgetResult, []disasm.Instruction, error, []error) {
 	var harderror error
 	var softerrors []error
-	if instructions == nil {
-		instructions, harderror, softerrors = getInstructions(inMemory, pidN, filepath, startN, endN)
+	if len(instructions) == 0 {
+		instructions, harderror, softerrors = getInstructions(spec.InMemory, spec.PidN, spec.Filepath, spec.StartN, spec.EndN)
 		if harderror != nil {
-			return GadgetResult{}, instructions, 0, harderror, softerrors
+			return GadgetResult{}, instructions, harderror, softerrors
 		}
 	}
 
-	gadgetsFound, count := gadgets(instructions, int(instructionsN), int(octetsN), int(limitN))
+	gadgetsFound, lastIndex := gadgets(instructions, spec)
 	return GadgetResult{
 		Gadgets: gadgetsFound,
-	}, instructions, count, nil, softerrors
+	}, instructions[lastIndex:], nil, softerrors
 }
 
 func getInstructions(inMemory bool, pidN int, filepath string, startN uint64, endN uint64) ([]disasm.Instruction, error, []error) {
