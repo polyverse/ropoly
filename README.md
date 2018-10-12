@@ -4,21 +4,12 @@
 
 # polyverse/ropoly
 
-## Build Instructions for Ubuntu with Docker
-From the project directory, run the following:
-$ docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang bash
-$ cd /go/src/github.com/polyverse/ropoly
-$ go build
+## Build Instructions
+Run "./build.sh"
 
 ## Run Instructions for Docker
 The container must be run with --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged
 Port 8008 must be mapped to a port on the host with -p in order to view output.
-
-## Build Instructions for Alpine with Docker
-docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly golang:1.8-alpine /bin/ash
-cd /go/src/github.com/polyverse/ropoly
-apk add --no-cache make build-base
-go build
 
 ## Command Line Options
 
@@ -57,7 +48,10 @@ Disassemble executable memory of the given _pid_ between _start_ and _end_ and r
 #### gadget
 Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
 
-### /api/v1/files/\<_path_\>
+#### fingerprint
+Search executable memory of the given _pid_ between _start_ and _end_ and return a fingerprint describing the locations of up to _limit_ gadgets size limited to _instructions_ and _octets_.
+
+### /api/v1/files/\<_path_\>[?mode=\<directory|signature|disasm|gadget|fingerprint\>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
 View information about the files and directories in the given directory on the server according to the option provided in _mode_.
 
 #### directory
@@ -70,4 +64,7 @@ Looks for the Polyverse signature, "-PV-", in the given file, and returns based 
 Disassembles the .text section of the given ELF binary. Fails if given a directory, or if the given file is not an ELF binary.
 
 #### gadget
-Search executable memory of the given ELF binary and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
+Search .text section of the given ELF binary and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
+
+#### fingerprint
+Search .text section of the given ELF binary and return a fingerprint describing the locations of up to _limit_ gadgets size limited to _instructions_ and _octets_.
