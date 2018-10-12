@@ -1,7 +1,19 @@
 package lib
 
-/*func Fingerprint(inMemory bool, pidN int, filepath string, startN uint64, endN uint64, limitN uint64, instructionsN uint64, octetsN uint64) {
-	OperateOnGadgets(inMemory, pidN, filepath, startN, endN, limitN, instructionsN, octetsN, func(gadgetResult GadgetResult, firstTime bool, lastTime bool)(error) {
+import (
+	"github.com/polyverse/disasm"
+)
 
+func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
+	fingerprint := map[Sig][]disasm.Ptr{}
+	harderror, softerrors := OperateOnGadgets(spec, func(gadgetResult GadgetResult, firstTime bool, lastTime bool)(error) {
+		for i := 0; i < len(gadgetResult.Gadgets); i++ {
+			gadget := gadgetResult.Gadgets[i]
+			fingerprint[gadget.Signature] = append(fingerprint[gadget.Signature], gadget.Address)
+		}
+		return nil
 	})
-}*/
+	return FingerprintResult {
+		Gadgets: fingerprint,
+	}, harderror, softerrors
+}

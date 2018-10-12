@@ -195,7 +195,8 @@ func gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) ([]Gadget
 			if found {
 				gadgets = append(gadgets, gadget(gadgetInstructions))
 				for i := 1; i < len(gadgetInstructions) && uint64(len(gadgets) + len(foundEarly)) < spec.LimitN; i++ {
-					*foundEarly[i] = gadget(gadgetInstructions[i:])
+					subgadgetInstructions := gadget(gadgetInstructions[i:])
+					foundEarly[i] = &subgadgetInstructions
 				}
 			}
 		} else {
@@ -210,16 +211,21 @@ func gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) ([]Gadget
 func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
 	gadgetInstructions := make([]disasm.Instruction, 0)
 	numOctets := uint64(0)
-	for i := index; i < len(instructions) && uint64(len(gadgetInstructions)) < spec.InstructionsN && numOctets < spec.OctetsN; i++ {
+	for i := index; i < len(instructions) && uint64(len(gadgetInstructions)) <= spec.InstructionsN && numOctets < spec.OctetsN; i++ {
 		instruction := instructions[i]
 
-		if i != 0 {
+		if len(gadgetInstructions) != 0 {
 			pos := relativePosition(gadgetInstructions[len(gadgetInstructions)-1], instruction)
 			if pos == overlapping {
 				continue
 			} else if pos == apart {
 				break
 			}
+		}
+
+		numOctets += uint64(instruction.NumOctets)
+		if numOctets > spec.OctetsN {
+			break
 		}
 
 		gadgetInstructions = append(gadgetInstructions, instruction)
@@ -248,13 +254,13 @@ func gadget(instructions []disasm.Instruction) Gadget {
 
 func isControlInstruction(instruction disasm.Instruction) bool {
 	tokens := strings.Split(instruction.DisAsm, " ")
-	pneumonic := tokens[0]
-	return controlInstructions[pneumonic]
+	mnemonic := tokens[0]
+	return controlInstructions[mnemonic]
 }
 
 // first must precede second
 func relativePosition(first disasm.Instruction, second disasm.Instruction) position {
-	firstEnd := disasm.Ptr(int(first.Address) + first.NumOctets)
+	firstEnd := disasm.Ptr(first.Address + disasm.Ptr(first.NumOctets))
 	if firstEnd == second.Address {
 		return adjacent
 	} else if firstEnd < second.Address {

@@ -7,7 +7,7 @@ import (
 
 func OperateOnGadgets(spec GadgetSearchSpec, operation func(GadgetResult, bool, bool)(error)) (error, []error) {
 	perWriteSpec := spec
-	gadgetsPerWrite := SafeNumGadgets(spec.InstructionsN)
+	gadgetsPerWrite := SafeNumGadgets(spec.InstructionsN + 1)
 	perWriteSpec.LimitN = gadgetsPerWrite
 	var disasmInstructions []disasm.Instruction
 	firstTime := true

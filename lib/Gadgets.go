@@ -9,7 +9,7 @@ import (
 func Gadgets(instructions []disasm.Instruction, spec GadgetSearchSpec) (GadgetResult, []disasm.Instruction, error, []error) {
 	var harderror error
 	var softerrors []error
-	if instructions == nil {
+	if len(instructions) == 0 {
 		instructions, harderror, softerrors = getInstructions(spec.InMemory, spec.PidN, spec.Filepath, spec.StartN, spec.EndN)
 		if harderror != nil {
 			return GadgetResult{}, instructions, harderror, softerrors
