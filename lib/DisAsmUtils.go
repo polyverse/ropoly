@@ -3,6 +3,7 @@ package lib
 import (
 	"bytes"
 	"github.com/polyverse/disasm"
+	"github.com/polyverse/masche/memaccess"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -75,21 +76,41 @@ func parseBytes(line string) []byte {
 	return ret
 }
 
-func diskInstructions(filepath string, startN uint64, endN uint64, limitN uint64, disassembleAll bool) ([]disasm.Instruction, error) {
+func diskInstructions(filepath string, startN uint64, endN uint64, limitN uint64, disassembleAll bool) ([]DisAsmRegion, error) {
 	command := exec.Command("readelf", "--section-details", filepath)
 	readelfResult, error := command.Output()
 	if error != nil {
-		return []disasm.Instruction{}, error
+		return []DisAsmRegion{}, error
 	}
+
+	regions := make([]DisAsmRegion, 0)
 
 	sectionInfo := bytes.Split(readelfResult, []byte("] "))
 	for i := 0; i < len(sectionInfo); i++ {
 		found, sectionStart, sectionLength := sectionLocation(sectionInfo[i], []byte(".text"))
 		if found {
-			return disassembleFile(filepath, startN, endN, limitN, disassembleAll, sectionStart, sectionLength)
+			instructions, error := disassembleFile(filepath, startN, endN, limitN, disassembleAll, sectionStart, sectionLength)
+			if error != nil {
+				return []DisAsmRegion{}, error
+			}
+
+			region := memaccess.MemoryRegion {
+				Address: uintptr(sectionStart),
+				Size: uint(sectionLength),
+				Kind: string(bytes.SplitN(sectionInfo[i], []byte("\n"), 2)[0]),
+			}
+
+			regions = append(regions, DisAsmRegion {
+				Instructions: instructions,
+				Region: region,
+			})
 		}
 	}
-	return make([]disasm.Instruction, 0), errors.New(".text section not found or could not be parsed")
+
+	if len(regions) == 0 {
+		return []DisAsmRegion{}, errors.New(".text section not found or could not be parsed")
+	}
+	return regions, nil
 }
 
 const (
@@ -155,17 +176,18 @@ func disassembleFile(filepath string, startN uint64, endN uint64, limitN uint64,
 	}
 
 	info := disasm.InfoInitBytes(disasm.Ptr(sectionStart), disasm.Ptr(sectionStart + sectionLength - 1), binary)
-	instructions, err := disassemble(info, start, end, limitN, disassembleAll)
+	instructions, err := disassemble(info, start, end, limitN, disassembleAll, uintptr(sectionStart))
 	return instructions, err
 }
 
-func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disassembleAll bool) ([]disasm.Instruction, error) {
+func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disassembleAll bool, sectionStart uintptr) ([]disasm.Instruction, error) {
 	instructions := make([]disasm.Instruction, 0)
 	for pc := start; pc < end && uint64(len(instructions)) < limit; {
 		instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
 		if err != nil {
 			return instructions, err
 		}
+		instruction.Address -= disasm.Ptr(sectionStart)
 		instructions = append(instructions, *instruction)
 		if disassembleAll {
 			pc++
@@ -173,13 +195,8 @@ func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disas
 			pc += uint64(instruction.NumOctets)
 		}
 	}
-	return instructions, nil
-}
 
-func disAsmResult(instructions []disasm.Instruction) DisAsmResult {
-	return DisAsmResult{
-		Instructions: instructions,
-	}
+	return instructions, nil
 }
 
 // Returns found gadgets, index of first instruction of last gadget

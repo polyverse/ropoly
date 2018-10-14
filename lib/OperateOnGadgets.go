@@ -2,11 +2,12 @@ package lib
 
 import (
 	"errors"
-	"github.com/polyverse/disasm"
+	//"github.com/polyverse/disasm"
 )
 
+// TODO
 func OperateOnGadgets(spec GadgetSearchSpec, operation func(GadgetResult, bool, bool)(error)) (error, []error) {
-	perWriteSpec := spec
+	/*perWriteSpec := spec
 	gadgetsPerWrite := SafeNumGadgets(spec.InstructionsN + 1)
 	perWriteSpec.LimitN = gadgetsPerWrite
 	var disasmInstructions *[]disasm.Instruction
@@ -45,5 +46,6 @@ func OperateOnGadgets(spec GadgetSearchSpec, operation func(GadgetResult, bool, 
 		firstTime = false
 	}
 
-	return nil, softerrors
+	return nil, softerrors*/
+	return errors.New("OperateOnGadgets() is broken"), nil
 }

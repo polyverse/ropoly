@@ -160,6 +160,11 @@ type FingerprintGadget struct {
 }
 
 type DisAsmResult struct {
+	Regions []DisAsmRegion `json:"regions"`
+}
+
+type DisAsmRegion struct {
+	Region memaccess.MemoryRegion `json:"region"`
 	Instructions []disasm.Instruction `json:"instructions"`
 }
 

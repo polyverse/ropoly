@@ -16,9 +16,10 @@ func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64, dis
 	defer process.Close()
 	softerrors = append(softerrors, softerrors1...)
 
-	var instructions []disasm.Instruction
+	var regions []DisAsmRegion
+	numInstructions := 0
 
-	for pc := startN; (pc <= endN) && (len(instructions) < int(limitN)); {
+	for pc := startN; (pc <= endN) && (numInstructions < int(limitN)); {
 		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(process, uintptr(pc), memaccess.Readable+memaccess.Executable)
 		if harderror2 != nil {
 			return DisAsmResult{}, harderror2, joinerrors(softerrors1, softerrors2)
@@ -53,14 +54,18 @@ func MemoryDisAsmForPid(pidN int, startN uint64, endN uint64, limitN uint64, dis
 			end = endN
 		}
 
-		regionInstructions, harderror3 := disassemble(info, pc, end, limitN, disassembleAll)
+		regionInstructions, harderror3 := disassemble(info, pc, end, limitN, disassembleAll, region.Address)
 		if harderror3 != nil {
 			return DisAsmResult{}, harderror3, joinerrors(softerrors1, softerrors2)
 		}
-		instructions = append(instructions, regionInstructions...)
+		numInstructions += len(regionInstructions)
+		regions = append(regions, DisAsmRegion {
+			Region: region,
+			Instructions: regionInstructions,
+		})
 		pc = end
 	} // for
 
-	disAsmResult := DisAsmResult{Instructions: instructions}
+	disAsmResult := DisAsmResult{Regions: regions}
 	return disAsmResult, nil, joinerrors(softerrors1, softerrors)
 }
