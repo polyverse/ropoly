@@ -98,6 +98,11 @@ type LibrariesResult struct {
 }
 
 type GadgetResult struct {
+	Regions []GadgetRegion `json:"regions"`
+}
+
+type GadgetRegion struct {
+	Region memaccess.MemoryRegion `json:"region"`
 	Gadgets []Gadget `json:"gadgets"`
 }
 

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"math"
@@ -21,6 +20,7 @@ import (
 )
 
 const safeEndAddress uint64 = 0x7fffffffffff
+const indent string = "    "
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -95,7 +95,7 @@ func ROPDirectoryHandler(w http.ResponseWriter, r *http.Request, filepath string
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&filesResult, "", "	  ")
+	b, err := json.MarshalIndent(&filesResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -110,7 +110,7 @@ func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath 
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	b, err := json.MarshalIndent(&signatureResult, "", "    ")
+	b, err := json.MarshalIndent(&signatureResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -126,7 +126,7 @@ func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&pIdsResult, "", "    ")
+	b, err := json.MarshalIndent(&pIdsResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -169,7 +169,7 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&librariesResult, "", "    ")
+	b, err := json.MarshalIndent(&librariesResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -219,13 +219,13 @@ func ROPDiskDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath strin
 
 	all := r.Form.Get("all") == "true"
 
-	disAsmResult, harderror := lib.DisAsmForFile(filepath, startN, endN, limitN, all)
+	disAsmResult, harderror, _ := lib.DisAsmForFile(filepath, startN, endN, limitN, all)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusBadRequest)
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&disAsmResult, "", "    ")
+	b, err := json.MarshalIndent(&disAsmResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -282,7 +282,7 @@ func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&disAsmResult, "", "    ")
+	b, err := json.MarshalIndent(&disAsmResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -371,32 +371,34 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		LimitN:         limitN,
 		InstructionsN:  instructionsN,
 		OctetsN:        octetsN,
-	} // spec
+	} // GadgetSearchSpec
 
-	harderror, softerrors := lib.OperateOnGadgets(spec, func(gadgetResult lib.GadgetResult, firstTime bool, lastTime bool)(error) {
-		b, err := json.MarshalIndent(&gadgetResult, "", "    ")
-		if err != nil {
-			return err
-		} // if
+	firstRegion := true
+	var firstGadget bool
 
-		if !firstTime {
-			split := bytes.SplitN(b, []byte("[\n"), 2)
-			if len(split) == 2 {
-				b = split[1]
-				b = append([]byte(",\n"), b...)
-			} else {
-				b = []byte(jsonGadgetsEnd)
-			} // else
-		} // if
-
-		if !lastTime {
-			b = bytes.Replace(b, []byte(jsonGadgetsEnd), []byte(""), 1)
-		} // if
+	w.Write([]byte("{\n" + indent + "\"regions\": ["))
+	harderror, softerrors := lib.OperateOnGadgets(spec, func(region memaccess.MemoryRegion) {
+		b, _ := json.MarshalIndent(&region, indent + indent + indent, indent)
+		b = append([]byte("\n" + indent + indent + "{\n" + indent + indent + indent + "\"region\": "), b...)
+		b = append(b, []byte(",\n" + indent + indent + indent + "\"gadgets\": [\n" + indent + indent + indent + indent)...)
+		if !firstRegion {
+			b = append([]byte("\n" + indent + indent + indent + "]\n" + indent + indent + "},"), b...)
+		}
+		firstRegion = false
 
 		w.Write(b)
-		return nil
+
+		firstGadget = true
+	}, func(gadget lib.Gadget) {
+		b, _ := json.MarshalIndent(&gadget, indent + indent + indent + indent, indent)
+		if !firstGadget {
+			b = append([]byte(",\n" + indent + indent + indent + indent), b...)
+		}
+		firstGadget = false
+		w.Write(b)
 	}) //lib.OperateOnGadgets
 	logErrors(harderror, softerrors)
+	w.Write([]byte("\n" + indent + indent + indent + "]\n" + indent + indent + "}\n" + indent + "]\n}"))
 } // GadgetHandler()
 
 func FingerprintHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
@@ -479,7 +481,7 @@ func FingerprintHandler(inMemory bool, w http.ResponseWriter, r *http.Request, p
 		return
 	} // if
 
-	b, err := json.MarshalIndent(lib.Printable(&fingerprintResult), "", "    ")
+	b, err := json.MarshalIndent(lib.Printable(&fingerprintResult), "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -524,7 +526,7 @@ func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&regionsResult, "", "    ")
+	b, err := json.MarshalIndent(&regionsResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -587,7 +589,7 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	} // if
 	logErrors(harderror, softerrors)
 
-	b, err := json.MarshalIndent(&searchResult, "", "    ")
+	b, err := json.MarshalIndent(&searchResult, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

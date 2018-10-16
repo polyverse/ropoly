@@ -1,51 +1,76 @@
 package lib
 
 import (
-	//"github.com/polyverse/disasm"
+	"github.com/polyverse/disasm"
+	"hash/crc32"
 	"math"
-	"errors"
+	"strconv"
+	"strings"
 )
 
-// TODO
-// Returns found gadgets, remaining instructions to search, hard error, soft errors
-func Gadgets(instructions *[]DisAsmRegion, spec GadgetSearchSpec) (GadgetResult, *[]DisAsmRegion, error, []error) {
-	/*var harderror error
-	var softerrors []error
-	if instructions == nil {
-		instructions = new([]DisAsmRegion)
-		*instructions, harderror, softerrors = getInstructions(spec.InMemory, spec.PidN, spec.Filepath, spec.StartN, spec.EndN)
-		if harderror != nil {
-			return GadgetResult{}, instructions, harderror, softerrors
+func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
+	gadgetInstructions := make([]disasm.Instruction, 0)
+	numOctets := uint64(0)
+	for i := index; i < len(instructions) && uint64(len(gadgetInstructions)) <= spec.InstructionsN && numOctets < spec.OctetsN; i++ {
+		instruction := instructions[i]
+
+		if len(gadgetInstructions) != 0 {
+			pos := relativePosition(gadgetInstructions[len(gadgetInstructions)-1], instruction)
+			if pos == overlapping {
+				continue
+			} else if pos == apart {
+				break
+			}
+		}
+
+		numOctets += uint64(instruction.NumOctets)
+		if numOctets > spec.OctetsN {
+			break
+		}
+
+		gadgetInstructions = append(gadgetInstructions, instruction)
+
+		if isControlInstruction(instruction) {
+			return true, gadgetInstructions
 		}
 	}
-
-	gadgetsFound, lastRegionIndex, lastInstructionIndex := gadgets(*instructions, spec)
-	newInstructions := len(*instructions[])
-	newInstructions = (*instructions)[lastIndex:]
-	return GadgetResult{
-		Gadgets: gadgetsFound,
-	}, &newInstructions, nil, softerrors*/
-	return GadgetResult{}, nil, errors.New("Gadgets is broken right now."), []error{}
+	return false, gadgetInstructions
 }
 
-func getInstructions(inMemory bool, pidN int, filepath string, startN uint64, endN uint64) ([]DisAsmRegion, error, []error) {
-	if inMemory {
-		return memoryInstructions(pidN, startN, endN)
-	} else {
-		ret, err := diskInstructions(filepath, startN, endN, endN - startN, true)
-		return ret, err, make([]error, 0)
+func gadget(instructions []disasm.Instruction) Gadget {
+	octets := make([]byte, 0)
+	for i := 0; i < len(instructions); i++ {
+		octets = append(octets, instructions[i].Octets...)
+	}
+	signature := crc32.ChecksumIEEE(octets)
+	return Gadget {
+		Address:            instructions[0].Address,
+		NumInstructions:    len(instructions),
+		NumOctets:          len(octets),
+		Signature:          Sig((signature / math.MaxUint16) ^ (signature % math.MaxUint16)),
+		Instructions:       instructions,
 	}
 }
 
-func memoryInstructions(pidN int, startN uint64, endN uint64) ([]DisAsmRegion, error, []error) {
-	instructionLimit := endN - startN
-	if instructionLimit > math.MaxInt32 {
-		instructionLimit = math.MaxInt32
+func isControlInstruction(instruction disasm.Instruction) bool {
+	tokens := strings.Split(instruction.DisAsm, " ")
+	mnemonic := tokens[0]
+	return controlInstructions[mnemonic]
+}
+
+// first must precede second
+func relativePosition(first disasm.Instruction, second disasm.Instruction) position {
+	firstEnd := disasm.Ptr(first.Address + disasm.Ptr(first.NumOctets))
+	if firstEnd == second.Address {
+		return adjacent
+	} else if firstEnd < second.Address {
+		return apart
+	} else /* firstEnd > second.Address */ {
+		return overlapping
 	}
-	disasmResult, harderror, softerrors := MemoryDisAsmForPid(pidN, startN, endN, uint64(instructionLimit), true)
-	if harderror != nil {
-		return []DisAsmRegion{}, harderror, softerrors
-	}
-	instructions := disasmResult.Regions
-	return instructions, harderror, softerrors
+}
+
+func (g *Gadget) String() string {
+	sAdr := strconv.FormatUint(uint64(g.Address), 16)
+	return "0x" + sAdr
 }

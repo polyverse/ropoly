@@ -1,11 +1,12 @@
 package lib
 
 import (
-	"github.com/polyverse/disasm"
+	//"github.com/polyverse/disasm"
+	"errors"
 )
 
 func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
-	fingerprint := map[Sig][]disasm.Ptr{}
+	/*fingerprint := map[Sig][]disasm.Ptr{}
 	harderror, softerrors := OperateOnGadgets(spec, func(gadgetResult GadgetResult, firstTime bool, lastTime bool)(error) {
 		for i := 0; i < len(gadgetResult.Gadgets); i++ {
 			gadget := gadgetResult.Gadgets[i]
@@ -15,5 +16,6 @@ func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
 	})
 	return FingerprintResult {
 		Gadgets: fingerprint,
-	}, harderror, softerrors
+	}, harderror, softerrors*/
+	return FingerprintResult{}, errors.New("Fingerprint is broken."), []error{}
 }
