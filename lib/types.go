@@ -135,42 +135,57 @@ func (g *Gadget) MarshalJSON() ([]byte, error) {
 }
 
 type FingerprintResult struct {
-	Gadgets     map[Sig][]disasm.Ptr
+	Regions     map[memaccess.MemoryRegion]map[Sig][]disasm.Ptr
 }
 
-func Printable(f *FingerprintResult) []FingerprintGadget {
-	ret :=  make([]FingerprintGadget, 0)
+func Printable(f *FingerprintResult) PrintableFingerprintResult {
+	regions := make([]PrintableFingerprintRegion, 0)
 
-	for signature, addresses := range f.Gadgets {
-		addressStrings := make([]string, len(addresses))
-		for i := 0; i < len(addresses); i++ {
-			addressStrings[i] = addresses[i].String()
+	for region, contents := range f.Regions {
+		gadgets := make([]PrintableFingerprintGadget, 0)
+		for sig, addresses := range contents {
+			addressStrings := make([]string, len(addresses))
+			for i := 0; i < len(addresses); i++ {
+				addressStrings[i] = addresses[i].String()
+			}
+			gadgets = append(gadgets, PrintableFingerprintGadget {
+				Signature: sig.String(),
+				Addresses: addressStrings,
+			})
 		}
-		ret = append(ret, FingerprintGadget {
-			Signature: signature.String(),
-			Addresses: addressStrings,
+
+		regions = append(regions, PrintableFingerprintRegion{
+			Region: region,
+			Gadgets: gadgets,
 		})
 	}
 
-	return ret
+	return PrintableFingerprintResult {
+		Regions: regions,
+	}
 }
 
 type PrintableFingerprintResult struct {
-	Gadgets     FingerprintResult   `json:"gadgets"`
+	Regions     []PrintableFingerprintRegion    `json:"gadgets"`
 }
 
-type FingerprintGadget struct {
+type PrintableFingerprintRegion struct {
+	Region      memaccess.MemoryRegion          `json:"region"`
+	Gadgets     []PrintableFingerprintGadget    `json:"gadgets"`
+}
+
+type PrintableFingerprintGadget struct {
 	Signature   string      `json:"signature"`
 	Addresses   []string    `json:"addresses"`
 }
 
 type DisAsmResult struct {
-	Regions []DisAsmRegion `json:"regions"`
+	Regions []DisAsmRegion  `json:"regions"`
 }
 
 type DisAsmRegion struct {
-	Region memaccess.MemoryRegion `json:"region"`
-	Instructions []disasm.Instruction `json:"instructions"`
+	Region          memaccess.MemoryRegion  `json:"region"`
+	Instructions    []disasm.Instruction    `json:"instructions"`
 }
 
 type RegionsResult struct {
