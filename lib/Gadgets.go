@@ -8,6 +8,54 @@ import (
 	"strings"
 )
 
+type position int
+
+const (
+	adjacent    position = 1
+	overlapping position = 2
+	apart       position = 3
+)
+
+type controlType int
+
+const (
+	notControl  controlType = 0
+	dontCare    controlType = 1
+	gadgetEnd   controlType = 2
+	breakGadget controlType = 3
+	prefix      controlType = 4
+	bad         controlType = 5
+)
+
+var controlInstructions = map[string]controlType {
+	"jmp":      breakGadget,
+	"je":       dontCare,
+	"jne":      dontCare,
+	"jg":       dontCare,
+	"jge":      dontCare,
+	"ja":       dontCare,
+	"jae":      dontCare,
+	"jl":       dontCare,
+	"jle":      dontCare,
+	"jb":       dontCare,
+	"jbe":      dontCare,
+	"jo":       dontCare,
+	"jno":      dontCare,
+	"jz":       dontCare,
+	"jnz":      dontCare,
+	"js":       dontCare,
+	"jns":      dontCare,
+	"call":     dontCare,
+	"ret":      gadgetEnd,
+	"lock":     prefix,
+	"rep":      prefix,
+	"repe":     prefix,
+	"repz":     prefix,
+	"repne":    prefix,
+	"repnz":    prefix,
+	"(bad)":    bad,
+}
+
 func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
 	gadgetInstructions := make([]disasm.Instruction, 0)
 	numOctets := uint64(0)
@@ -23,6 +71,11 @@ func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSear
 			}
 		}
 
+		cType := getControlType(instruction)
+		if cType == breakGadget || cType == bad {
+			break
+		}
+
 		numOctets += uint64(instruction.NumOctets)
 		if numOctets > spec.OctetsN {
 			break
@@ -30,7 +83,7 @@ func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSear
 
 		gadgetInstructions = append(gadgetInstructions, instruction)
 
-		if isControlInstruction(instruction) {
+		if cType == gadgetEnd {
 			return true, gadgetInstructions
 		}
 	}
@@ -52,9 +105,14 @@ func gadget(instructions []disasm.Instruction) Gadget {
 	}
 }
 
-func isControlInstruction(instruction disasm.Instruction) bool {
+func getControlType(instruction disasm.Instruction) controlType {
 	tokens := strings.Split(instruction.DisAsm, " ")
-	mnemonic := tokens[0]
+	var mnemonic string
+	cType := prefix
+	for i := 0; cType == prefix; i++ {
+		mnemonic = tokens[i]
+		cType = controlInstructions[mnemonic]
+	}
 	return controlInstructions[mnemonic]
 }
 
