@@ -47,6 +47,19 @@ type ProcessScanResult struct {
 	Processes []ProcessScanEntry `json:"processes"`
 }
 
+type FingerprintComparison struct {
+	RemovedRegions              []memaccess.MemoryRegion        `json:"removed sections"`
+	AddedRegions                []memaccess.MemoryRegion        `json:"added sections"`
+	SharedRegionComparisons     []FingerprintRegionComparison   `json:"shared region comparisons"`
+}
+
+type FingerprintRegionComparison struct {
+	Region              memaccess.MemoryRegion  `json:"region (original address)"`
+	Displacement        uint64                  `json:"displacement"`
+	GadgetDisplacements map[disasm.Ptr][]uint64 `json:"gadget displacements"`
+	AddedGadgets        map[Sig][]disasm.Ptr    `json:"added gadgets"`
+}
+
 type SignatureResult struct {
 	Signature bool `json:"signature"`
 }
@@ -98,6 +111,11 @@ type LibrariesResult struct {
 }
 
 type GadgetResult struct {
+	Regions []GadgetRegion `json:"regions"`
+}
+
+type GadgetRegion struct {
+	Region memaccess.MemoryRegion `json:"region"`
 	Gadgets []Gadget `json:"gadgets"`
 }
 
@@ -130,37 +148,64 @@ func (g *Gadget) MarshalJSON() ([]byte, error) {
 }
 
 type FingerprintResult struct {
+	Regions     map[string]*FingerprintRegion
+}
+
+type FingerprintRegion struct {
+	Region      memaccess.MemoryRegion  `json:"region"`
 	Gadgets     map[Sig][]disasm.Ptr
 }
 
-func Printable(f *FingerprintResult) []FingerprintGadget {
-	ret :=  make([]FingerprintGadget, 0)
+func Printable(f *FingerprintResult) PrintableFingerprintResult {
+	regions := make([]PrintableFingerprintRegion, 0)
 
-	for signature, addresses := range f.Gadgets {
-		addressStrings := make([]string, len(addresses))
-		for i := 0; i < len(addresses); i++ {
-			addressStrings[i] = addresses[i].String()
+	for _, mapping := range f.Regions {
+		region := mapping.Region
+		contents := mapping.Gadgets
+		gadgets := make([]PrintableFingerprintGadget, 0)
+		for sig, addresses := range contents {
+			addressStrings := make([]string, len(addresses))
+			for i := 0; i < len(addresses); i++ {
+				addressStrings[i] = addresses[i].String()
+			}
+			gadgets = append(gadgets, PrintableFingerprintGadget {
+				Signature: sig.String(),
+				Addresses: addressStrings,
+			})
 		}
-		ret = append(ret, FingerprintGadget {
-			Signature: signature.String(),
-			Addresses: addressStrings,
+
+		regions = append(regions, PrintableFingerprintRegion{
+			Region: region,
+			Gadgets: gadgets,
 		})
 	}
 
-	return ret
+	return PrintableFingerprintResult {
+		Regions: regions,
+	}
 }
 
 type PrintableFingerprintResult struct {
-	Gadgets     FingerprintResult   `json:"gadgets"`
+	Regions     []PrintableFingerprintRegion    `json:"gadgets"`
 }
 
-type FingerprintGadget struct {
+type PrintableFingerprintRegion struct {
+	Region      memaccess.MemoryRegion          `json:"region"`
+	Gadgets     []PrintableFingerprintGadget    `json:"gadgets"`
+}
+
+type PrintableFingerprintGadget struct {
 	Signature   string      `json:"signature"`
 	Addresses   []string    `json:"addresses"`
 }
 
 type DisAsmResult struct {
-	Instructions []disasm.Instruction `json:"instructions"`
+	Regions []DisAsmRegion  `json:"regions"`
+}
+
+type DisAsmRegion struct {
+	Region          memaccess.MemoryRegion  `json:"region"`
+	Instructions    []disasm.Instruction    `json:"instructions"`
 }
 
 type RegionsResult struct {
