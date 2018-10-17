@@ -47,6 +47,19 @@ type ProcessScanResult struct {
 	Processes []ProcessScanEntry `json:"processes"`
 }
 
+type FingerprintComparison struct {
+	RemovedRegions              []memaccess.MemoryRegion        `json:"removed sections"`
+	AddedRegions                []memaccess.MemoryRegion        `json:"added sections"`
+	SharedRegionComparisons     []FingerprintRegionComparison   `json:"shared region comparisons"`
+}
+
+type FingerprintRegionComparison struct {
+	Region              memaccess.MemoryRegion  `json:"region (original address)"`
+	Displacement        uint64                  `json:"displacement"`
+	GadgetDisplacements map[disasm.Ptr][]uint64 `json:"gadget displacements"`
+	AddedGadgets        map[Sig][]disasm.Ptr    `json:"added gadgets"`
+}
+
 type SignatureResult struct {
 	Signature bool `json:"signature"`
 }
@@ -135,13 +148,20 @@ func (g *Gadget) MarshalJSON() ([]byte, error) {
 }
 
 type FingerprintResult struct {
-	Regions     map[memaccess.MemoryRegion]map[Sig][]disasm.Ptr
+	Regions     map[string]*FingerprintRegion
+}
+
+type FingerprintRegion struct {
+	Region      memaccess.MemoryRegion  `json:"region"`
+	Gadgets     map[Sig][]disasm.Ptr
 }
 
 func Printable(f *FingerprintResult) PrintableFingerprintResult {
 	regions := make([]PrintableFingerprintRegion, 0)
 
-	for region, contents := range f.Regions {
+	for _, mapping := range f.Regions {
+		region := mapping.Region
+		contents := mapping.Gadgets
 		gadgets := make([]PrintableFingerprintGadget, 0)
 		for sig, addresses := range contents {
 			addressStrings := make([]string, len(addresses))
