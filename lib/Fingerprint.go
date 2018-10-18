@@ -22,6 +22,10 @@ func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
 	return FingerprintResult{fingerprint}, harderror, softerrors
 }
 
+func CompareFingerprints(old, new FingerprintResult) FingerprintComparison {
+	return compareFingerprints(old.Regions, new.Regions)
+}
+
 func compareFingerprints(old, new map[string]*FingerprintRegion) FingerprintComparison {
 	ret := FingerprintComparison{}
 

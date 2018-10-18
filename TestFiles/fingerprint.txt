@@ -1,0 +1,568 @@
+{
+    "regions": [
+        {
+            "region": {
+                "address": "0x5c0",
+                "size": "0x222",
+                "kind": ".text"
+            },
+            "gadgets": [
+                {
+                    "signature": "0xcf71",
+                    "addresses": [
+                        "0x0000000000c5"
+                    ]
+                },
+                {
+                    "signature": "0xc5d9",
+                    "addresses": [
+                        "0x0000000000c6"
+                    ]
+                },
+                {
+                    "signature": "0x0f8e",
+                    "addresses": [
+                        "0x0000000000c7"
+                    ]
+                },
+                {
+                    "signature": "0x65f9",
+                    "addresses": [
+                        "0x0000000000d0"
+                    ]
+                },
+                {
+                    "signature": "0x7a50",
+                    "addresses": [
+                        "0x0000000000d1"
+                    ]
+                },
+                {
+                    "signature": "0xf9a3",
+                    "addresses": [
+                        "0x0000000001f0"
+                    ]
+                },
+                {
+                    "signature": "0x4adf",
+                    "addresses": [
+                        "0x0000000001fd"
+                    ]
+                },
+                {
+                    "signature": "0xe488",
+                    "addresses": [
+                        "0x0000000000be"
+                    ]
+                },
+                {
+                    "signature": "0x448f",
+                    "addresses": [
+                        "0x00000000020c"
+                    ]
+                },
+                {
+                    "signature": "0x80d2",
+                    "addresses": [
+                        "0x0000000000e8"
+                    ]
+                },
+                {
+                    "signature": "0x6c77",
+                    "addresses": [
+                        "0x0000000000c4"
+                    ]
+                },
+                {
+                    "signature": "0x9756",
+                    "addresses": [
+                        "0x0000000000cc"
+                    ]
+                },
+                {
+                    "signature": "0x37f2",
+                    "addresses": [
+                        "0x0000000000e3"
+                    ]
+                },
+                {
+                    "signature": "0x4e48",
+                    "addresses": [
+                        "0x0000000001ef"
+                    ]
+                },
+                {
+                    "signature": "0xeeef",
+                    "addresses": [
+                        "0x0000000001f8"
+                    ]
+                },
+                {
+                    "signature": "0x35d9",
+                    "addresses": [
+                        "0x00000000020b"
+                    ]
+                },
+                {
+                    "signature": "0x57ff",
+                    "addresses": [
+                        "0x000000000210"
+                    ]
+                },
+                {
+                    "signature": "0x3e0a",
+                    "addresses": [
+                        "0x00000000021b"
+                    ]
+                },
+                {
+                    "signature": "0x437a",
+                    "addresses": [
+                        "0x0000000000bf"
+                    ]
+                },
+                {
+                    "signature": "0x3703",
+                    "addresses": [
+                        "0x0000000001fb"
+                    ]
+                },
+                {
+                    "signature": "0x1b9e",
+                    "addresses": [
+                        "0x0000000000dc"
+                    ]
+                },
+                {
+                    "signature": "0x4346",
+                    "addresses": [
+                        "0x0000000000d3"
+                    ]
+                },
+                {
+                    "signature": "0x8a81",
+                    "addresses": [
+                        "0x0000000000d6"
+                    ]
+                },
+                {
+                    "signature": "0x7259",
+                    "addresses": [
+                        "0x0000000000d8"
+                    ]
+                },
+                {
+                    "signature": "0xf172",
+                    "addresses": [
+                        "0x0000000000e9"
+                    ]
+                },
+                {
+                    "signature": "0xc029",
+                    "addresses": [
+                        "0x0000000000ea"
+                    ]
+                },
+                {
+                    "signature": "0x9ab4",
+                    "addresses": [
+                        "0x00000000020e"
+                    ]
+                },
+                {
+                    "signature": "0x2c94",
+                    "addresses": [
+                        "0x000000000212"
+                    ]
+                },
+                {
+                    "signature": "0x1caa",
+                    "addresses": [
+                        "0x0000000000aa"
+                    ]
+                },
+                {
+                    "signature": "0x322d",
+                    "addresses": [
+                        "0x0000000001ee"
+                    ]
+                },
+                {
+                    "signature": "0xec6a",
+                    "addresses": [
+                        "0x0000000001f1"
+                    ]
+                },
+                {
+                    "signature": "0xa00a",
+                    "addresses": [
+                        "0x00000000020d"
+                    ]
+                },
+                {
+                    "signature": "0x898c",
+                    "addresses": [
+                        "0x00000000020f"
+                    ]
+                },
+                {
+                    "signature": "0x799a",
+                    "addresses": [
+                        "0x00000000021f"
+                    ]
+                },
+                {
+                    "signature": "0x72d0",
+                    "addresses": [
+                        "0x0000000000ac"
+                    ]
+                },
+                {
+                    "signature": "0x24bd",
+                    "addresses": [
+                        "0x0000000000c9"
+                    ]
+                },
+                {
+                    "signature": "0x9df8",
+                    "addresses": [
+                        "0x0000000000cb"
+                    ]
+                },
+                {
+                    "signature": "0x7b41",
+                    "addresses": [
+                        "0x0000000000cd"
+                    ]
+                },
+                {
+                    "signature": "0xfbfa",
+                    "addresses": [
+                        "0x0000000000cf"
+                    ]
+                },
+                {
+                    "signature": "0x0506",
+                    "addresses": [
+                        "0x0000000000d5"
+                    ]
+                },
+                {
+                    "signature": "0xb6a7",
+                    "addresses": [
+                        "0x0000000000d9"
+                    ]
+                },
+                {
+                    "signature": "0x8094",
+                    "addresses": [
+                        "0x0000000000c1"
+                    ]
+                },
+                {
+                    "signature": "0x14d8",
+                    "addresses": [
+                        "0x0000000000c3"
+                    ]
+                },
+                {
+                    "signature": "0x6644",
+                    "addresses": [
+                        "0x0000000000de"
+                    ]
+                },
+                {
+                    "signature": "0xad10",
+                    "addresses": [
+                        "0x0000000001ea"
+                    ]
+                },
+                {
+                    "signature": "0x7c9d",
+                    "addresses": [
+                        "0x0000000001f5"
+                    ]
+                },
+                {
+                    "signature": "0x6e70",
+                    "addresses": [
+                        "0x0000000000c2"
+                    ]
+                },
+                {
+                    "signature": "0xd7f9",
+                    "addresses": [
+                        "0x0000000000bb"
+                    ]
+                },
+                {
+                    "signature": "0x946c",
+                    "addresses": [
+                        "0x0000000000ec"
+                    ]
+                },
+                {
+                    "signature": "0x91dc",
+                    "addresses": [
+                        "0x0000000001f4"
+                    ]
+                },
+                {
+                    "signature": "0x8de6",
+                    "addresses": [
+                        "0x0000000001f6"
+                    ]
+                },
+                {
+                    "signature": "0x5edf",
+                    "addresses": [
+                        "0x0000000001fc"
+                    ]
+                },
+                {
+                    "signature": "0x734a",
+                    "addresses": [
+                        "0x000000000202"
+                    ]
+                },
+                {
+                    "signature": "0x1bbd",
+                    "addresses": [
+                        "0x000000000207"
+                    ]
+                },
+                {
+                    "signature": "0xb777",
+                    "addresses": [
+                        "0x00000000005e",
+                        "0x0000000000ae"
+                    ]
+                },
+                {
+                    "signature": "0xd657",
+                    "addresses": [
+                        "0x00000000020a"
+                    ]
+                },
+                {
+                    "signature": "0x2997",
+                    "addresses": [
+                        "0x00000000021d"
+                    ]
+                },
+                {
+                    "signature": "0xb0de",
+                    "addresses": [
+                        "0x000000000209"
+                    ]
+                },
+                {
+                    "signature": "0xc8b9",
+                    "addresses": [
+                        "0x0000000000d2"
+                    ]
+                },
+                {
+                    "signature": "0xdad1",
+                    "addresses": [
+                        "0x0000000001ec",
+                        "0x000000000206"
+                    ]
+                },
+                {
+                    "signature": "0xffb2",
+                    "addresses": [
+                        "0x0000000001f3"
+                    ]
+                },
+                {
+                    "signature": "0x0798",
+                    "addresses": [
+                        "0x00000000021e"
+                    ]
+                },
+                {
+                    "signature": "0x4113",
+                    "addresses": [
+                        "0x0000000000ce"
+                    ]
+                },
+                {
+                    "signature": "0x64d5",
+                    "addresses": [
+                        "0x0000000000ca"
+                    ]
+                },
+                {
+                    "signature": "0xf4ea",
+                    "addresses": [
+                        "0x0000000000ed"
+                    ]
+                },
+                {
+                    "signature": "0x94df",
+                    "addresses": [
+                        "0x0000000001ff"
+                    ]
+                },
+                {
+                    "signature": "0x3d10",
+                    "addresses": [
+                        "0x000000000201"
+                    ]
+                },
+                {
+                    "signature": "0x419e",
+                    "addresses": [
+                        "0x000000000213"
+                    ]
+                },
+                {
+                    "signature": "0x296d",
+                    "addresses": [
+                        "0x0000000000ba"
+                    ]
+                },
+                {
+                    "signature": "0x7975",
+                    "addresses": [
+                        "0x0000000000bc"
+                    ]
+                },
+                {
+                    "signature": "0x9651",
+                    "addresses": [
+                        "0x0000000000ef"
+                    ]
+                },
+                {
+                    "signature": "0x2c5a",
+                    "addresses": [
+                        "0x0000000001ed"
+                    ]
+                },
+                {
+                    "signature": "0x19af",
+                    "addresses": [
+                        "0x000000000203"
+                    ]
+                },
+                {
+                    "signature": "0x799b",
+                    "addresses": [
+                        "0x00000000005d"
+                    ]
+                },
+                {
+                    "signature": "0x4547",
+                    "addresses": [
+                        "0x0000000000d7"
+                    ]
+                },
+                {
+                    "signature": "0x3700",
+                    "addresses": [
+                        "0x0000000001eb"
+                    ]
+                },
+                {
+                    "signature": "0x520a",
+                    "addresses": [
+                        "0x0000000001f9"
+                    ]
+                },
+                {
+                    "signature": "0x13d2",
+                    "addresses": [
+                        "0x0000000001fe"
+                    ]
+                },
+                {
+                    "signature": "0xc8a8",
+                    "addresses": [
+                        "0x000000000200"
+                    ]
+                },
+                {
+                    "signature": "0xec7d",
+                    "addresses": [
+                        "0x000000000204"
+                    ]
+                },
+                {
+                    "signature": "0x0ca2",
+                    "addresses": [
+                        "0x0000000000d4"
+                    ]
+                },
+                {
+                    "signature": "0x7606",
+                    "addresses": [
+                        "0x0000000000e7"
+                    ]
+                },
+                {
+                    "signature": "0xb317",
+                    "addresses": [
+                        "0x0000000001fa"
+                    ]
+                },
+                {
+                    "signature": "0x93eb",
+                    "addresses": [
+                        "0x000000000211"
+                    ]
+                },
+                {
+                    "signature": "0x8129",
+                    "addresses": [
+                        "0x00000000021c"
+                    ]
+                },
+                {
+                    "signature": "0xb8de",
+                    "addresses": [
+                        "0x0000000000c0"
+                    ]
+                },
+                {
+                    "signature": "0xa3de",
+                    "addresses": [
+                        "0x0000000000bd"
+                    ]
+                },
+                {
+                    "signature": "0xaca3",
+                    "addresses": [
+                        "0x0000000000ee"
+                    ]
+                },
+                {
+                    "signature": "0xa32c",
+                    "addresses": [
+                        "0x000000000060",
+                        "0x0000000000b0"
+                    ]
+                },
+                {
+                    "signature": "0x9b6d",
+                    "addresses": [
+                        "0x0000000001f7"
+                    ]
+                },
+                {
+                    "signature": "0x8b5d",
+                    "addresses": [
+                        "0x00000000021a"
+                    ]
+                },
+                {
+                    "signature": "0xb6ac",
+                    "addresses": [
+                        "0x0000000000eb"
+                    ]
+                }
+            ]
+        }
+    ]
+}

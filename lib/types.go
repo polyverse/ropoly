@@ -54,10 +54,66 @@ type FingerprintComparison struct {
 }
 
 type FingerprintRegionComparison struct {
+	Region              memaccess.MemoryRegion      `json:"region (original address)"`
+	Displacement        uint64                      `json:"displacement"`
+	GadgetDisplacements map[disasm.Ptr][]uint64     `json:"gadget displacements"`
+	AddedGadgets        map[Sig][]disasm.Ptr        `json:"added gadgets"`
+}
+
+type PrintableFingerprintComparison struct {
+	RemovedRegions              []memaccess.MemoryRegion        `json:"removed sections"`
+	AddedRegions                []memaccess.MemoryRegion        `json:"added sections"`
+	SharedRegionComparisons     []PrintableRegionComparison     `json:"shared region comparisons"`
+}
+
+type PrintableRegionComparison struct {
 	Region              memaccess.MemoryRegion  `json:"region (original address)"`
-	Displacement        uint64                  `json:"displacement"`
-	GadgetDisplacements map[disasm.Ptr][]uint64 `json:"gadget displacements"`
-	AddedGadgets        map[Sig][]disasm.Ptr    `json:"added gadgets"`
+	Displacement        string                  `json:"displacement"`
+	GadgetDisplacements map[string][]string     `json:"gadget displacements"`
+	AddedGadgets        []AddedGadget           `json:"added gadgets"`
+}
+
+type AddedGadget struct {
+	Signature   string      `json:"signature"`
+	Addresses   []string    `json:"addresses"`
+}
+
+func PrintableComparison(c *FingerprintComparison) PrintableFingerprintComparison {
+	ret := PrintableFingerprintComparison {
+		RemovedRegions: c.RemovedRegions,
+		AddedRegions:   c.AddedRegions,
+		SharedRegionComparisons: make([]PrintableRegionComparison, len(c.SharedRegionComparisons)),
+	}
+
+	for i := 0; i < len(c.SharedRegionComparisons); i++ {
+		ret.SharedRegionComparisons[i] = PrintableRegionComparison {
+			Region: c.SharedRegionComparisons[i].Region,
+			Displacement: "0x" + strconv.FormatUint(c.SharedRegionComparisons[i].Displacement, 16),
+			GadgetDisplacements: map[string][]string{},
+			AddedGadgets: []AddedGadget{},
+		}
+
+		for origin, displacements := range c.SharedRegionComparisons[i].GadgetDisplacements {
+			displacementStrings := make([]string, len(displacements))
+			for i := 0; i < len(displacements); i++ {
+				displacementStrings[i] = "0x" + strconv.FormatUint(displacements[i], 16)
+			}
+			ret.SharedRegionComparisons[i].GadgetDisplacements[origin.String()] = displacementStrings
+		}
+
+		for sig, addresses := range c.SharedRegionComparisons[i].AddedGadgets {
+			addressStrings := make([]string, len(addresses))
+			for i := 0; i < len(addresses); i++ {
+				addressStrings[i] = addresses[i].String()
+			}
+			ret.SharedRegionComparisons[i].AddedGadgets = append(ret.SharedRegionComparisons[i].AddedGadgets, AddedGadget {
+				Signature: sig.String(),
+				Addresses: addressStrings,
+			})
+		}
+	}
+
+	return ret
 }
 
 type SignatureResult struct {
@@ -156,6 +212,32 @@ type FingerprintRegion struct {
 	Gadgets     map[Sig][]disasm.Ptr
 }
 
+func Parseable(r *memaccess.MemoryRegion) ParseableMemoryRegion {
+	return ParseableMemoryRegion {
+		Address: "0x" + strconv.FormatUint(uint64(r.Address), 16),
+		Size: "0x" + strconv.FormatUint(uint64(r.Size), 16),
+		Kind: r.Kind,
+	}
+}
+
+func ParseRegion(r ParseableMemoryRegion) (memaccess.MemoryRegion, error) {
+	address, error := strconv.ParseUint(r.Address, 0, 64)
+	if error != nil {
+		return memaccess.MemoryRegion{}, error
+	}
+
+	size, error := strconv.ParseUint(r.Address, 0, 64)
+	if error != nil {
+		return memaccess.MemoryRegion{}, error
+	}
+
+	return memaccess.MemoryRegion {
+		Address: uintptr(address),
+		Size: uint(size),
+		Kind: r.Kind,
+	}, nil
+}
+
 func Printable(f *FingerprintResult) PrintableFingerprintResult {
 	regions := make([]PrintableFingerprintRegion, 0)
 
@@ -175,7 +257,7 @@ func Printable(f *FingerprintResult) PrintableFingerprintResult {
 		}
 
 		regions = append(regions, PrintableFingerprintRegion{
-			Region: region,
+			Region: Parseable(&region),
 			Gadgets: gadgets,
 		})
 	}
@@ -185,13 +267,59 @@ func Printable(f *FingerprintResult) PrintableFingerprintResult {
 	}
 }
 
+func ParseFingerprintResult(f PrintableFingerprintResult) (FingerprintResult, error) {
+	regions := map[string]*FingerprintRegion{}
+
+	for i := 0; i < len(f.Regions); i++ {
+		readRegion := f.Regions[i]
+
+		parsedRegion, error := ParseRegion(readRegion.Region)
+		if error != nil {
+			return FingerprintResult{}, error
+		}
+		region := FingerprintRegion{
+			Region: parsedRegion,
+			Gadgets: map[Sig][]disasm.Ptr{},
+		}
+
+		for i := 0; i < len(readRegion.Gadgets); i++ {
+			readGadget := readRegion.Gadgets[i]
+
+			readGadgetSignature, error := strconv.ParseUint(readGadget.Signature, 0, 64)
+			if error != nil {
+				return FingerprintResult{}, error
+			}
+
+			addresses := make([]disasm.Ptr, len(readGadget.Addresses))
+			for i := 0; i < len(addresses); i++ {
+				address, error := strconv.ParseUint(readGadget.Addresses[i], 0, 64)
+				if error != nil {
+					return FingerprintResult{}, error
+				}
+				addresses[i] = disasm.Ptr(address)
+			}
+
+			region.Gadgets[Sig(readGadgetSignature)] = addresses
+		}
+		regions[region.Region.Kind] = &region
+	}
+
+	return FingerprintResult{regions}, nil
+}
+
 type PrintableFingerprintResult struct {
-	Regions     []PrintableFingerprintRegion    `json:"gadgets"`
+	Regions     []PrintableFingerprintRegion    `json:"regions"`
 }
 
 type PrintableFingerprintRegion struct {
-	Region      memaccess.MemoryRegion          `json:"region"`
+	Region      ParseableMemoryRegion           `json:"region"`
 	Gadgets     []PrintableFingerprintGadget    `json:"gadgets"`
+}
+
+type ParseableMemoryRegion struct {
+	Address     string      `json:"address"`
+	Size        string      `json:"size"`
+	Kind        string      `json:"kind"`
 }
 
 type PrintableFingerprintGadget struct {
