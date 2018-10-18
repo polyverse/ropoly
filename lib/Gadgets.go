@@ -83,7 +83,7 @@ func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSear
 
 		gadgetInstructions = append(gadgetInstructions, instruction)
 
-		if cType == gadgetEnd {
+		if cType == gadgetEnd && len(gadgetInstructions) > 1 {
 			return true, gadgetInstructions
 		}
 	}
