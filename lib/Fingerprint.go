@@ -81,7 +81,7 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 	for _, count := range ret.GadgetsByOffset {
 		p := float64(count) / float64(ret.NumOldGadgets)
 		term := p * math.Log2(p)
-		/*DEBUG*/ println(count, p, term)
+		/*DEBUG*/ println("count:", count, "p:", p, "term:", term)
 		ret.Eqi -= term
 	}
 
