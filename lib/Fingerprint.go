@@ -3,6 +3,7 @@ package lib
 import (
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
+	"math"
 )
 
 func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
@@ -51,6 +52,8 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		Displacement: int64(new.Region.Address) - int64(old.Region.Address),
 		GadgetDisplacements: map[disasm.Ptr][]int64{},
 		AddedGadgets: map[Sig][]disasm.Ptr{},
+		NumOldGadgets: 0,
+		GadgetsByOffset: map[int64]int{},
 	}
 
 	for sig, addresses := range old.Gadgets {
@@ -59,16 +62,27 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 			oldAddress := addresses[i]
 			offsets := make([]int64, len(newAddresses))
 			for j := 0; j < len(offsets); j++ {
-				offsets[j] = int64(newAddresses[j]) - int64(oldAddress)
+				offset := int64(newAddresses[j]) - int64(oldAddress)
+				offsets[j] = offset
+				ret.GadgetsByOffset[offset]++
 			}
 			ret.GadgetDisplacements[oldAddress] = offsets
 		}
+		ret.NumOldGadgets += len(addresses)
 	}
 
 	for sig, addresses := range new.Gadgets {
 		if old.Gadgets[sig] == nil {
 			ret.AddedGadgets[sig] = addresses
 		}
+	}
+
+	ret.Eqi = float64(0)
+	for _, count := range ret.GadgetsByOffset {
+		p := float64(count) / float64(ret.NumOldGadgets)
+		term := p * math.Log2(p)
+		/*DEBUG*/ println(count, p, term)
+		ret.Eqi -= term
 	}
 
 	return ret
