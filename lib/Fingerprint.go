@@ -48,8 +48,8 @@ func compareFingerprints(old, new map[string]*FingerprintRegion) FingerprintComp
 func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) FingerprintRegionComparison {
 	ret := FingerprintRegionComparison {
 		Region: old.Region,
-		Displacement: uint64(new.Region.Address - old.Region.Address),
-		GadgetDisplacements: map[disasm.Ptr][]uint64{},
+		Displacement: int64(new.Region.Address) - int64(old.Region.Address),
+		GadgetDisplacements: map[disasm.Ptr][]int64{},
 		AddedGadgets: map[Sig][]disasm.Ptr{},
 	}
 
@@ -57,9 +57,9 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		newAddresses := new.Gadgets[sig]
 		for i := 0; i < len(addresses); i++ {
 			oldAddress := addresses[i]
-			offsets := make([]uint64, len(newAddresses))
+			offsets := make([]int64, len(newAddresses))
 			for j := 0; j < len(offsets); j++ {
-				offsets[j] = uint64(newAddresses[j] - oldAddress)
+				offsets[j] = int64(newAddresses[j]) - int64(oldAddress)
 			}
 			ret.GadgetDisplacements[oldAddress] = offsets
 		}
