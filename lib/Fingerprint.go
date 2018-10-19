@@ -3,7 +3,6 @@ package lib
 import (
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
-	"math"
 )
 
 func Fingerprint(spec GadgetSearchSpec) (FingerprintResult, error, []error) {
@@ -77,13 +76,14 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		}
 	}
 
-	ret.Eqi = float64(0)
+	maxP := float64(0)
 	for _, count := range ret.GadgetsByOffset {
 		p := float64(count) / float64(ret.NumOldGadgets)
-		term := p * math.Log2(p)
-		/*DEBUG*/ println("count:", count, "p:", p, "term:", term)
-		ret.Eqi -= term
+		if p > maxP {
+			maxP = p
+		}
 	}
+	ret.Eqi = float64(100) * (float64(1) - maxP)
 
 	return ret
 }
