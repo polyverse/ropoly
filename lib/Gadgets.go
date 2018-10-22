@@ -109,7 +109,7 @@ func getControlType(instruction disasm.Instruction) controlType {
 	tokens := strings.Split(instruction.DisAsm, " ")
 	var mnemonic string
 	cType := prefix
-	for i := 0; cType == prefix; i++ {
+	for i := 0; cType == prefix && i < len(tokens); i++ {
 		mnemonic = tokens[i]
 		cType = controlInstructions[mnemonic]
 	}
