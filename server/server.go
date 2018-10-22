@@ -19,6 +19,7 @@ func ServeOverHttp(address string) error {
 
 	addHandleFunc(v1, "/health", handlers.ROPHealthHandler)
 	addHandleFunc(v1, "/pids", handlers.ROPPIdsHandler)
+	addHandleFunc(v1, "/compare", handlers.FingerprintComparisonHandler)
 
 	pid := subLister(v1, "/pids/{pid}")
 	addHandleFunc(pid, "/libraries", handlers.ROPLibrariesHandler)

@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"github.com/polyverse/disasm"
+)
+
 const (
 	readelfOffsetLine = 1
 	readelfOffsetToken = 2
