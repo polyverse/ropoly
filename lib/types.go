@@ -9,6 +9,16 @@ import (
 	"strings"
 )
 
+type EqiResult struct {
+	Eqi         float64     `json:"overall EQI"`
+	RegionEqis  []RegionEqi `json:"region EQIs"`
+}
+
+type RegionEqi struct {
+	Region  memaccess.MemoryRegion  `json:"region"`
+	Eqi     float64                 `json:"EQI"`
+}
+
 type GadgetSearchSpec struct {
 	InMemory        bool
 	PidN            int
@@ -60,23 +70,21 @@ type FingerprintRegionComparison struct {
 	AddedGadgets        map[Sig][]disasm.Ptr        `json:"added gadgets"`
 	NumOldGadgets       int                         `json:"total gadgets in original"`
 	GadgetsByOffset     map[int64]int               `json:"number of gadgets findable at each displacement"`
-	Eqi                 float64                     `json:"EQI"`
 }
 
 type PrintableFingerprintComparison struct {
-	RemovedRegions              []memaccess.MemoryRegion        `json:"removed sections"`
-	AddedRegions                []memaccess.MemoryRegion        `json:"added sections"`
+	RemovedRegions              []ParseableMemoryRegion         `json:"removed sections"`
+	AddedRegions                []ParseableMemoryRegion         `json:"added sections"`
 	SharedRegionComparisons     []PrintableRegionComparison     `json:"shared region comparisons"`
 }
 
 type PrintableRegionComparison struct {
-	Region              memaccess.MemoryRegion  `json:"region (original address)"`
+	Region              ParseableMemoryRegion   `json:"region (original address)"`
 	Displacement        string                  `json:"displacement"`
 	GadgetDisplacements map[string][]string     `json:"gadget displacements"`
 	AddedGadgets        []AddedGadget           `json:"added gadgets"`
 	NumOldGadgets       int                     `json:"total gadgets in original"`
 	GadgetsByOffset     map[string]int          `json:"number of gadgets findable at each displacement"`
-	Eqi                 float64                 `json:"EQI"`
 }
 
 type AddedGadget struct {
@@ -86,49 +94,149 @@ type AddedGadget struct {
 
 func PrintableComparison(c *FingerprintComparison) PrintableFingerprintComparison {
 	ret := PrintableFingerprintComparison {
-		RemovedRegions: c.RemovedRegions,
-		AddedRegions:   c.AddedRegions,
+		RemovedRegions: make([]ParseableMemoryRegion, len(c.RemovedRegions)),
+		AddedRegions:   make([]ParseableMemoryRegion, len(c.AddedRegions)),
 		SharedRegionComparisons: make([]PrintableRegionComparison, len(c.SharedRegionComparisons)),
+	}
+
+	for i := 0; i < len(c.RemovedRegions); i++ {
+		ret.RemovedRegions[i] = Parseable(&c.RemovedRegions[i])
+	}
+
+	for i := 0; i < len(c.AddedRegions); i++ {
+		ret.AddedRegions[i] = Parseable(&c.AddedRegions[i])
 	}
 
 	for i := 0; i < len(c.SharedRegionComparisons); i++ {
 		readRegion := c.SharedRegionComparisons[i]
-		ret.SharedRegionComparisons[i] = PrintableRegionComparison {
-			Region: readRegion.Region,
-			Displacement: formatHexInt(readRegion.Displacement),
-			GadgetDisplacements: map[string][]string{},
-			AddedGadgets: []AddedGadget{},
-			NumOldGadgets: readRegion.NumOldGadgets,
-			GadgetsByOffset: map[string]int{},
-		}
-
-		for origin, displacements := range readRegion.GadgetDisplacements {
-			displacementStrings := make([]string, len(displacements))
-			for i := 0; i < len(displacements); i++ {
-				displacementStrings[i] = formatHexInt(displacements[i])
-			}
-			ret.SharedRegionComparisons[i].GadgetDisplacements[origin.String()] = displacementStrings
-		}
-
-		for sig, addresses := range readRegion.AddedGadgets {
-			addressStrings := make([]string, len(addresses))
-			for i := 0; i < len(addresses); i++ {
-				addressStrings[i] = addresses[i].String()
-			}
-			ret.SharedRegionComparisons[i].AddedGadgets = append(ret.SharedRegionComparisons[i].AddedGadgets, AddedGadget {
-				Signature: sig.String(),
-				Addresses: addressStrings,
-			})
-		}
-
-		for offset, count := range readRegion.GadgetsByOffset {
-			ret.SharedRegionComparisons[i].GadgetsByOffset[formatHexInt(offset)] = count
-		}
-
-		ret.SharedRegionComparisons[i].Eqi = readRegion.Eqi
+		ret.SharedRegionComparisons[i] = printableFingerprintRegionComparison(&readRegion)
 	}
 
 	return ret
+}
+
+func ParseComparison(c PrintableFingerprintComparison) (FingerprintComparison, error) {
+	parsed := FingerprintComparison {
+		RemovedRegions: make([]memaccess.MemoryRegion, len(c.RemovedRegions)),
+		AddedRegions: make([]memaccess.MemoryRegion, len(c.AddedRegions)),
+		SharedRegionComparisons: make([]FingerprintRegionComparison, len(c.SharedRegionComparisons)),
+	}
+
+	for i := 0; i < len(c.RemovedRegions); i++ {
+		var err error = nil
+		parsed.RemovedRegions[i], err = ParseRegion(c.RemovedRegions[i])
+		if err != nil {
+			return FingerprintComparison{}, err
+		}
+	}
+
+	for i := 0; i < len(c.AddedRegions); i++ {
+		var err error = nil
+		parsed.AddedRegions[i], err = ParseRegion(c.AddedRegions[i])
+		if err != nil {
+			return FingerprintComparison{}, err
+		}
+	}
+
+	for i := 0; i < len(c.SharedRegionComparisons); i++ {
+		var err error = nil
+		parsed.SharedRegionComparisons[i], err = parseFingerprintRegionComparison(c.SharedRegionComparisons[i])
+		if err != nil {
+			return FingerprintComparison{}, err
+		}
+	}
+
+	return parsed, nil
+}
+
+func printableFingerprintRegionComparison(c *FingerprintRegionComparison) PrintableRegionComparison {
+	ret := PrintableRegionComparison {
+		Region: Parseable(&c.Region),
+		Displacement: formatHexInt(c.Displacement),
+		GadgetDisplacements: map[string][]string{},
+		AddedGadgets: make([]AddedGadget, 0),
+		NumOldGadgets: c.NumOldGadgets,
+		GadgetsByOffset: map[string]int{},
+	}
+
+	for origin, displacements := range c.GadgetDisplacements {
+		displacementStrings := make([]string, len(displacements))
+		for i := 0; i < len(displacements); i++ {
+			displacementStrings[i] = formatHexInt(displacements[i])
+		}
+		ret.GadgetDisplacements[origin.String()] = displacementStrings
+	}
+
+	for sig, addresses := range c.AddedGadgets {
+		addressStrings := make([]string, len(addresses))
+		for i := 0; i < len(addresses); i++ {
+			addressStrings[i] = addresses[i].String()
+		}
+		ret.AddedGadgets = append(ret.AddedGadgets, AddedGadget {
+			Signature: sig.String(),
+			Addresses: addressStrings,
+		})
+	}
+
+	for offset, count := range c.GadgetsByOffset {
+		ret.GadgetsByOffset[formatHexInt(offset)] = count
+	}
+
+	return ret
+}
+
+func parseFingerprintRegionComparison(c PrintableRegionComparison) (FingerprintRegionComparison, error) {
+	parsed := FingerprintRegionComparison {
+		GadgetDisplacements: map[disasm.Ptr][]int64{},
+		AddedGadgets: map[Sig][]disasm.Ptr{},
+		NumOldGadgets: c.NumOldGadgets,
+		GadgetsByOffset: map[int64]int{},
+	}
+
+	var err error
+	parsed.Region, err = ParseRegion(c.Region)
+	if err != nil {
+		return FingerprintRegionComparison{}, err
+	}
+
+	parsed.Displacement, err = strconv.ParseInt(c.Displacement, 0, 64)
+	if err != nil {
+		return FingerprintRegionComparison{}, err
+	}
+
+	for originString, displacementStrings := range c.GadgetDisplacements {
+		origin, err := strconv.ParseUint(originString, 0, 64)
+		if err != nil {
+			return FingerprintRegionComparison{}, err
+		}
+		displacements := make([]int64, len(displacementStrings))
+		for i := 0; i < len(displacements); i++ {
+			displacements[i], err = strconv.ParseInt(displacementStrings[i], 0, 64)
+			if err != nil {
+				return FingerprintRegionComparison{}, err
+			}
+		}
+		parsed.GadgetDisplacements[disasm.Ptr(origin)] = displacements
+	}
+
+	for i := 0; i < len(c.AddedGadgets); i++ {
+		gadget := c.AddedGadgets[i]
+		sig, err := strconv.ParseUint(gadget.Signature, 0, 64)
+		if err != nil {
+			return FingerprintRegionComparison{}, err
+		}
+		addresses := make([]disasm.Ptr, len(gadget.Addresses))
+		for j := 0; j < len(addresses); j++ {
+			address, err := strconv.ParseUint(gadget.Addresses[j], 0, 64)
+			if err != nil {
+				return FingerprintRegionComparison{}, err
+			}
+			addresses[j]  = disasm.Ptr(address)
+		}
+		parsed.AddedGadgets[Sig(sig)] = addresses
+	}
+
+	return parsed, nil
 }
 
 func formatHexInt(i int64) string {

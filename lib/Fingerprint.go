@@ -31,13 +31,16 @@ func compareFingerprints(old, new map[string]*FingerprintRegion) FingerprintComp
 
 	for regionName, mapping := range old {
 		if new[regionName] == nil {
+			/*DEBUG*/ println("Found a removed region.")
 			ret.RemovedRegions = append(ret.RemovedRegions, mapping.Region)
 		} else {
+			/*DEBUG*/ println("Found a shared region.")
 			ret.SharedRegionComparisons = append(ret.SharedRegionComparisons, compareFingerprintRegions(*old[regionName], *new[regionName]))
 		}
 	}
 	for regionName, mapping := range new {
 		if old[regionName] == nil {
+			/*DEBUG*/ println("Found an added region.")
 			ret.AddedRegions = append(ret.AddedRegions, mapping.Region)
 		}
 	}
@@ -54,6 +57,7 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		NumOldGadgets: 0,
 		GadgetsByOffset: map[int64]int{},
 	}
+	/*DEBUG*/ println("Set up region comparison.")
 
 	for sig, addresses := range old.Gadgets {
 		newAddresses := new.Gadgets[sig]
@@ -69,19 +73,14 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		}
 		ret.NumOldGadgets += len(addresses)
 	}
+	/*DEBUG*/ println("Counted gadget displacements.")
 
 	for sig, addresses := range new.Gadgets {
 		if old.Gadgets[sig] == nil {
 			ret.AddedGadgets[sig] = addresses
 		}
 	}
-
-	chiSquaredSum := 0
-	for _, count := range ret.GadgetsByOffset {
-		chiSquared := count * count
-		chiSquaredSum += chiSquared
-	}
-	ret.Eqi = (1.0 - (float64(chiSquaredSum) / float64(ret.NumOldGadgets * ret.NumOldGadgets))) * 100.0
+	/*DEBUG*/ println("Counted added gadgets.")
 
 	return ret
 }

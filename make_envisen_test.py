@@ -5,7 +5,7 @@ ropoly_start = 0x401d60
 ropoly_size = 0x296912
 new_center = 0x10000
 offsets = [0x10, 0x10010]
-fill_byte = 0
+fill_byte = 0xff
 
 loop = open("TestFiles/loop", "rb")
 loop_bytes = bytearray(loop.read())
