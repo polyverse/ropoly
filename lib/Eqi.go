@@ -3,9 +3,10 @@ package lib
 import (
 	"errors"
 	"math"
+	"net/url"
 )
 
-func Eqi(comparison FingerprintComparison, eqiFunc string) (EqiResult, error) {
+func Eqi(comparison FingerprintComparison, eqiFunc string, form url.Values) (EqiResult, error) {
 	ret := EqiResult{
 		Eqi: float64(0),
 	}
@@ -16,7 +17,10 @@ func Eqi(comparison FingerprintComparison, eqiFunc string) (EqiResult, error) {
 		if f == nil {
 			return EqiResult{}, errors.New("EQI function not recognized")
 		}
-		eqi := regionEqiFuncs[eqiFunc](regionComparison)
+		eqi, err := regionEqiFuncs[eqiFunc](regionComparison, form)
+		if err != nil {
+			return EqiResult{}, err
+		}
 		ret.RegionEqis = append(ret.RegionEqis, RegionEqi {
 			Region: regionComparison.Region,
 			Eqi: normalizeEqi(eqi),
@@ -28,7 +32,7 @@ func Eqi(comparison FingerprintComparison, eqiFunc string) (EqiResult, error) {
 	return ret, nil
 }
 
-type regionEqiFunc func(FingerprintRegionComparison) float64
+type regionEqiFunc func(FingerprintRegionComparison, url.Values) (float64, error)
 
 var regionEqiFuncs = map[string]regionEqiFunc {
 	"monte-carlo": monteCarloEqi,

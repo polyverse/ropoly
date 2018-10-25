@@ -34,7 +34,7 @@ func EqiHandler(w http.ResponseWriter, r *http.Request) {
 
 	eqiFunc := r.Form.Get("func")
 
-	eqiResult, err := lib.Eqi(comparison, eqiFunc)
+	eqiResult, err := lib.Eqi(comparison, eqiFunc, r.Form)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
