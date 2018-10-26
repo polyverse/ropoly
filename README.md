@@ -73,9 +73,12 @@ Search .text section of the given ELF binary and return a fingerprint describing
 Get fingerprint comparison information about the changes from the _old_/original binary to the _new_/modified binary.
 _new_ and _old_ should be files containing fingerprints. To generate a fingerprint binary, use the _fingerprint_ mode and direct stdout to a file.
 
-### /api/v1/eqi?comparison=_filepath_&calc=<|monte-carlo|>
+### /api/v1/eqi?comparison=_filepath_&calc=<|monte-carlo|envisen-original>
 Calculate the EQI based on the given fingerprint comparison file, using the given calculation method. Additional arguments may be required depending on _func_.
 _comparison_ should be a fingerprint comparison file. To generate one, use the _compare_ endpoint and direct stdout to a file.
 
 #### monte-carlo
 Uses a Monte Carlo method to simulate _fingerprints_ ROP attacks of length between _min_ and _max_ gadgets. EQI is the percentage of attacks with no common offset.
+
+#### envisen-original
+Uses the original formula described at https://github.com/polyverse/EnVisen/blob/master/docs/entropy-index.md as of October 25, 2018.

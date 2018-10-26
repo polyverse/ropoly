@@ -36,6 +36,7 @@ type regionEqiFunc func(FingerprintRegionComparison, url.Values) (float64, error
 
 var regionEqiFuncs = map[string]regionEqiFunc {
 	"monte-carlo": monteCarloEqi,
+	"envisen-original": originalEnvisenEqi,
 }
 
 func normalizeEqi(eqi float64) float64 {

@@ -236,6 +236,14 @@ func parseFingerprintRegionComparison(c PrintableRegionComparison) (FingerprintR
 		parsed.AddedGadgets[Sig(sig)] = addresses
 	}
 
+	for offsetString, count := range c.GadgetsByOffset {
+		offset, err := strconv.ParseInt(offsetString, 0, 64)
+		if err != nil {
+			return FingerprintRegionComparison{}, err
+		}
+		parsed.GadgetsByOffset[offset]=count
+	}
+
 	return parsed, nil
 }
 
