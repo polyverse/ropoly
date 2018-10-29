@@ -58,7 +58,7 @@ func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
 	case "fingerprint":
 		FingerprintHandler(false, w, r, 0, filepath)
 	default:
-		http.Error(w, "Mode should be directory, signature, gadget, or disasm.", http.StatusBadRequest)
+		http.Error(w, "Mode should be directory, signature, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	} // switch
 }
 
