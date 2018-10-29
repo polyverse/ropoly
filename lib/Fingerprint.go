@@ -76,12 +76,5 @@ func compareFingerprintRegions(old FingerprintRegion, new FingerprintRegion) Fin
 		}
 	}
 
-	chiSquaredSum := 0
-	for _, count := range ret.GadgetsByOffset {
-		chiSquared := count * count
-		chiSquaredSum += chiSquared
-	}
-	ret.Eqi = (1.0 - (float64(chiSquaredSum) / float64(ret.NumOldGadgets * ret.NumOldGadgets))) * 100.0
-
 	return ret
 }
