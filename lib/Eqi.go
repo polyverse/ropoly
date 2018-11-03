@@ -21,9 +21,9 @@ func Eqi(comparison FingerprintComparison, eqiFunc string, form url.Values) (Eqi
 		if err != nil {
 			return EqiResult{}, err
 		}
-		ret.RegionEqis = append(ret.RegionEqis, RegionEqi {
+		ret.RegionEqis = append(ret.RegionEqis, RegionEqi{
 			Region: regionComparison.Region,
-			Eqi: normalizeEqi(eqi),
+			Eqi:    normalizeEqi(eqi),
 		})
 		ret.Eqi += math.Pow(eqi, 2.0)
 	}
@@ -34,8 +34,8 @@ func Eqi(comparison FingerprintComparison, eqiFunc string, form url.Values) (Eqi
 
 type regionEqiFunc func(FingerprintRegionComparison, url.Values) (float64, error)
 
-var regionEqiFuncs = map[string]regionEqiFunc {
-	"monte-carlo": monteCarloEqi,
+var regionEqiFuncs = map[string]regionEqiFunc{
+	"monte-carlo":      monteCarloEqi,
 	"envisen-original": originalEnvisenEqi,
 }
 

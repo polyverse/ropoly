@@ -362,15 +362,15 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 		} // if
 	} // else if
 
-	spec := lib.GadgetSearchSpec {
-		InMemory:       inMemory,
-		PidN:           pidN,
-		Filepath:       filepath,
-		StartN:         startN,
-		EndN:           endN,
-		LimitN:         limitN,
-		InstructionsN:  instructionsN,
-		OctetsN:        octetsN,
+	spec := lib.GadgetSearchSpec{
+		InMemory:      inMemory,
+		PidN:          pidN,
+		Filepath:      filepath,
+		StartN:        startN,
+		EndN:          endN,
+		LimitN:        limitN,
+		InstructionsN: instructionsN,
+		OctetsN:       octetsN,
 	} // GadgetSearchSpec
 
 	firstRegion := true
@@ -378,11 +378,11 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 
 	w.Write([]byte("{\n" + indent + "\"regions\": ["))
 	harderror, softerrors := lib.OperateOnGadgets(spec, func(region memaccess.MemoryRegion) {
-		b, _ := json.MarshalIndent(&region, indent + indent + indent, indent)
-		b = append([]byte("\n" + indent + indent + "{\n" + indent + indent + indent + "\"region\": "), b...)
-		b = append(b, []byte(",\n" + indent + indent + indent + "\"gadgets\": [\n" + indent + indent + indent + indent)...)
+		b, _ := json.MarshalIndent(&region, indent+indent+indent, indent)
+		b = append([]byte("\n"+indent+indent+"{\n"+indent+indent+indent+"\"region\": "), b...)
+		b = append(b, []byte(",\n"+indent+indent+indent+"\"gadgets\": [\n"+indent+indent+indent+indent)...)
 		if !firstRegion {
-			b = append([]byte("\n" + indent + indent + indent + "]\n" + indent + indent + "},"), b...)
+			b = append([]byte("\n"+indent+indent+indent+"]\n"+indent+indent+"},"), b...)
 		}
 		firstRegion = false
 
@@ -390,9 +390,9 @@ func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN i
 
 		firstGadget = true
 	}, func(gadget lib.Gadget) {
-		b, _ := json.MarshalIndent(&gadget, indent + indent + indent + indent, indent)
+		b, _ := json.MarshalIndent(&gadget, indent+indent+indent+indent, indent)
 		if !firstGadget {
-			b = append([]byte(",\n" + indent + indent + indent + indent), b...)
+			b = append([]byte(",\n"+indent+indent+indent+indent), b...)
 		}
 		firstGadget = false
 		w.Write(b)
@@ -463,15 +463,15 @@ func FingerprintHandler(inMemory bool, w http.ResponseWriter, r *http.Request, p
 		} // if
 	} // else if
 
-	spec := lib.GadgetSearchSpec {
-		InMemory:       inMemory,
-		PidN:           pidN,
-		Filepath:       filepath,
-		StartN:         startN,
-		EndN:           endN,
-		LimitN:         limitN,
-		InstructionsN:  instructionsN,
-		OctetsN:        octetsN,
+	spec := lib.GadgetSearchSpec{
+		InMemory:      inMemory,
+		PidN:          pidN,
+		Filepath:      filepath,
+		StartN:        startN,
+		EndN:          endN,
+		LimitN:        limitN,
+		InstructionsN: instructionsN,
+		OctetsN:       octetsN,
 	} // spec
 
 	fingerprintResult, harderror, softerrors := lib.Fingerprint(spec)

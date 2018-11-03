@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"io/ioutil"
 	"github.com/polyverse/ropoly/lib"
+	"io/ioutil"
+	"net/http"
 )
 
 func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {

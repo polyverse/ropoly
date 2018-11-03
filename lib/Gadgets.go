@@ -27,33 +27,33 @@ const (
 	bad         controlType = 5
 )
 
-var controlInstructions = map[string]controlType {
-	"jmp":      breakGadget,
-	"je":       dontCare,
-	"jne":      dontCare,
-	"jg":       dontCare,
-	"jge":      dontCare,
-	"ja":       dontCare,
-	"jae":      dontCare,
-	"jl":       dontCare,
-	"jle":      dontCare,
-	"jb":       dontCare,
-	"jbe":      dontCare,
-	"jo":       dontCare,
-	"jno":      dontCare,
-	"jz":       dontCare,
-	"jnz":      dontCare,
-	"js":       dontCare,
-	"jns":      dontCare,
-	"call":     dontCare,
-	"ret":      gadgetEnd,
-	"lock":     prefix,
-	"rep":      prefix,
-	"repe":     prefix,
-	"repz":     prefix,
-	"repne":    prefix,
-	"repnz":    prefix,
-	"(bad)":    bad,
+var controlInstructions = map[string]controlType{
+	"jmp":   breakGadget,
+	"je":    dontCare,
+	"jne":   dontCare,
+	"jg":    dontCare,
+	"jge":   dontCare,
+	"ja":    dontCare,
+	"jae":   dontCare,
+	"jl":    dontCare,
+	"jle":   dontCare,
+	"jb":    dontCare,
+	"jbe":   dontCare,
+	"jo":    dontCare,
+	"jno":   dontCare,
+	"jz":    dontCare,
+	"jnz":   dontCare,
+	"js":    dontCare,
+	"jns":   dontCare,
+	"call":  dontCare,
+	"ret":   gadgetEnd,
+	"lock":  prefix,
+	"rep":   prefix,
+	"repe":  prefix,
+	"repz":  prefix,
+	"repne": prefix,
+	"repnz": prefix,
+	"(bad)": bad,
 }
 
 func gadgetAtIndex(index int, instructions []disasm.Instruction, spec GadgetSearchSpec) (bool, []disasm.Instruction) {
@@ -96,12 +96,12 @@ func gadget(instructions []disasm.Instruction) Gadget {
 		octets = append(octets, instructions[i].Octets...)
 	}
 	signature := crc32.ChecksumIEEE(octets)
-	return Gadget {
-		Address:            instructions[0].Address,
-		NumInstructions:    len(instructions),
-		NumOctets:          len(octets),
-		Signature:          Sig((signature / math.MaxUint16) ^ (signature % math.MaxUint16)),
-		Instructions:       instructions,
+	return Gadget{
+		Address:         instructions[0].Address,
+		NumInstructions: len(instructions),
+		NumOctets:       len(octets),
+		Signature:       Sig((signature / math.MaxUint16) ^ (signature % math.MaxUint16)),
+		Instructions:    instructions,
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 func OperateOnGadgets(spec GadgetSearchSpec, regionOperation func(memaccess.MemoryRegion), gadgetOperation func(Gadget)) (error, []error) {
 	var opError error
 
-	regionsError, softerrors := OperateOnRegions(spec, func(region memaccess.MemoryRegion, info disasm.Info, start uint64, end uint64)bool {
+	regionsError, softerrors := OperateOnRegions(spec, func(region memaccess.MemoryRegion, info disasm.Info, start uint64, end uint64) bool {
 		regionOperation(region)
 
 		numRegionGadgets, error := operateOnRegionGadgets(spec, region, info, start, end, gadgetOperation)
@@ -45,7 +45,7 @@ func operateOnRegionGadgets(spec GadgetSearchSpec, region memaccess.MemoryRegion
 			if found {
 				operation(gadget(gadgetInstructions))
 				numGadgets += 1
-				for i := 1; i < len(gadgetInstructions) && numGadgets + uint64(len(foundEarly)) < spec.LimitN; i++ {
+				for i := 1; i < len(gadgetInstructions) && numGadgets+uint64(len(foundEarly)) < spec.LimitN; i++ {
 					subgadgetInstructions := gadgetInstructions[i:]
 					foundEarly[i] = &subgadgetInstructions
 				}

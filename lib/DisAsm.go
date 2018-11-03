@@ -1,8 +1,8 @@
 package lib
 
-import(
-	"github.com/polyverse/masche/memaccess"
+import (
 	"github.com/polyverse/disasm"
+	"github.com/polyverse/masche/memaccess"
 )
 
 func DisAsm(spec GadgetSearchSpec, disassembleAll bool) (DisAsmResult, error, []error) {
@@ -10,15 +10,15 @@ func DisAsm(spec GadgetSearchSpec, disassembleAll bool) (DisAsmResult, error, []
 	var softerrors []error
 	var regions []DisAsmRegion
 
-	regionsHarderror, regionsSofterrors := OperateOnRegions(spec, func(region memaccess.MemoryRegion, info disasm.Info, pc uint64, end uint64)bool {
+	regionsHarderror, regionsSofterrors := OperateOnRegions(spec, func(region memaccess.MemoryRegion, info disasm.Info, pc uint64, end uint64) bool {
 		var regionInstructions []disasm.Instruction
 		regionInstructions, harderror = disassemble(info, pc, end, spec.LimitN, disassembleAll, region.Address)
 		if harderror != nil {
 			return false
 		}
 		spec.LimitN -= uint64(len(regionInstructions))
-		regions = append(regions, DisAsmRegion {
-			Region: region,
+		regions = append(regions, DisAsmRegion{
+			Region:       region,
 			Instructions: regionInstructions,
 		})
 		return spec.LimitN > 0
@@ -41,8 +41,8 @@ func disassembleRegion(spec GadgetSearchSpec, region memaccess.MemoryRegion, inf
 		return DisAsmRegion{}, error
 	}
 
-	disAsmRegion := DisAsmRegion {
-		Region: region,
+	disAsmRegion := DisAsmRegion{
+		Region:       region,
 		Instructions: regionInstructions,
 	}
 	return disAsmRegion, nil
@@ -68,8 +68,8 @@ func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disas
 }
 
 const (
-	readelfOffsetLine = 1
+	readelfOffsetLine  = 1
 	readelfOffsetToken = 2
-	readelfSizeLine = 2
+	readelfSizeLine    = 2
 	// readelfSizeToken = 0
 )

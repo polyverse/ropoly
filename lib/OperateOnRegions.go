@@ -2,15 +2,15 @@ package lib
 
 import (
 	"bytes"
+	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/masche/process"
-	"github.com/polyverse/disasm"
 	"os"
 	"os/exec"
 	"strconv"
 )
 
-func OperateOnRegions(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64)bool) (error, []error) {
+func OperateOnRegions(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64) bool) (error, []error) {
 	if spec.InMemory {
 		return operateOnMemoryRegions(spec, operation)
 	} else {
@@ -18,7 +18,7 @@ func OperateOnRegions(spec GadgetSearchSpec, operation func(memaccess.MemoryRegi
 	}
 }
 
-func operateOnMemoryRegions(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64)bool) (error, []error) {
+func operateOnMemoryRegions(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64) bool) (error, []error) {
 	softerrors := []error{}
 	process, harderror1, softerrors1 := process.OpenFromPid(int(spec.PidN))
 	if harderror1 != nil {
@@ -75,7 +75,7 @@ func operateOnMemoryRegions(spec GadgetSearchSpec, operation func(memaccess.Memo
 	return nil, softerrors
 }
 
-func operateOnTextSections(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64)bool) (error) {
+func operateOnTextSections(spec GadgetSearchSpec, operation func(memaccess.MemoryRegion, disasm.Info, uint64, uint64) bool) error {
 	command := exec.Command("readelf", "--section-details", spec.Filepath)
 	readelfResult, error := command.Output()
 	if error != nil {
@@ -100,17 +100,17 @@ func operateOnTextSections(spec GadgetSearchSpec, operation func(memaccess.Memor
 			}
 
 			end := spec.EndN
-			if end > sectionStart + sectionLength {
+			if end > sectionStart+sectionLength {
 				end = sectionStart + sectionLength
 			}
 
-			region := memaccess.MemoryRegion {
+			region := memaccess.MemoryRegion{
 				Address: uintptr(sectionStart),
-				Size: uint(sectionLength),
-				Kind: string(bytes.SplitN(sectionInfo[i], []byte("\n"), 2)[0]),
+				Size:    uint(sectionLength),
+				Kind:    string(bytes.SplitN(sectionInfo[i], []byte("\n"), 2)[0]),
 			}
 
-			info := disasm.InfoInitBytes(disasm.Ptr(sectionStart), disasm.Ptr(sectionStart + sectionLength - 1), binary)
+			info := disasm.InfoInitBytes(disasm.Ptr(sectionStart), disasm.Ptr(sectionStart+sectionLength-1), binary)
 			keepGoing := operation(region, info, start, end)
 			if !keepGoing {
 				break
@@ -134,7 +134,7 @@ func sectionLocation(header []byte, target []byte) (bool, uint64, uint64) {
 
 	headerLines := bytes.Split(header, []byte("\n"))
 
-	offsetQueue := noEmptyByteArraysQueue {
+	offsetQueue := noEmptyByteArraysQueue{
 		Items: bytes.Split(headerLines[readelfOffsetLine], []byte(" ")),
 		Index: 0,
 	}
@@ -146,7 +146,7 @@ func sectionLocation(header []byte, target []byte) (bool, uint64, uint64) {
 		return false, 0, 0
 	}
 
-	sizeQueue := noEmptyByteArraysQueue {
+	sizeQueue := noEmptyByteArraysQueue{
 		Items: bytes.Split(headerLines[readelfSizeLine], []byte(" ")),
 		Index: 0,
 	}

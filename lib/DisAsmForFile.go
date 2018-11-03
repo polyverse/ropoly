@@ -4,8 +4,8 @@ func DisAsmForFile(path string, startN uint64, endN uint64, limitN uint64, disas
 	return DisAsm(GadgetSearchSpec{
 		InMemory: false,
 		Filepath: path,
-		StartN: startN,
-		EndN: endN,
-		LimitN: limitN,
+		StartN:   startN,
+		EndN:     endN,
+		LimitN:   limitN,
 	}, disassembleAll)
 }
