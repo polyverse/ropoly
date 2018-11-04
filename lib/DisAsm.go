@@ -1,8 +1,10 @@
 package lib
 
 import (
+	"github.com/pkg/errors"
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
+	"github.com/polyverse/ropoly/lib/types"
 )
 
 func DisAsm(spec GadgetSearchSpec, disassembleAll bool) (DisAsmResult, error, []error) {
@@ -35,21 +37,20 @@ func DisAsm(spec GadgetSearchSpec, disassembleAll bool) (DisAsmResult, error, []
 	return DisAsmResult{regions}, nil, softerrors
 }
 
-func disassembleRegion(spec GadgetSearchSpec, region memaccess.MemoryRegion, info disasm.Info, pc uint64, end uint64, disassembleAll bool) (DisAsmRegion, error) {
-	regionInstructions, error := disassemble(info, pc, end, spec.LimitN, disassembleAll, region.Address)
-	if error != nil {
-		return DisAsmRegion{}, error
+func disassembleRegion(region memaccess.MemoryRegion, info disasm.Info, limit uint64, pc uint64, end uint64, disassembleAll bool) (*types.MemoryRegionDisAsm, error) {
+	regionInstructions, err := disassemble(info, pc, end, limit, disassembleAll, region.Address)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Unable to disassemble Region %v", region.String())
 	}
 
-	disAsmRegion := DisAsmRegion{
+	return &types.MemoryRegionDisAsm{
 		Region:       region,
 		Instructions: regionInstructions,
-	}
-	return disAsmRegion, nil
+	}, nil
 }
 
 func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disassembleAll bool, sectionStart uintptr) ([]disasm.Instruction, error) {
-	instructions := make([]disasm.Instruction, 0)
+	instructions := []disasm.Instruction{}
 	for pc := start; pc < end && uint64(len(instructions)) < limit; {
 		instruction, err := disasm.DecodeInstruction(info, disasm.Ptr(pc))
 		if err != nil {
@@ -60,7 +61,7 @@ func disassemble(info disasm.Info, start uint64, end uint64, limit uint64, disas
 		if disassembleAll {
 			pc++
 		} else {
-			pc += uint64(instruction.NumOctets)
+			pc += uint64(len(instruction.Octets))
 		}
 	}
 

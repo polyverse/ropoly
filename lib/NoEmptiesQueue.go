@@ -5,7 +5,7 @@ type noEmptyStringsQueue struct {
 	Index int
 }
 
-func dequeueString(queue *noEmptyStringsQueue) string {
+func (queue *noEmptyStringsQueue) dequeueString() string {
 	ret := ""
 	for ret == "" {
 		ret = queue.Items[queue.Index]
@@ -19,7 +19,7 @@ type noEmptyByteArraysQueue struct {
 	Index int
 }
 
-func dequeueByteArray(queue *noEmptyByteArraysQueue) []byte {
+func (queue *noEmptyByteArraysQueue) dequeueByteArray() []byte {
 	ret := make([]byte, 0)
 	for len(ret) == 0 {
 		ret = queue.Items[queue.Index]
