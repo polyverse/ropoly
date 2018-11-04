@@ -1,9 +1,9 @@
 package lib
 
 import (
+	"debug/elf"
 	"github.com/pkg/errors"
 	"github.com/polyverse/disasm"
-	"debug/elf"
 )
 
 func GadgetsFromExecutable(path string, maxLength int) ([]*disasm.Gadget, error) {

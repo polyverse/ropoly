@@ -1,12 +1,6 @@
 package handlers
 
-import (
-	"encoding/json"
-	"github.com/polyverse/ropoly/lib"
-	"io/ioutil"
-	"net/http"
-)
-
+/*
 func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -23,7 +17,7 @@ func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var oldPrintable lib.PrintableFingerprintResult
+	var oldPrintable types.Fingerprint
 	err = json.Unmarshal(oldContents, &oldPrintable)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -63,3 +57,5 @@ func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(b)
 }
+
+*/

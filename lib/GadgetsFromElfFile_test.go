@@ -28,5 +28,3 @@ func (s *LibSuite) TestGadgetsFromExecutable(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(gadgets, HasLen, 20)
 }
-
-

@@ -1,11 +1,6 @@
 package lib
 
-import (
-	"errors"
-	"math/rand"
-	"net/url"
-	"strconv"
-)
+/*
 
 func monteCarloEqi(comparison FingerprintRegionComparison, form url.Values) (float64, error) {
 	min, err := strconv.ParseInt(form.Get("min"), 0, 64)
@@ -77,3 +72,4 @@ func int64SetCopy(s map[int64]bool) map[int64]bool {
 	}
 	return ret
 }
+*/

@@ -1,12 +1,6 @@
 package lib
 
-import (
-	"errors"
-	"github.com/polyverse/ropoly/lib/types"
-	"math"
-	"net/url"
-)
-
+/*
 func Eqi(comparison types.FingerprintComparison, eqiFunc string, form url.Values) (types.Eqi, error) {
 	ret := types.Eqi{
 		Aggregate: types.EntropyQualityIndex(0),
@@ -43,3 +37,4 @@ var regionEqiFuncs = map[string]regionEqiFunc{
 func normalizeEqi(eqi float64) types.EntropyQualityIndex {
 	return types.EntropyQualityIndex(100.0 * (1.0 - eqi))
 }
+*/

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
 	"io/ioutil"
 	"net/http"
 )
@@ -20,18 +20,14 @@ func EqiHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var readComparison lib.PrintableFingerprintComparison
+	var readComparison types.FingerprintComparison
 	err = json.Unmarshal(contents, &readComparison)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	comparison, err := lib.ParseComparison(readComparison)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
+	/*
 	eqiFunc := r.Form.Get("func")
 
 	eqiResult, err := lib.Eqi(comparison, eqiFunc, r.Form)
@@ -46,4 +42,5 @@ func EqiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+	*/
 }

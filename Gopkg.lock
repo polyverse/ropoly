@@ -94,11 +94,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:76e2db5da452fbc05c86ef013a1022e83cdb57ff7fa0953a1eaafd728a222c74"
+  digest = "1:060b4bd29fdd4f97efc7afd6ac6863591f2e483c4716df53aa437b6f880d0a03"
   name = "github.com/polyverse/disasm"
   packages = ["."]
   pruneopts = "UT"
-  revision = "286330b14964e49148dfded18b06d0ecd63e72b4"
+  revision = "010e32c29b083ebe2849aac437e1b43ad797bcd7"
 
 [[projects]]
   branch = "master"

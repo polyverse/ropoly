@@ -2,99 +2,59 @@ package types
 
 import (
 	"github.com/polyverse/disasm"
-	"github.com/polyverse/masche/memaccess"
-	"strconv"
-	"time"
 )
 
-type Sig uint
-
-type GadgetSearchRequest struct {
-	InMemory      bool
-	PidN          int
-	Filepath      string
-	StartN        uint64
-	EndN          uint64
-	LimitN        uint64
-	InstructionsN uint64
-	OctetsN       uint64
-}
-
 type FingerprintComparison struct {
-	RemovedRegions          []memaccess.MemoryRegion      `json:"removed sections"`
-	AddedRegions            []memaccess.MemoryRegion      `json:"added sections"`
-	SharedRegionComparisons []FingerprintRegionComparison `json:"shared region comparisons"`
+	GadgetDisplacements map[disasm.Ptr][]int64 `json:"gadgetDisplacements"`
+	NewGadgets        map[string][]disasm.Ptr   `json:"newGadgets"`
+	GadgetsByOffset     map[int64]int          `json:"gadgetCountsByOffset"`
 }
 
-type FingerprintRegionComparison struct {
-	Region              memaccess.MemoryRegion `json:"region (original address)"`
-	Displacement        int64                  `json:"displacement"`
-	GadgetDisplacements map[disasm.Ptr][]int64 `json:"gadget displacements"`
-	AddedGadgets        map[Sig][]disasm.Ptr   `json:"added gadgets"`
-	NumOldGadgets       int                    `json:"total gadgets in original"`
-	GadgetsByOffset     map[int64]int          `json:"number of gadgets findable at each displacement"`
+type GadgetContent struct {
+	Instructions string `json:"instructions"`
 }
 
-type AddedGadget struct {
-	Gadget    string   `json:"signature"`
-	Addresses []string `json:"addresses"`
-}
+type Fingerprint map[string][]disasm.Ptr
 
-func formatHexInt(i int64) string {
-	if i < 0 {
-		return "-0x" + strconv.FormatInt(-i, 16)
-	} else {
-		return "0x" + strconv.FormatInt(i, 16)
+func FingerprintFromGadgets(gadgets []*disasm.Gadget) (Fingerprint) {
+	fingerprint := Fingerprint{}
+	for _, gadget := range gadgets {
+		hash := gadget.InstructionString()
+		if _, ok := fingerprint[hash]; !ok {
+			fingerprint[hash] = []disasm.Ptr{gadget.Address}
+		} else {
+			fingerprint[hash] = append(fingerprint[hash], gadget.Address)
+		}
 	}
+
+	return fingerprint
 }
 
-type File struct {
-	Permissions string    `json:"permissions"`
-	NumLink     string    `json:"numLink"`
-	Owner       string    `json:"owner"`
-	Group       string    `json:"group"`
-	Size        string    `json:"size"`
-	DateTime    time.Time `json:"time"`
-	Filename    string    `json:"filename"`
-}
+func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
+	ret := FingerprintComparison{
+		GadgetDisplacements: map[disasm.Ptr][]int64{},
+		NewGadgets:        map[string][]disasm.Ptr{},
+		GadgetsByOffset:     map[int64]int{},
+	}
 
-type FilesResult struct {
-	Files []File `json:"files"`
-}
+	for gadget, oldAddresses := range f1 {
+		newAddresses := f1[gadget]
+		for _, oldAddress := range oldAddresses {
+			offsets := make([]int64, len(newAddresses))
+			for j, newAddress := range newAddresses {
+				offset := int64(newAddress) - int64(oldAddress)
+				offsets[j] = offset
+				ret.GadgetsByOffset[offset]++
+			}
+			ret.GadgetDisplacements[oldAddress] = offsets
+		}
+	}
 
-type GadgetResult struct {
-	Regions []GadgetRegion `json:"regions"`
-}
+	for gadget, addresses := range f2 {
+		if f1[gadget] == nil {
+			ret.NewGadgets[gadget] = addresses
+		}
+	}
 
-type GadgetRegion struct {
-	Region  memaccess.MemoryRegion `json:"region"`
-	Gadgets []Gadget               `json:"gadgets"`
-}
-
-type FingerprintResult struct {
-	Regions map[string]*FingerprintRegion
-}
-
-type FingerprintRegion struct {
-	Region  memaccess.MemoryRegion `json:"region"`
-	Gadgets map[Sig][]disasm.Ptr
-}
-
-type MemoryRegion struct {
-	Address string `json:"address"`
-	Size    string `json:"size"`
-	Kind    string `json:"kind"`
-}
-
-type DisAsmResult struct {
-	Regions []MemoryRegionDisAsm `json:"regions"`
-}
-
-type MemoryRegionDisAsm struct {
-	Region       memaccess.MemoryRegion `json:"region"`
-	Instructions []disasm.Instruction   `json:"instructions"`
-}
-
-type SearchResult struct {
-	Addresses []string `json:"addresses"`
+	return ret
 }
