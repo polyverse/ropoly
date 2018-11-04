@@ -61,6 +61,22 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:ca955a9cd5b50b0f43d2cc3aeb35c951473eeca41b34eb67507f1dbcc0542394"
+  name = "github.com/kr/pretty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:15b5cc79aad436d47019f814fde81a10221c740dc8ddf769221a65097fb6c2e9"
+  name = "github.com/kr/text"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
+  version = "v0.1.0"
+
+[[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -78,11 +94,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c9772ed0d8b6f5d6b00c5e0e33d35210b3f2963411064b385c47487f86e0ffbb"
+  digest = "1:76e2db5da452fbc05c86ef013a1022e83cdb57ff7fa0953a1eaafd728a222c74"
   name = "github.com/polyverse/disasm"
   packages = ["."]
   pruneopts = "UT"
-  revision = "86c0ed415845ec400466a7403068991ca1f9e9cc"
+  revision = "286330b14964e49148dfded18b06d0ecd63e72b4"
 
 [[projects]]
   branch = "master"
@@ -195,6 +211,14 @@
   pruneopts = "UT"
   revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
 
+[[projects]]
+  branch = "v1"
+  digest = "1:af715ae33cc1f5695c4b2a4e4b21d008add8802a99e15bb467ac7c32edb5000d"
+  name = "gopkg.in/check.v1"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "788fd78401277ebd861206a03c884797c6ec5541"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -210,6 +234,7 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
+    "gopkg.in/check.v1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
