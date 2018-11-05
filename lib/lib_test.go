@@ -78,3 +78,16 @@ func (s *LibSuite) TestLibrariesForPid(c *C) {
 		log.Infof("==> Library %s is %s Polyverse Tained", lib.Path, polyversedEval)
 	}
 }
+
+func (s *LibSuite) TestHasPolyverseTaintExecutable(c *C) {
+	taint, err := HasPolyverseTaint("../TestFiles/polyversed_curl_alpine")
+	c.Assert(err, IsNil)
+	c.Assert(taint, Equals, true)
+}
+
+func (s *LibSuite) TestHasPolyverseTaintLibrary(c *C) {
+	taint, err := HasPolyverseTaint("../TestFiles/polyversed_libssh2_alpine.so")
+	c.Assert(err, IsNil)
+	c.Assert(taint, Equals, true)
+}
+

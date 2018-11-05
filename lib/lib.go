@@ -11,6 +11,7 @@ func GadgetsFromExecutable(path string, maxLength int) ([]*disasm.Gadget, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error opening ELF file %s", path)
 	}
+	defer file.Close()
 
 	allGadgets := []*disasm.Gadget{}
 

@@ -3,10 +3,7 @@ package lib
 import (
 	"github.com/polyverse/masche/listlibs"
 	"github.com/polyverse/masche/process"
-	"github.com/polyverse/ropoly/constants"
 	"github.com/polyverse/ropoly/lib/types"
-	"os/exec"
-	"strings"
 )
 
 func GetLibrariesForPid(pidN int, checkSignatures bool) ([]*types.Library, error, []error) {
@@ -31,15 +28,13 @@ func GetLibrariesForPid(pidN int, checkSignatures bool) ([]*types.Library, error
 		}
 
 		if checkSignatures {
-			stringsOutput, error := exec.Command("strings", library).Output()
-			if error != nil {
-				softerrors3 = append(softerrors3, error)
+			taint, err := HasPolyverseTaint(library)
+			if err != nil {
+				softerrors3 = append(softerrors3, err)
 				continue
 			}
 
-			if strings.Contains(string(stringsOutput), constants.PolyverseSignature) {
-				libInfo.PolyverseTained = true
-			}
+			libInfo.PolyverseTained = taint
 		}
 		libInfos = append(libInfos, libInfo)
 	}
