@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -52,18 +51,26 @@ func getFilepath(r *http.Request, uri string) string {
 }
 
 func FileHandler(w http.ResponseWriter, r *http.Request) {
-	filepath := getFilepath(r, "api/v1/files")
+	path := getFilepath(r, "api/v1/files")
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		log.WithError(err).Warningf("Unable to stat path %s. Not handling it like a directory.", path)
+	} else if fi.IsDir() {
+		DirectoryListingHandler(w, r, path)
+		return
+	}
 
 	mode := r.FormValue("mode")
 	switch mode {
-	case "directory":
-		DirectoryListingHandler(w, r, filepath)
-	case "signature":
-		PolyverseTaintedFileHandler(w, r, filepath)
 	case "gadget":
-		ROPFileGadgetHandler(w, r, filepath)
+		GadgetsFromFileHandler(w, r, path)
+	case "signature":
+		PolyverseTaintedFileHandler(w, r, path)
 	case "fingerprint":
-		FingerprintHandler(false, w, r, 0, filepath)
+		FingerprintForFileHandler(w, r, path)
+	case "search":
+		FileGadgetSearchHandler(w, r, path)
 	default:
 		http.Error(w, "Mode should be directory, signature, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	} // switch
@@ -75,18 +82,21 @@ func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	pidN := int(pid)
 
 	mode := r.FormValue("mode")
 	switch mode {
 	case "gadget":
-		ROPMemoryGadgetHandler(w, r, pidN)
+		GadgetsFromPidHandler(w, r, int(pid))
+	case "signature":
+		PolyverseTaintedPidHandler(w, r, int(pid))
 	case "fingerprint":
-		FingerprintForPidHandler(w, r, pidN)
+		FingerprintForPidHandler(w, r, int(pid))
+	case "search":
+		PidGadgetSearchHandler(w, r, int(pid))
 	default:
 		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	}
-} // ROPMemoryHandler()
+}
 
 func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath string) {
 	listing := []*DirectoryListingEntry{}
@@ -126,7 +136,7 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 	} // if
 
 	w.Write(b)
-} // ROPFileHandler
+}
 
 func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path string) {
 	fileinfo, err := os.Stat(path)
@@ -149,7 +159,77 @@ func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path st
 		return
 	} // if
 	w.Write(b)
-} // ROPisPolyverseFileHandler
+}
+
+func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(gadgets, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
+func FingerprintForFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	fingerprint := types.FingerprintFromGadgets(gadgets)
+
+	b, err := json.MarshalIndent(fingerprint, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
+func FileGadgetSearchHandler(w http.ResponseWriter, r *http.Request, path string) {
+	search := r.Form.Get("string")
+	if search == "" {
+		search = r.Form.Get("regexp")
+		if search == "" {
+			err := errors.New("Search with no or empty target given.")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} // if
+
+	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
+}
 
 func PidListingHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
@@ -181,70 +261,32 @@ func getPid(r *http.Request) (uint64, error) {
 	return pidN, err
 }
 
-func PidLibrariesHandler(w http.ResponseWriter, r *http.Request) {
-	pidN, err := getPid(r)
+func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	checkSignatures := false
-	signatures := r.Form.Get("signatures")
-	if signatures == "true" {
-		checkSignatures = true
-	}
-
-	librariesResult, harderror, softerrors := lib.GetLibrariesForPid(int(pidN), checkSignatures)
-
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 
-	b, err := json.MarshalIndent(&librariesResult, "", indent)
+	b, err := json.MarshalIndent(gadgets, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	} // if
+	}
 	w.Write(b)
-} // ROPLibrariesHandler()
-
-func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	GadgetHandler(true, w, r, pidN, "")
-} //ROPMemoryGadgetHandler
-
-func ROPFileGadgetHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	GadgetHandler(false, w, r, 0, filepath)
 }
-
-func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	var instructionsN uint64 = 2 // Gadgets longer than 2 instructions have to be explicitly requested
-	instructions := r.Form.Get("instructions")
-	if instructions == "instructions" {
-		instructionsN = 5
-	} else if instructions != "" {
-		instructionsN, err = strconv.ParseUint(instructions, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var octetsN uint64 = math.MaxInt32
-	octets := r.Form.Get("octets")
-	if octets == "octets" {
-		octetsN = 100
-	} else if octets != "" {
-		octetsN, err = strconv.ParseUint(octets, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-} // GadgetHandler()
-
 func FingerprintForPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
 	var err error
@@ -272,9 +314,25 @@ func FingerprintForPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 		return
 	}
 	w.Write(b)
-} // FingerprintHandler()
+}
 
-func GadgetMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
+func PolyverseTaintedPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	libraries, err, softerrors := lib.GetLibrariesForPid(pid, true)
+	if err != nil {
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	b, err := json.MarshalIndent(libraries, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+	w.Write(b)
+}
+
+func PidGadgetSearchHandler(w http.ResponseWriter, r *http.Request, pid int) {
 	search := r.Form.Get("string")
 	if search == "" {
 		search = r.Form.Get("regexp")
@@ -286,4 +344,4 @@ func GadgetMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int)
 	} // if
 
 	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
-} // ROPMemorySearchHandler()
+}
