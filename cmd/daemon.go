@@ -42,9 +42,10 @@ func init() {
 }
 
 var daemonCmd = &cobra.Command{
-	Use:   "server",
-	Short: "Run Ropoly as a webserver.",
-	Long:  `Run Ropoly as a webserver that can be scraped for information about the system (that Ropoly has permissions to.)`,
+	Use:   "daemon",
+	Short: "Run Ropoly as a background scanner daemon.",
+	Long: `Run Ropoly as a background scanner daemon that will iterate over files and processes. 
+Results can be logged or exposed over a prometheus endpoint.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !LogEnabled && !PrometheusEnabled {
 			log.Fatalf("Daemon mode requires that at least one form of scanner output be enabled: Logs or Prometheus metrics. You have disabled both.")
@@ -56,7 +57,9 @@ var daemonCmd = &cobra.Command{
 
 		if PrometheusEnabled {
 			log.Infof("Starting Prometheus server at address %s...", PrometheusAddress)
-			go log.Fatal(http.ListenAndServe(PrometheusAddress, promhttp.Handler()))
+			go func() {
+				log.Fatal(http.ListenAndServe(PrometheusAddress, promhttp.Handler()))
+			}()
 		} else {
 			log.Infof("No Prometueus endpoint hosted for scan results")
 		}
