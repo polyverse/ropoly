@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ServerAddress string
+	ServerAddress  string
 	VerboseLogging bool
 )
 
@@ -26,7 +26,7 @@ var serverCmd = &cobra.Command{
 			log.Infof("Enabling verbose debug-level logging...")
 			log.SetLevel(log.DebugLevel)
 		}
-		
+
 		log.Infof("Starting a blocking webserver at address %s", ServerAddress)
 		server.ServeOverHttp(ServerAddress)
 	},
