@@ -76,7 +76,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	} // switch
 }
 
-func ProcessHandler(w http.ResponseWriter, r *http.Request) {
+func PidHandler(w http.ResponseWriter, r *http.Request) {
 	pid, err := getPid(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
