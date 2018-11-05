@@ -113,7 +113,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8fd354d872742c3df83e4258561f5f2188984e22846708494f00af17d515dfb2"
+  digest = "1:4dab2a3bdcaffb106d12e3ac19748ee28065f1998d879078a22590e467ccd473"
   name = "github.com/polyverse/masche"
   packages = [
     "common",
@@ -123,7 +123,7 @@
     "process",
   ]
   pruneopts = "UT"
-  revision = "422c17ba3f7fc0f835bba8d144a96b8cff90ef64"
+  revision = "8cd9736d5cdbe5b6b6c1bfd159ca653cae2abfcc"
 
 [[projects]]
   digest = "1:26663fafdea73a38075b07e8e9d82fc0056379d2be8bb4e13899e8fda7c7dd23"
@@ -196,14 +196,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ae8732513b32381d9fae6fc1e04544f92332878786726c9709d66f4871a182db"
-  name = "golang.org/x/arch"
-  packages = ["x86/x86asm"]
-  pruneopts = "UT"
-  revision = "b19384d3c130858bb31a343ea8fce26be71b5998"
-
-[[projects]]
-  branch = "master"
   digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -252,7 +244,6 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
-    "golang.org/x/arch/x86/x86asm",
     "gopkg.in/check.v1",
   ]
   solver-name = "gps-cdcl"

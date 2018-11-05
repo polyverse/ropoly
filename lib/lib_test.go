@@ -90,4 +90,3 @@ func (s *LibSuite) TestHasPolyverseTaintLibrary(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(taint, Equals, true)
 }
-

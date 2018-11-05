@@ -6,16 +6,10 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func GetLibrariesForPid(pidN int, checkSignatures bool) ([]*types.Library, error, []error) {
-	process, harderror1, softerrors1 := process.OpenFromPid(pidN)
-	if harderror1 != nil {
-		return nil, harderror1, softerrors1
-	} // if
-	defer process.Close()
-
-	libraries, harderror2, softerrors2 := listlibs.ListLoadedLibraries(process)
+func GetLibrariesForPid(pid int, checkSignatures bool) ([]*types.Library, error, []error) {
+	libraries, harderror2, softerrors2 := listlibs.ListLoadedLibraries(process.LinuxProcess(pid))
 	if harderror2 != nil {
-		return nil, harderror2, joinerrors(softerrors1, softerrors2)
+		return nil, harderror2, softerrors2
 	} // if
 
 	libInfos := []*types.Library{}
@@ -39,5 +33,5 @@ func GetLibrariesForPid(pidN int, checkSignatures bool) ([]*types.Library, error
 		libInfos = append(libInfos, libInfo)
 	}
 
-	return libInfos, nil, joinerrors(softerrors1, softerrors2, softerrors3)
+	return libInfos, nil, joinerrors(softerrors2, softerrors3)
 }
