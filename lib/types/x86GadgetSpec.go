@@ -1,6 +1,5 @@
 package types
 
-
 // Adapted from:
 // 	https://github.com/JonathanSalwan/ROPgadget/blob/master/ropgadget/gadgets.py
 // https://github.com/polyverse/EnVisen/blob/master/internaljs/instruction_gadget_worker.js

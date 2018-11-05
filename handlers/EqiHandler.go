@@ -28,19 +28,19 @@ func EqiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	/*
-	eqiFunc := r.Form.Get("func")
+		eqiFunc := r.Form.Get("func")
 
-	eqiResult, err := lib.Eqi(comparison, eqiFunc, r.Form)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+		eqiResult, err := lib.Eqi(comparison, eqiFunc, r.Form)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-	b, err := json.MarshalIndent(eqiResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	w.Write(b)
+		b, err := json.MarshalIndent(eqiResult, "", indent)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Write(b)
 	*/
 }

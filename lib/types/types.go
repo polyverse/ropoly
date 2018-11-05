@@ -5,21 +5,19 @@ import (
 )
 
 type FingerprintComparison struct {
-	GadgetDisplacements map[disasm.Ptr][]int64 `json:"gadgetDisplacements"`
-	NewGadgets        map[string][]disasm.Ptr   `json:"newGadgets"`
-	GadgetsByOffset     map[int64]int          `json:"gadgetCountsByOffset"`
+	GadgetDisplacements map[disasm.Ptr][]int64    `json:"gadgetDisplacements"`
+	NewGadgets          map[GadgetId][]disasm.Ptr `json:"newGadgets"`
+	GadgetsByOffset     map[int64]int             `json:"gadgetCountsByOffset"`
 }
 
-type GadgetContent struct {
-	Instructions string `json:"instructions"`
-}
+type GadgetId string
 
-type Fingerprint map[string][]disasm.Ptr
+type Fingerprint map[GadgetId][]disasm.Ptr
 
-func FingerprintFromGadgets(gadgets []*disasm.Gadget) (Fingerprint) {
+func FingerprintFromGadgets(gadgets []*disasm.Gadget) Fingerprint {
 	fingerprint := Fingerprint{}
 	for _, gadget := range gadgets {
-		hash := gadget.InstructionString()
+		hash := GadgetId(gadget.InstructionString())
 		if _, ok := fingerprint[hash]; !ok {
 			fingerprint[hash] = []disasm.Ptr{gadget.Address}
 		} else {
@@ -33,7 +31,7 @@ func FingerprintFromGadgets(gadgets []*disasm.Gadget) (Fingerprint) {
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	ret := FingerprintComparison{
 		GadgetDisplacements: map[disasm.Ptr][]int64{},
-		NewGadgets:        map[string][]disasm.Ptr{},
+		NewGadgets:          map[GadgetId][]disasm.Ptr{},
 		GadgetsByOffset:     map[int64]int{},
 	}
 

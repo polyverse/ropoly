@@ -37,7 +37,6 @@ func (s *TypesSuite) TestAddrSerializeDeserialize(c *C) {
 	c.Assert(a, Equals, b)
 }
 
-
 func (s *TypesSuite) TestAddrSerializeDeserializeJSON(c *C) {
 	var a Addr = 10
 	aj, err := a.MarshalJSON()
@@ -47,7 +46,6 @@ func (s *TypesSuite) TestAddrSerializeDeserializeJSON(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(a, Equals, b)
 }
-
 
 func (s *TypesSuite) TestOctetSerializeDeserialize(c *C) {
 	var a Octets = []byte{0x10, 0x05, 0xff, 0x12}
@@ -61,7 +59,6 @@ func (s *TypesSuite) TestOctetSerializeDeserialize(c *C) {
 
 	c.Assert(a.String(), Equals, b.String())
 }
-
 
 func (s *TypesSuite) TestOctetSerializeDeserializeJSON(c *C) {
 	var a Octets = []byte{0x10, 0x05, 0xff, 0x12}

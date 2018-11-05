@@ -24,7 +24,7 @@ func (a *Addr) UnmarshalJSON(b []byte) error {
 	str = strings.TrimSuffix(str, "\"")
 
 	if !strings.HasPrefix(str, "0x") {
-		return errors.Errorf("Cannot unmarshall string %s into an address. " +
+		return errors.Errorf("Cannot unmarshall string %s into an address. "+
 			"It must be a hexadecimal value prefixed by 0x", str)
 	}
 
@@ -88,15 +88,15 @@ func (o Octets) MarshalJSON() ([]byte, error) {
 }
 
 type Instruction struct {
-	Octets  Octets `json:"octets"`
-	DisAsm  string `json:"disasm"`
+	Octets Octets `json:"octets"`
+	DisAsm string `json:"disasm"`
 }
 
 type Gadget []*Instruction
 
 type GadgetInstance struct {
-	Address Addr `json:"address"`
-	Gadget Gadget `json:"gadget"`
+	Address Addr   `json:"address"`
+	Gadget  Gadget `json:"gadget"`
 }
 
 func (i *Instruction) String() string {
@@ -115,5 +115,3 @@ func (g Gadget) InstructionString() string {
 	}
 	return buffer.String()
 }
-
-
