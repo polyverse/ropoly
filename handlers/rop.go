@@ -117,7 +117,7 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 			entry.Type = EntryTypeDir
 		} else {
 			entry.Type = EntryTypeFile
-			pvTaint, err := lib.HasPVSignature(path)
+			pvTaint, err := lib.HasPolyverseTaint(path)
 			if err != nil {
 				log.WithError(err).Errorf("Error when checking for Polyverse taint on path %s", path)
 			} else {
@@ -147,7 +147,7 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 }
 
 func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path string) {
-	signatureResult, err := lib.HasPVSignature(path)
+	signatureResult, err := lib.HasPolyverseTaint(path)
 	if err != nil {
 		logErrors(err, make([]error, 0))
 		http.Error(w, err.Error(), http.StatusBadRequest)
