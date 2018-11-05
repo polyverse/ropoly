@@ -2,25 +2,34 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/polyverse/ropoly/lib/types"
-	"log"
+	"errors"
 	"math"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-
-	"github.com/polyverse/masche/memaccess"
-
-	"github.com/polyverse/disasm"
 	"github.com/polyverse/ropoly/lib"
-
-	"errors"
+	"github.com/polyverse/ropoly/lib/types"
+	log "github.com/sirupsen/logrus"
 )
 
 const indent string = "    "
+
+type DirectoryListingEntryType string
+
+const (
+	EntryTypeDir  DirectoryListingEntryType = "Directory"
+	EntryTypeFile DirectoryListingEntryType = "File"
+)
+
+type DirectoryListingEntry struct {
+	Path            string                    `json:"path"`
+	Type            DirectoryListingEntryType `json:"type"`
+	PolyverseTained bool                      `json:"polyverseTainted"`
+}
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -48,11 +57,9 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	mode := r.FormValue("mode")
 	switch mode {
 	case "directory":
-		ROPDirectoryHandler(w, r, filepath)
+		DirectoryListingHandler(w, r, filepath)
 	case "signature":
-		ROPIsPolyverseFileHandler(w, r, filepath)
-	case "disasm":
-		ROPDiskDisAsmHandler(w, r, filepath)
+		PolyverseTaintedFileHandler(w, r, filepath)
 	case "gadget":
 		ROPFileGadgetHandler(w, r, filepath)
 	case "fingerprint":
@@ -62,7 +69,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	} // switch
 }
 
-func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
+func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	pid, err := getPid(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -72,38 +79,68 @@ func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	mode := r.FormValue("mode")
 	switch mode {
-	case "disasm":
-		ROPMemoryDisAsmHandler(w, r, pidN)
 	case "gadget":
 		ROPMemoryGadgetHandler(w, r, pidN)
 	case "fingerprint":
-		FingerprintHandler(true, w, r, pidN, "")
+		FingerprintForPidHandler(w, r, pidN)
 	default:
 		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
 	}
 } // ROPMemoryHandler()
 
-func ROPDirectoryHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	filesResult, harderror := lib.GetFiles(filepath)
-	if harderror != nil {
-		logErrors(harderror, make([]error, 0))
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
+func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath string) {
+	listing := []*DirectoryListingEntry{}
 
-	b, err := json.MarshalIndent(&filesResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPFileHandler
-
-func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	signatureResult, err := lib.HasPVSignature(filepath)
+	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.WithError(err).Error("Unable to walk filesystem path %s", path)
+			return nil
+		}
+		entry := &DirectoryListingEntry{
+			Path: path,
+		}
+		if info.IsDir() {
+			entry.Type = EntryTypeDir
+		} else {
+			entry.Type = EntryTypeFile
+			pvTaint, err := lib.HasPVSignature(info)
+			if err != nil {
+				log.WithError(err).Errorf("Error when checking for Polyverse taint on path %s", path)
+			} else {
+				entry.PolyverseTained = pvTaint
+			}
+		}
+		listing = append(listing, entry)
+		return nil
+	})
 	if err != nil {
 		logErrors(err, make([]error, 0))
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	b, err := json.MarshalIndent(&listing, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	w.Write(b)
+} // ROPFileHandler
+
+func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	fileinfo, err := os.Stat(path)
+	if err != nil {
+		logErrors(err, make([]error, 0))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	signatureResult, err := lib.HasPVSignature(fileinfo)
+	if err != nil {
+		logErrors(err, make([]error, 0))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	b, err := json.MarshalIndent(&signatureResult, "", indent)
@@ -114,7 +151,7 @@ func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath 
 	w.Write(b)
 } // ROPisPolyverseFileHandler
 
-func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
+func PidListingHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
 	logErrors(harderror, softerrors)
 	if harderror != nil {
@@ -144,7 +181,7 @@ func getPid(r *http.Request) (uint64, error) {
 	return pidN, err
 }
 
-func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
+func PidLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 	pidN, err := getPid(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -172,37 +209,6 @@ func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
 	} // if
 	w.Write(b)
 } // ROPLibrariesHandler()
-
-func FileDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	disAsmResult, harderror, _ := lib.DisAsmForFile(filepath, startN, endN, limitN, all)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&disAsmResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // DiskDisAsmHandler
-
-func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(pidN, startN, endN, limitN, all)
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&disAsmResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPMemoryDisAsmHandler()
 
 func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 	GadgetHandler(true, w, r, pidN, "")
@@ -239,29 +245,31 @@ func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 
 } // GadgetHandler()
 
-func FingerprintForPidHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int) {
-	var instructionsN int = 2 // Gadgets longer than 2 instructions must be requested explicitly
-	instructions := r.Form.Get("instructions")
-	if instructions == "instructions" {
-		instructionsN = 5
-	} else if instructions != "" {
-		instructionsN, err = strconv.ParseUint(instructions, 0, 32)
+func FingerprintForPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		} // if
 	} // else if
 
-	fingerprint := types.FingerprintFromGadgets(lib.GadgetsFromProcess(pidN, instructionsN))
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
+	if err != nil {
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 
-	b, err := json.MarshalIndent(fingerprint), "", indent)
+	fingerprint := types.FingerprintFromGadgets(gadgets)
+
+	b, err := json.MarshalIndent(fingerprint, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.Write(b)
 } // FingerprintHandler()
@@ -277,17 +285,5 @@ func GadgetMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int)
 		}
 	} // if
 
-	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.Form.Get("regexp") != "")
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-	logErrors(harderror, softerrors)
-
-	b, err := json.MarshalIndent(&searchResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
+	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
 } // ROPMemorySearchHandler()

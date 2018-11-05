@@ -72,9 +72,9 @@ func (s *LibSuite) TestLibrariesForPid(c *C) {
 	log.Infof("Number of libraries in Loop Process: %d", len(libraries))
 	for _, lib := range libraries {
 		polyversedEval := ""
-		if !lib.PolyverseGenerated {
+		if !lib.PolyverseTained {
 			polyversedEval = "NOT"
 		}
-		log.Infof("==> Library %s is %s Polyversed", lib.Path, polyversedEval)
+		log.Infof("==> Library %s is %s Polyverse Tained", lib.Path, polyversedEval)
 	}
 }

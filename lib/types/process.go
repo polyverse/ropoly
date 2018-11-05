@@ -18,6 +18,6 @@ type ProcessInfo struct {
 }
 
 type Library struct {
-	Path               string `json:"path"`
-	PolyverseGenerated bool   `json:"polyverseGenerated"`
+	Path            string `json:"path"`
+	PolyverseTained bool   `json:"polyverseTainted"`
 }

@@ -38,7 +38,7 @@ func GetLibrariesForPid(pidN int, checkSignatures bool) ([]*types.Library, error
 			}
 
 			if strings.Contains(string(stringsOutput), constants.PolyverseSignature) {
-				libInfo.PolyverseGenerated = true
+				libInfo.PolyverseTained = true
 			}
 		}
 		libInfos = append(libInfos, libInfo)
