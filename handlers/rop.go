@@ -133,13 +133,13 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 	})
 	if err != nil {
 		logErrors(err, make([]error, 0))
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.MarshalIndent(&listing, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 
@@ -150,13 +150,13 @@ func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path st
 	signatureResult, err := lib.HasPolyverseTaint(path)
 	if err != nil {
 		logErrors(err, make([]error, 0))
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.MarshalIndent(&signatureResult, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 	w.Write(b)
@@ -169,7 +169,7 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 	if lenStr != "" {
 		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} // if
 	} // else if
@@ -196,7 +196,7 @@ func FingerprintForFileHandler(w http.ResponseWriter, r *http.Request, path stri
 	if lenStr != "" {
 		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} // if
 	} // else if
@@ -224,7 +224,7 @@ func FileGadgetSearchHandler(w http.ResponseWriter, r *http.Request, path string
 		search = r.Form.Get("regexp")
 		if search == "" {
 			err := errors.New("Search with no or empty target given.")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} // if
@@ -236,13 +236,13 @@ func PidListingHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
 	logErrors(harderror, softerrors)
 	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		http.Error(w, harderror.Error(), http.StatusInternalServerError)
 		return
 	} // if
 
 	b, err := json.MarshalIndent(&pIdsResult, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 	w.Write(b)
@@ -269,7 +269,7 @@ func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 	if lenStr != "" {
 		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} // if
 	} // else if
@@ -295,7 +295,7 @@ func FingerprintForPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 	if lenStr != "" {
 		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} // if
 	} // else if
@@ -321,13 +321,13 @@ func PolyverseTaintedPidHandler(w http.ResponseWriter, r *http.Request, pid int)
 	libraries, err, softerrors := lib.GetLibrariesForPid(pid, true)
 	if err != nil {
 		logErrors(err, softerrors)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.MarshalIndent(libraries, "", indent)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} // if
 	w.Write(b)
@@ -339,7 +339,7 @@ func PidGadgetSearchHandler(w http.ResponseWriter, r *http.Request, pid int) {
 		search = r.Form.Get("regexp")
 		if search == "" {
 			err := errors.New("Search with no or empty target given.")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} // if

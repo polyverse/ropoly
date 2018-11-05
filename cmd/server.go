@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ServerAddress string
+	ServerAddress  string
 	VerboseLogging bool
 )
 

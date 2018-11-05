@@ -17,13 +17,13 @@ func EqiHandler(w http.ResponseWriter, r *http.Request) {
 	comparisonPath := r.Form.Get("comparison")
 	contents, err := ioutil.ReadFile(comparisonPath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	var readComparison types.FingerprintComparison
 	err = json.Unmarshal(contents, &readComparison)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
