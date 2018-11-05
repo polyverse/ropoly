@@ -2,25 +2,33 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
-	"math"
+	"errors"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-
-	"github.com/polyverse/masche/memaccess"
-
-	"github.com/polyverse/disasm"
 	"github.com/polyverse/ropoly/lib"
-
-	"errors"
+	"github.com/polyverse/ropoly/lib/types"
+	log "github.com/sirupsen/logrus"
 )
 
-const safeEndAddress uint64 = 0x7fffffffffff
 const indent string = "    "
+
+type DirectoryListingEntryType string
+
+const (
+	EntryTypeDir  DirectoryListingEntryType = "Directory"
+	EntryTypeFile DirectoryListingEntryType = "File"
+)
+
+type DirectoryListingEntry struct {
+	Path            string                    `json:"path"`
+	Type            DirectoryListingEntryType `json:"type"`
+	PolyverseTained bool                      `json:"polyverseTainted"`
+}
 
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
@@ -33,81 +41,117 @@ func logErrors(hardError error, softErrors []error) {
 	}
 } // logErrors
 
-func ROPHealthHandler(w http.ResponseWriter, r *http.Request) {
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Ropoly API Healthy")
 } // ROPTestHandler()
 
 func getFilepath(r *http.Request, uri string) string {
 	splitUri := strings.Split(r.RequestURI, uri)
-	return strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
+	path := strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
+	if path == "" {
+		path = "/"
+	}
+	return path
 }
 
-func ROPFileHandler(w http.ResponseWriter, r *http.Request) {
-	filepath := getFilepath(r, "api/v1/files")
+func FileHandler(w http.ResponseWriter, r *http.Request) {
+	path := getFilepath(r, "api/v1/files")
 
-	mode := r.FormValue("mode")
-	switch mode {
-	case "directory":
-		ROPDirectoryHandler(w, r, filepath)
-	case "signature":
-		ROPIsPolyverseFileHandler(w, r, filepath)
-	case "disasm":
-		ROPDiskDisAsmHandler(w, r, filepath)
-	case "gadget":
-		ROPFileGadgetHandler(w, r, filepath)
+	fi, err := os.Stat(path)
+	if err != nil {
+		log.WithError(err).Warningf("Unable to stat path %s. Not handling it like a directory.", path)
+	} else if fi.IsDir() {
+		DirectoryListingHandler(w, r, path)
+		return
+	}
+
+	query := r.FormValue("query")
+	switch query {
+	case "taints":
+		PolyverseTaintedFileHandler(w, r, path)
+	case "gadgets":
+		GadgetsFromFileHandler(w, r, path)
 	case "fingerprint":
-		FingerprintHandler(false, w, r, 0, filepath)
+		FingerprintForFileHandler(w, r, path)
+	case "search":
+		FileGadgetSearchHandler(w, r, path)
 	default:
-		http.Error(w, "Mode should be directory, signature, disasm, gadget, or fingerprint.", http.StatusBadRequest)
+		PolyverseTaintedFileHandler(w, r, path)
 	} // switch
 }
 
-func ROPMemoryHandler(w http.ResponseWriter, r *http.Request) {
+func PidHandler(w http.ResponseWriter, r *http.Request) {
 	pid, err := getPid(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	pidN := int(pid)
 
-	mode := r.FormValue("mode")
-	switch mode {
-	case "regions":
-		ROPMemoryRegionsHandler(w, r, pidN)
-	case "search":
-		ROPMemorySearchHandler(w, r, pidN)
-	case "disasm":
-		ROPMemoryDisAsmHandler(w, r, pidN)
-	case "gadget":
-		ROPMemoryGadgetHandler(w, r, pidN)
+	query := r.FormValue("query")
+	switch query {
+	case "taints":
+		PolyverseTaintedPidHandler(w, r, int(pid))
+	case "gadgets":
+		GadgetsFromPidHandler(w, r, int(pid))
 	case "fingerprint":
-		FingerprintHandler(true, w, r, pidN, "")
+		FingerprintForPidHandler(w, r, int(pid))
+	case "search":
+		PidGadgetSearchHandler(w, r, int(pid))
 	default:
-		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
+		PolyverseTaintedPidHandler(w, r, int(pid))
 	}
-} // ROPMemoryHandler()
+}
 
-func ROPDirectoryHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	filesResult, harderror := lib.GetFiles(filepath)
-	if harderror != nil {
-		logErrors(harderror, make([]error, 0))
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
+func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath string) {
+	listing := []*DirectoryListingEntry{}
 
-	b, err := json.MarshalIndent(&filesResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPFileHandler
+	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.WithError(err).Error("Unable to walk filesystem path %s", path)
+			return nil
+		}
+		entry := &DirectoryListingEntry{
+			Path: path,
+		}
+		if info.IsDir() {
+			entry.Type = EntryTypeDir
+		} else {
+			entry.Type = EntryTypeFile
+			pvTaint, err := lib.HasPVSignature(path)
+			if err != nil {
+				log.WithError(err).Errorf("Error when checking for Polyverse taint on path %s", path)
+			} else {
+				entry.PolyverseTained = pvTaint
+			}
+		}
+		listing = append(listing, entry)
 
-func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	signatureResult, err := lib.DiskSignatureSearch(filepath)
+		if info.IsDir() && dirpath != path {
+			return filepath.SkipDir
+		}
+		return nil
+	})
 	if err != nil {
 		logErrors(err, make([]error, 0))
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	b, err := json.MarshalIndent(&listing, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	w.Write(b)
+}
+
+func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	signatureResult, err := lib.HasPVSignature(path)
+	if err != nil {
+		logErrors(err, make([]error, 0))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	b, err := json.MarshalIndent(&signatureResult, "", indent)
@@ -116,9 +160,79 @@ func ROPIsPolyverseFileHandler(w http.ResponseWriter, r *http.Request, filepath 
 		return
 	} // if
 	w.Write(b)
-} // ROPisPolyverseFileHandler
+}
 
-func ROPPIdsHandler(w http.ResponseWriter, r *http.Request) {
+func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(gadgets, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
+func FingerprintForFileHandler(w http.ResponseWriter, r *http.Request, path string) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	fingerprint := types.FingerprintFromGadgets(gadgets)
+
+	b, err := json.MarshalIndent(fingerprint, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
+func FileGadgetSearchHandler(w http.ResponseWriter, r *http.Request, path string) {
+	search := r.Form.Get("string")
+	if search == "" {
+		search = r.Form.Get("regexp")
+		if search == "" {
+			err := errors.New("Search with no or empty target given.")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} // if
+
+	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
+}
+
+func PidListingHandler(w http.ResponseWriter, r *http.Request) {
 	pIdsResult, harderror, softerrors := lib.GetAllPids()
 	logErrors(harderror, softerrors)
 	if harderror != nil {
@@ -148,430 +262,78 @@ func getPid(r *http.Request) (uint64, error) {
 	return pidN, err
 }
 
-func ROPLibrariesHandler(w http.ResponseWriter, r *http.Request) {
-	pidN, err := getPid(r)
+func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
+
+	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(gadgets, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Write(b)
+}
+func FingerprintForPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	var err error
+	lenStr := r.Form.Get("len")
+	if lenStr != "" {
+		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // else if
 
-	checkSignatures := false
-	signatures := r.Form.Get("signatures")
-	if signatures == "true" {
-		checkSignatures = true
+	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
+	if err != nil {
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	fingerprint := types.FingerprintFromGadgets(gadgets)
+
+	b, err := json.MarshalIndent(fingerprint, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	librariesResult, harderror, softerrors := lib.GetLibrariesForPid(int(pidN), checkSignatures)
-
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&librariesResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
 	w.Write(b)
-} // ROPLibrariesHandler()
-
-func ROPDiskDisAsmHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	var startN uint64 = 0
-	start := r.Form.Get("start")
-	if start == "start" {
-		startN = 0
-	} else if start != "" {
-		var err error
-		startN, err = strconv.ParseUint(start, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var endN uint64 = math.MaxUint64
-	end := r.Form.Get("end")
-	if end == "end" {
-		endN = uint64(safeEndAddress)
-	} else if end != "" {
-		var err error
-		endN, err = strconv.ParseUint(end, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var limitN uint64 = math.MaxInt32
-	limit := r.Form.Get("limit")
-	if limit == "limit" {
-		limitN = 100
-	} else if limit != "" {
-		var err error
-		limitN, err = strconv.ParseUint(limit, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	all := r.Form.Get("all") == "true"
-
-	disAsmResult, harderror, _ := lib.DisAsmForFile(filepath, startN, endN, limitN, all)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&disAsmResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // DiskDisAsmHandler
-
-func ROPMemoryDisAsmHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	var startN uint64 = 0
-	start := r.Form.Get("start")
-	if start == "start" {
-		startN = 0
-	} else if start != "" {
-		var err error
-		startN, err = strconv.ParseUint(start, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var endN uint64 = math.MaxUint64
-	end := r.Form.Get("end")
-	if end == "end" {
-		endN = uint64(safeEndAddress)
-	} else if end != "" {
-		var err error
-		endN, err = strconv.ParseUint(end, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var limitN uint64 = math.MaxInt32
-	limit := r.Form.Get("limit")
-	if limit == "limit" {
-		limitN = 100
-	} else if limit != "" {
-		var err error
-		limitN, err = strconv.ParseUint(limit, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	all := r.Form.Get("all") == "true"
-
-	disAsmResult, harderror, softerrors := lib.MemoryDisAsmForPid(pidN, startN, endN, limitN, all)
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&disAsmResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPMemoryDisAsmHandler()
-
-func ROPMemoryGadgetHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	GadgetHandler(true, w, r, pidN, "")
-} //ROPMemoryGadgetHandler
-
-func ROPFileGadgetHandler(w http.ResponseWriter, r *http.Request, filepath string) {
-	GadgetHandler(false, w, r, 0, filepath)
 }
 
-const jsonGadgetsEnd = "\n    ]\n}"
-
-func GadgetHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
-	var startN uint64 = 0
-	start := r.Form.Get("start")
-	var err error
-	if start == "start" {
-		startN = 0
-	} else if start != "" {
-		startN, err = strconv.ParseUint(start, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var endN uint64 = math.MaxUint64
-	end := r.Form.Get("end")
-	if end == "end" {
-		endN = uint64(safeEndAddress)
-	} else if end != "" {
-		endN, err = strconv.ParseUint(end, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var limitN uint64 = math.MaxInt32
-	limit := r.Form.Get("limit")
-	if limit == "limit" {
-		limitN = 100
-	} else if limit != "" {
-		limitN, err = strconv.ParseUint(limit, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // else if
-	} // if
-
-	var instructionsN uint64 = math.MaxInt32
-	instructions := r.Form.Get("instructions")
-	if instructions == "instructions" {
-		instructionsN = 5
-	} else if instructions != "" {
-		instructionsN, err = strconv.ParseUint(instructions, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var octetsN uint64 = math.MaxInt32
-	octets := r.Form.Get("octets")
-	if octets == "octets" {
-		octetsN = 100
-	} else if octets != "" {
-		octetsN, err = strconv.ParseUint(octets, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	spec := lib.GadgetSearchSpec {
-		InMemory:       inMemory,
-		PidN:           pidN,
-		Filepath:       filepath,
-		StartN:         startN,
-		EndN:           endN,
-		LimitN:         limitN,
-		InstructionsN:  instructionsN,
-		OctetsN:        octetsN,
-	} // GadgetSearchSpec
-
-	firstRegion := true
-	var firstGadget bool
-
-	w.Write([]byte("{\n" + indent + "\"regions\": ["))
-	harderror, softerrors := lib.OperateOnGadgets(spec, func(region memaccess.MemoryRegion) {
-		b, _ := json.MarshalIndent(&region, indent + indent + indent, indent)
-		b = append([]byte("\n" + indent + indent + "{\n" + indent + indent + indent + "\"region\": "), b...)
-		b = append(b, []byte(",\n" + indent + indent + indent + "\"gadgets\": [\n" + indent + indent + indent + indent)...)
-		if !firstRegion {
-			b = append([]byte("\n" + indent + indent + indent + "]\n" + indent + indent + "},"), b...)
-		}
-		firstRegion = false
-
-		w.Write(b)
-
-		firstGadget = true
-	}, func(gadget lib.Gadget) {
-		b, _ := json.MarshalIndent(&gadget, indent + indent + indent + indent, indent)
-		if !firstGadget {
-			b = append([]byte(",\n" + indent + indent + indent + indent), b...)
-		}
-		firstGadget = false
-		w.Write(b)
-	}) //lib.OperateOnGadgets
-	logErrors(harderror, softerrors)
-	w.Write([]byte("\n" + indent + indent + indent + "]\n" + indent + indent + "}\n" + indent + "]\n}"))
-} // GadgetHandler()
-
-func FingerprintHandler(inMemory bool, w http.ResponseWriter, r *http.Request, pidN int, filepath string) {
-	var startN uint64 = 0
-	start := r.Form.Get("start")
-	var err error
-	if start == "start" {
-		startN = 0
-	} else if start != "" {
-		startN, err = strconv.ParseUint(start, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var endN uint64 = math.MaxUint64
-	end := r.Form.Get("end")
-	if end == "end" {
-		endN = uint64(safeEndAddress)
-	} else if end != "" {
-		endN, err = strconv.ParseUint(end, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var limitN uint64 = math.MaxInt32
-	limit := r.Form.Get("limit")
-	if limit == "limit" {
-		limitN = 100
-	} else if limit != "" {
-		limitN, err = strconv.ParseUint(limit, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // else if
-	} // if
-
-	var instructionsN uint64 = math.MaxInt32
-	instructions := r.Form.Get("instructions")
-	if instructions == "instructions" {
-		instructionsN = 5
-	} else if instructions != "" {
-		instructionsN, err = strconv.ParseUint(instructions, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var octetsN uint64 = math.MaxInt32
-	octets := r.Form.Get("octets")
-	if octets == "octets" {
-		octetsN = 100
-	} else if octets != "" {
-		octetsN, err = strconv.ParseUint(octets, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	spec := lib.GadgetSearchSpec {
-		InMemory:       inMemory,
-		PidN:           pidN,
-		Filepath:       filepath,
-		StartN:         startN,
-		EndN:           endN,
-		LimitN:         limitN,
-		InstructionsN:  instructionsN,
-		OctetsN:        octetsN,
-	} // spec
-
-	fingerprintResult, harderror, softerrors := lib.Fingerprint(spec)
-	logErrors(harderror, softerrors)
-	if harderror != nil {
+func PolyverseTaintedPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	libraries, err, softerrors := lib.GetLibrariesForPid(pid, true)
+	if err != nil {
+		logErrors(err, softerrors)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} // if
-
-	b, err := json.MarshalIndent(lib.Printable(&fingerprintResult), "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	w.Write(b)
-} // FingerprintHandler()
 
-func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	var access memaccess.Access = memaccess.None
-
-	accessS := strings.ToUpper(r.Form.Get("access"))
-	if accessS == "NONE" {
-		access = memaccess.None
-	} else if accessS == "" {
-		access = memaccess.Readable
-	} else {
-		if i := strings.Index(accessS, "R"); i != -1 {
-			access |= memaccess.Readable
-			accessS = strings.Replace(accessS, "R", "", 1)
-		} // if
-		if i := strings.Index(accessS, "W"); i != -1 {
-			access |= memaccess.Writable
-			accessS = strings.Replace(accessS, "W", "", 1)
-		} // if
-		if i := strings.Index(accessS, "X"); i != -1 {
-			access |= memaccess.Executable
-			accessS = strings.Replace(accessS, "X", "", 1)
-		} // if
-		if i := strings.Index(accessS, "F"); i != -1 {
-			access |= memaccess.Free
-			accessS = strings.Replace(accessS, "F", "", 1)
-		} // if
-		if accessS != "" {
-			http.Error(w, "Improper Access specification.", http.StatusBadRequest)
-			return
-		} // if
-	} // else
-
-	regionsResult, harderror, softerrors := lib.ROPMemoryRegions(pidN, access)
-	logErrors(harderror, softerrors)
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-
-	b, err := json.MarshalIndent(&regionsResult, "", indent)
+	b, err := json.MarshalIndent(libraries, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} // if
 	w.Write(b)
-} // ROPMemoryRegionsHandler()
+}
 
-func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
-	var startN uint64 = 0
-	start := r.Form.Get("start")
-	var err error
-	if start == "start" {
-		startN = 0
-	} else if start != "" {
-		startN, err = strconv.ParseUint(start, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var endN uint64 = math.MaxUint64
-	end := r.Form.Get("end")
-	if end == "end" {
-		endN = uint64(safeEndAddress)
-	} else if end != "" {
-		endN, err = strconv.ParseUint(end, 0, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
-	var limitN uint64 = math.MaxInt32
-	limit := r.Form.Get("limit")
-	if limit == "limit" {
-		limitN = 100
-	} else if limit != "" {
-		limitN, err = strconv.ParseUint(limit, 0, 32)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		} // if
-	} // else if
-
+func PidGadgetSearchHandler(w http.ResponseWriter, r *http.Request, pid int) {
 	search := r.Form.Get("string")
 	if search == "" {
 		search = r.Form.Get("regexp")
@@ -582,17 +344,5 @@ func ROPMemorySearchHandler(w http.ResponseWriter, r *http.Request, pidN int) {
 		}
 	} // if
 
-	searchResult, harderror, softerrors := lib.ROPMemorySearch(pidN, search, disasm.Ptr(startN), disasm.Ptr(endN), uint(limitN), r.Form.Get("regexp") != "")
-	if harderror != nil {
-		http.Error(w, harderror.Error(), http.StatusBadRequest)
-		return
-	} // if
-	logErrors(harderror, softerrors)
-
-	b, err := json.MarshalIndent(&searchResult, "", indent)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	} // if
-	w.Write(b)
-} // ROPMemorySearchHandler()
+	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
+}

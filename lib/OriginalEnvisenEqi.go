@@ -1,11 +1,6 @@
 package lib
 
-import (
-	"github.com/polyverse/disasm"
-	"math"
-	"net/url"
-)
-
+/*
 func originalEnvisenEqi(comparison FingerprintRegionComparison, _ url.Values) (float64, error) {
 	survived, _, offsets := survivedDeadOffsets(comparison)
 	fractionSurvivedGadgets := float64(survived) / float64(len(comparison.GadgetDisplacements))
@@ -85,3 +80,4 @@ func gadgetsByOffset(offsets map[disasm.Ptr]int64) map[int64]int {
 	}
 	return ret
 }
+*/

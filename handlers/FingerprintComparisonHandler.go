@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"io/ioutil"
 	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
+	"io/ioutil"
+	"net/http"
 )
 
 func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,13 +24,9 @@ func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var oldPrintable lib.PrintableFingerprintResult
-	err = json.Unmarshal(oldContents, &oldPrintable)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	old, err := lib.ParseFingerprintResult(oldPrintable)
+
+	var old types.Fingerprint
+	err = json.Unmarshal(oldContents, &old)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -41,22 +38,15 @@ func FingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var newPrintable lib.PrintableFingerprintResult
-	err = json.Unmarshal(newContents, &newPrintable)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	new, err := lib.ParseFingerprintResult(newPrintable)
+	var new types.Fingerprint
+	err = json.Unmarshal(newContents, &new)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	comparison := lib.CompareFingerprints(old, new)
-	printableComparison := lib.PrintableComparison(&comparison)
-
-	b, err := json.MarshalIndent(printableComparison, "", indent)
+	b, err := json.MarshalIndent(comparison, "", indent)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

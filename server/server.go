@@ -17,16 +17,14 @@ func ServeOverHttp(address string) error {
 	api := subLister(root, "/api")
 	v1 := subLister(api, "/v1")
 
-	addHandleFunc(v1, "/health", handlers.ROPHealthHandler)
-	addHandleFunc(v1, "/pids", handlers.ROPPIdsHandler)
+	addHandleFunc(v1, "/health", handlers.HealthHandler)
 	addHandleFunc(v1, "/compare", handlers.FingerprintComparisonHandler)
 	addHandleFunc(v1, "/eqi", handlers.EqiHandler)
 
-	pid := subLister(v1, "/pids/{pid}")
-	addHandleFunc(pid, "/libraries", handlers.ROPLibrariesHandler)
-	addHandleFunc(pid, "/memory", handlers.ROPMemoryHandler)
+	addHandleFunc(v1, "/pids", handlers.PidListingHandler)
+	addHandleFunc(v1, "/pids/{pid}", handlers.PidHandler)
 
-	directoryLister(v1, "/files", handlers.ROPFileHandler)
+	directoryLister(v1, "/files", handlers.FileHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
