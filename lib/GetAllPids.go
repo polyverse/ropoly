@@ -24,7 +24,7 @@ func intAttributeByPid(pid int, attribute string) (int, error) {
 		return 0, errors.Wrapf(err, "Unable to get integer value of attribute %s for pid %d due to underlying error", attribute, pid)
 	}
 
-	ret, err := strconv.Atoi(strVal)
+	ret, err := strconv.Atoi(strings.TrimSpace(strVal))
 	if err != nil {
 		return 0, errors.Wrapf(err, "Unable to parse integer from value %s of attribute %s for pid %d due to underlying error", strVal, attribute, pid)
 	}

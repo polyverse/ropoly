@@ -111,7 +111,7 @@ func scanFiles(wg *sync.WaitGroup) {
 
 			if !info.IsDir() {
 				fileScanStartTime := time.Now()
-				hasPvSignature, err := lib.HasPVSignature(info)
+				hasPvSignature, err := lib.HasPVSignature(path)
 				fileScanEndTime := time.Now()
 				if err != nil {
 					scanLogger.WithError(err).Errorf("Error when attempting to check file %s for PV signature.", info.Name())

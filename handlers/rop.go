@@ -47,7 +47,11 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 
 func getFilepath(r *http.Request, uri string) string {
 	splitUri := strings.Split(r.RequestURI, uri)
-	return strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
+	path := strings.SplitN(splitUri[len(splitUri)-1], "?", 2)[0]
+	if path == "" {
+		path = "/"
+	}
+	return path
 }
 
 func FileHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,18 +65,18 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mode := r.FormValue("mode")
-	switch mode {
-	case "gadget":
-		GadgetsFromFileHandler(w, r, path)
-	case "signature":
+	query := r.FormValue("query")
+	switch query {
+	case "taints":
 		PolyverseTaintedFileHandler(w, r, path)
+	case "gadgets":
+		GadgetsFromFileHandler(w, r, path)
 	case "fingerprint":
 		FingerprintForFileHandler(w, r, path)
 	case "search":
 		FileGadgetSearchHandler(w, r, path)
 	default:
-		http.Error(w, "Mode should be directory, signature, disasm, gadget, or fingerprint.", http.StatusBadRequest)
+		PolyverseTaintedFileHandler(w, r, path)
 	} // switch
 }
 
@@ -83,18 +87,18 @@ func PidHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mode := r.FormValue("mode")
-	switch mode {
-	case "gadget":
-		GadgetsFromPidHandler(w, r, int(pid))
-	case "signature":
+	query := r.FormValue("query")
+	switch query {
+	case "taints":
 		PolyverseTaintedPidHandler(w, r, int(pid))
+	case "gadgets":
+		GadgetsFromPidHandler(w, r, int(pid))
 	case "fingerprint":
 		FingerprintForPidHandler(w, r, int(pid))
 	case "search":
 		PidGadgetSearchHandler(w, r, int(pid))
 	default:
-		http.Error(w, "Mode should be regions, search, disasm, gadget, or fingerprint.", http.StatusBadRequest)
+		PolyverseTaintedPidHandler(w, r, int(pid))
 	}
 }
 
@@ -113,7 +117,7 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 			entry.Type = EntryTypeDir
 		} else {
 			entry.Type = EntryTypeFile
-			pvTaint, err := lib.HasPVSignature(info)
+			pvTaint, err := lib.HasPVSignature(path)
 			if err != nil {
 				log.WithError(err).Errorf("Error when checking for Polyverse taint on path %s", path)
 			} else {
@@ -121,6 +125,10 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 			}
 		}
 		listing = append(listing, entry)
+
+		if info.IsDir() && dirpath != path {
+			return filepath.SkipDir
+		}
 		return nil
 	})
 	if err != nil {
@@ -139,14 +147,7 @@ func DirectoryListingHandler(w http.ResponseWriter, r *http.Request, dirpath str
 }
 
 func PolyverseTaintedFileHandler(w http.ResponseWriter, r *http.Request, path string) {
-	fileinfo, err := os.Stat(path)
-	if err != nil {
-		logErrors(err, make([]error, 0))
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	signatureResult, err := lib.HasPVSignature(fileinfo)
+	signatureResult, err := lib.HasPVSignature(path)
 	if err != nil {
 		logErrors(err, make([]error, 0))
 		http.Error(w, err.Error(), http.StatusBadRequest)
