@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/gorilla/mux"
 	"github.com/polyverse/ropoly/lib"
