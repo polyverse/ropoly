@@ -25,6 +25,7 @@ var serverCmd = &cobra.Command{
 		if VerboseLogging {
 			log.Infof("Enabling verbose debug-level logging...")
 			log.SetLevel(log.DebugLevel)
+			log.SetReportCaller(true)
 		}
 
 		log.Infof("Starting a blocking webserver at address %s", ServerAddress)
