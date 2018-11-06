@@ -8,9 +8,13 @@ import (
 )
 
 type FingerprintComparison struct {
-	GadgetDisplacements map[disasm.Ptr][]Offset   `json:"gadgetDisplacements"`
-	NewGadgets          map[GadgetId][]disasm.Ptr `json:"newGadgets"`
-	GadgetsByOffset     map[Offset]int            `json:"gadgetCountsByOffset"`
+	GadgetDisplacements     map[disasm.Ptr][]Offset     `json:"gadgetDisplacements"`
+	NewGadgets              map[GadgetId][]disasm.Ptr   `json:"newGadgets"`
+	GadgetsByOffset         map[Offset]int              `json:"gadgetCountsByOffset"`
+	DeadGadgetCount         int                         `json:"deadGadgetCount"`
+	SurvivedGadgetCount     int                         `json:"survivedGadgetCount"`
+	SingleDisplacements     map[disasm.Ptr]Offset       `json:"bestGadgetDisplacements"`
+	GadgetsBySingleOffset   map[Offset]int              `json:"gadgetCountsByBestOffset"`
 }
 
 type Offset int64
@@ -89,19 +93,34 @@ func FingerprintFromGadgets(gadgets []*disasm.Gadget) Fingerprint {
 
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	ret := FingerprintComparison{
-		GadgetDisplacements: map[disasm.Ptr][]Offset{},
-		NewGadgets:          map[GadgetId][]disasm.Ptr{},
-		GadgetsByOffset:     map[Offset]int{},
+		GadgetDisplacements:    map[disasm.Ptr][]Offset{},
+		NewGadgets:             map[GadgetId][]disasm.Ptr{},
+		GadgetsByOffset:        map[Offset]int{},
+		DeadGadgetCount:        0,
+		SurvivedGadgetCount:    0,
+		SingleDisplacements:    map[disasm.Ptr]Offset{},
+		GadgetsBySingleOffset:  map[Offset]int{},
 	}
 
 	for gadget, oldAddresses := range f1 {
-		newAddresses := f1[gadget]
+		newAddresses := f2[gadget]
 		for _, oldAddress := range oldAddresses {
 			offsets := make([]Offset, len(newAddresses))
 			for j, newAddress := range newAddresses {
 				offset := Offset(newAddress) - Offset(oldAddress)
 				offsets[j] = offset
 				ret.GadgetsByOffset[offset]++
+			}
+			if len(offsets) == 0 {
+				ret.DeadGadgetCount++
+			} else {
+				bestOffset := smallestOffset(offsets)
+				if bestOffset == 0 {
+					ret.SurvivedGadgetCount++
+				} else {
+					ret.SingleDisplacements[oldAddress] = bestOffset
+					ret.GadgetsBySingleOffset[bestOffset]++
+				}
 			}
 			ret.GadgetDisplacements[oldAddress] = offsets
 		}
@@ -114,4 +133,23 @@ func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	}
 
 	return ret
+}
+
+func smallestOffset(offsets []Offset) Offset {
+	smallest := offsets[0]
+	for i := 1; i < len(offsets); i++ {
+		offset := offsets[i]
+		if abs(offset) < smallest {
+			smallest = offset
+		}
+	}
+	return smallest
+}
+
+func abs(o Offset) Offset {
+	if o < 0 {
+		return -o
+	} else {
+		return o
+	}
 }
