@@ -3,17 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
-
-	"github.com/gorilla/mux"
-	"github.com/polyverse/ropoly/lib"
-	"github.com/polyverse/ropoly/lib/types"
-	log "github.com/sirupsen/logrus"
 )
 
 const indent string = "    "
@@ -275,36 +273,12 @@ func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 		} // if
 	} // else if
 
-	if pid != os.Getpid() {
-		err := syscall.PtraceAttach(pid)
-		if err != nil {
-			logErrors(err, nil)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
 	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
 	if err != nil {
 		logErrors(err, softerrors)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		if pid != os.Getpid() {
-			attachErr := syscall.PtraceDetach(pid)
-			if attachErr != nil {
-				logErrors(attachErr, nil)
-			}
-		}
 		return
 	} // if
-
-	if pid != os.Getpid() {
-		err := syscall.PtraceDetach(pid)
-		if err != nil {
-			logErrors(err, softerrors)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
 
 	b, err := json.MarshalIndent(gadgets, "", indent)
 	if err != nil {

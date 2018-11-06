@@ -6,9 +6,30 @@ import (
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/masche/process"
 	log "github.com/sirupsen/logrus"
+	"os"
+	"syscall"
 )
 
 func GadgetsFromProcess(pid int, maxLength int) ([]*disasm.Gadget, error, []error) {
+
+	if pid != os.Getpid() {
+		log.Debugf("Since the Pid for gadget-finding %d is not the same as current pid %d, "+
+			"attempting to PtraceAttach to it, so we can read its memory.", os.Getpid(), pid)
+		err := syscall.PtraceAttach(pid)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error when attempting to PtraceAttach to Pid %d from Ropoly.", pid), nil
+		}
+
+		defer func(clearpid int) {
+			log.Debugf("Detaching Ropoly's PTrace attachment to pid %d", clearpid)
+			detachErr := syscall.PtraceDetach(clearpid)
+			if detachErr != nil {
+				log.WithError(err).Errorf("Unable to deteach Ropoly's PTrace from pid %d. This "+
+					"can lead to resource leaks. Beware.", clearpid)
+			}
+		}(pid)
+	}
+
 	softerrors := []error{}
 	proc := process.LinuxProcess(pid)
 
