@@ -5,7 +5,7 @@ import (
 	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/masche/process"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 )
 
 func GadgetsFromProcess(pid int, maxLength int) ([]*disasm.Gadget, error, []error) {
