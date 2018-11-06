@@ -1,13 +1,72 @@
 package types
 
 import (
+	"github.com/pkg/errors"
 	"github.com/polyverse/disasm"
+	"strconv"
+	"strings"
 )
 
 type FingerprintComparison struct {
-	GadgetDisplacements map[disasm.Ptr][]int64    `json:"gadgetDisplacements"`
+	GadgetDisplacements map[disasm.Ptr][]Offset   `json:"gadgetDisplacements"`
 	NewGadgets          map[GadgetId][]disasm.Ptr `json:"newGadgets"`
-	GadgetsByOffset     map[int64]int             `json:"gadgetCountsByOffset"`
+	GadgetsByOffset     map[Offset]int            `json:"gadgetCountsByOffset"`
+}
+
+type Offset int64
+
+func (o Offset) String() string {
+	negative := o < 0
+	str := ""
+	if negative {
+		o = -o
+	}
+	str += strconv.FormatInt(int64(o), 16)
+	ret := "0x" + strings.Repeat("0", 12-len(str)) + str
+	if negative {
+		ret = "-" + ret
+	}
+	return ret
+}
+
+func (o *Offset) UnmarshalJSON(b []byte) error {
+	if o == nil {
+		return errors.Errorf("Addr Unmarshall cannot operate on a nil pointer.")
+	}
+
+	str := string(b)
+	str = strings.TrimPrefix(str, "\"")
+	str = strings.TrimSuffix(str, "\"")
+
+	negative := strings.HasPrefix(str, "-")
+	if negative {
+		strings.TrimPrefix(str,"-")
+	}
+
+	if !strings.HasPrefix(str, "0x") {
+		return errors.Errorf("Cannot unmarshall string %s into an offset. "+
+			"It must be a hexadecimal value prefixed by 0x", str)
+	}
+
+	str = strings.TrimPrefix(str, "0x")
+	val, err := strconv.ParseInt(str, 16, 64)
+	if negative {
+		val = -val
+	}
+	if err != nil {
+		return errors.Wrapf(err, "Unable to parse hexadecimal value %s", str)
+	}
+	vo := Offset(val)
+	*o = vo
+	return nil
+}
+
+func (o Offset) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + o.String() + "\""), nil
+}
+
+func (o Offset) MarshalText() ([]byte, error) {
+	return []byte(o.String()), nil
 }
 
 type GadgetId string
@@ -30,17 +89,17 @@ func FingerprintFromGadgets(gadgets []*disasm.Gadget) Fingerprint {
 
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	ret := FingerprintComparison{
-		GadgetDisplacements: map[disasm.Ptr][]int64{},
+		GadgetDisplacements: map[disasm.Ptr][]Offset{},
 		NewGadgets:          map[GadgetId][]disasm.Ptr{},
-		GadgetsByOffset:     map[int64]int{},
+		GadgetsByOffset:     map[Offset]int{},
 	}
 
 	for gadget, oldAddresses := range f1 {
 		newAddresses := f1[gadget]
 		for _, oldAddress := range oldAddresses {
-			offsets := make([]int64, len(newAddresses))
+			offsets := make([]Offset, len(newAddresses))
 			for j, newAddress := range newAddresses {
-				offset := int64(newAddress) - int64(oldAddress)
+				offset := Offset(newAddress) - Offset(oldAddress)
 				offsets[j] = offset
 				ret.GadgetsByOffset[offset]++
 			}
