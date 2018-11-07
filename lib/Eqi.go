@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/url"
 	"github.com/polyverse/ropoly/lib/types"
+	"github.com/polyverse/ropoly/lib/eqi"
 )
 
 func Eqi(comparison types.FingerprintComparison, eqiFunc string, form url.Values) (types.EntropyQualityIndex, error) {
@@ -22,8 +23,10 @@ func Eqi(comparison types.FingerprintComparison, eqiFunc string, form url.Values
 type regionEqiFunc func(types.FingerprintComparison, url.Values) (float64, error)
 
 var regionEqiFuncs = map[string]regionEqiFunc{
-	"monte-carlo":      monteCarloEqi,
-	"envisen-original": originalEnvisenEqi,
+	"monte-carlo":      eqi.MonteCarloEqi,
+	"envisen-original": eqi.OriginalEnvisenEqi,
+	"count-poly":       eqi.CountPolynomialEqi,
+	"count-exp":        eqi.CountExponentialEqi,
 }
 
 func normalizeEqi(eqi float64) types.EntropyQualityIndex {

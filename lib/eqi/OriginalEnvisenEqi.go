@@ -1,4 +1,4 @@
-package lib
+package eqi
 
 import (
 	"math"
@@ -6,7 +6,7 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func originalEnvisenEqi(comparison types.FingerprintComparison, _ url.Values) (float64, error) {
+func OriginalEnvisenEqi(comparison types.FingerprintComparison, _ url.Values) (float64, error) {
 	gadgetCount := len(comparison.GadgetDisplacements)
 	weaklySurvivedCount := len(comparison.SingleDisplacements)
 	fractionSurvivedGadgets := float64(comparison.SurvivedGadgetCount) / float64(gadgetCount)

@@ -1,4 +1,4 @@
-package lib
+package eqi
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func monteCarloEqi(comparison types.FingerprintComparison, form url.Values) (float64, error) {
+func MonteCarloEqi(comparison types.FingerprintComparison, form url.Values) (float64, error) {
 	min, err := strconv.ParseInt(form.Get("min"), 0, 64)
 	if err != nil {
 		return 0, errors.New("Could not parse min.")
