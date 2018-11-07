@@ -35,7 +35,7 @@ func (o Offset) String() string {
 
 func (o *Offset) UnmarshalJSON(b []byte) error {
 	if o == nil {
-		return errors.Errorf("Addr Unmarshall cannot operate on a nil pointer.")
+		return errors.Errorf("Offset Unmarshall cannot operate on a nil pointer.")
 	}
 
 	str := string(b)
@@ -44,7 +44,7 @@ func (o *Offset) UnmarshalJSON(b []byte) error {
 
 	negative := strings.HasPrefix(str, "-")
 	if negative {
-		strings.TrimPrefix(str,"-")
+		str = strings.TrimPrefix(str,"-")
 	}
 
 	if !strings.HasPrefix(str, "0x") {
@@ -69,8 +69,12 @@ func (o Offset) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + o.String() + "\""), nil
 }
 
+func (o *Offset) UnmarshalText(b []byte) error {
+	return o.UnmarshalJSON(b)
+}
+
 func (o Offset) MarshalText() ([]byte, error) {
-	return []byte(o.String()), nil
+	return []byte("\"" + o.String() + "\""), nil
 }
 
 type GadgetId string
