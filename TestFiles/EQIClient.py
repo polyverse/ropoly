@@ -5,13 +5,20 @@ go_parent_dir = "/usr/local"
 # Set binary_pairs to the pairs of binaries to generate EQIs, original first and modified second.
 # Each pair of binaries must be in ropoly/TestFiles.
 # binary_pairs needs to have at least two items or Python freaks out.
-# If you only want to test one pair, use a None for the second.
-binary_pairs = (("loop_o0", "loop_o1"), None)
+binary_pairs = (("loop_o0", "loop_o0"), ("loop_o0", "loop_o1"))
 
 # Set eqi_funcs to the list of EQI functions you want to use.
 # Name of function first, followed by list of arguments.
-eqi_funcs = (["envisen-original", {}],
-             ["monte-carlo", {"min":2, "max":10, "trials":1000000}])
+eqi_funcs = (
+    ["envisen-original", {}],
+    ["monte-carlo", {"min":2, "max":10, "trials":1000000}],
+    ["monte-carlo", {"min":2, "max":2, "trials":1000000}],
+    ["count-poly", {}],
+    ["count-poly", {"order":3}],
+    ["count-poly", {"single":"true"}],
+    ["count-poly", {"single":"true", "order":3}],
+    ["count-exp", {"single":"true"}],
+    )
 
 function = 0
 arguments = 1
@@ -25,34 +32,27 @@ import urllib.request as r
 import json
 
 def main():
+    pairs = []
+    eqis = []
     for pair in binary_pairs:
-        if pair != None:
-            for i in range(2):
-                fingerprint_url = url_prefix + "files" + server_absolute_directory + pair[i] + "?mode=fingerprint"
-                http_to_file(fingerprint_url, client_absolute_directory + pair[i] + fingerprint_suffix)
+        for i in range(2):
+            fingerprint_url = url_prefix + "files" + server_absolute_directory + pair[i] + "?query=fingerprint"
+            http_to_file(fingerprint_url, client_absolute_directory + pair[i] + fingerprint_suffix)
 
-            comparison_url = url_prefix + "compare?old=" + relative_directory + pair[0] + fingerprint_suffix \
-                             + "&new=" + relative_directory + pair[1] + fingerprint_suffix
-            comparison_file = pair[0] + "__" + pair[1]
-            http_to_file(comparison_url, client_absolute_directory + comparison_file)
+        comparison_url = url_prefix + "compare?old=" + relative_directory + pair[0] + fingerprint_suffix \
+                         + "&new=" + relative_directory + pair[1] + fingerprint_suffix
+        comparison_file = pair[0] + "__" + pair[1]
+        pairs.append(comparison_file)
+        http_to_file(comparison_url, client_absolute_directory + comparison_file)
 
-            region_map = int_mapper()
-            eqis = []
-            for func in eqi_funcs:
-                func_eqis = expanding_slice("")
-                
-                eqi_url = url_prefix + "eqi?comparison=" + relative_directory + comparison_file + "&func=" + func_to_string(func)
-                
-                eqi_struct = http_to_struct(eqi_url)
-                for eqi_region in eqi_struct["region EQIs"]:
-                    region = eqi_region["region"]["kind"]
-                    region_index = region_map[region]
-                    eqi = eqi_region["EQI"]
-                    func_eqis[region_index] = eqi
-                eqis.append(func_eqis)
+        pair_eqis = []
+        for func in eqi_funcs:
+            eqi_url = url_prefix + "eqi?comparison=" + relative_directory + comparison_file + "&func=" + func_to_string(func)
+            pair_eqis.append(http_to_string(eqi_url))
+        eqis.append(pair_eqis)
 
-            csv_file = client_absolute_directory + comparison_file + ".csv"
-            arr2d_to_csv(eqis, csv_file, region_map.ordered_keys(), funcs_to_strings())
+    csv_file = client_absolute_directory +  "eqis.csv"
+    arr2d_to_csv(eqis, csv_file, funcs_to_strings(), pairs)
 
 def func_to_string(func):
     ret = func[function]
@@ -73,11 +73,10 @@ def http_to_file(url, path):
     file.write(content)
     file.close()
 
-def http_to_struct(url):
+def http_to_string(url):
     request = r.urlopen(url)
     content = request.read()
-    struct = json.loads(content)
-    return struct
+    return str(content)[2:-1]
 
 def arr2d_to_csv(data, filepath, column_labels, row_labels):
     file = open(filepath, "w")
@@ -89,41 +88,5 @@ def arr2d_to_csv(data, filepath, column_labels, row_labels):
         for column in range(len(column_labels)):
             file.write("," + str(data[row][column]))
     file.close()
-
-class int_mapper:
-    next_value = None
-    mapping = None
-
-    def __init__(self):
-        self.next_value = 0
-        self.mapping = {}
-
-    def __getitem__(self, index):
-        if index not in self.mapping:
-            self.mapping[index] = self.next_value
-            self.next_value += 1
-        return self.mapping[index]
-
-    def ordered_keys(self):
-        return self.mapping.keys()
-
-class expanding_slice:
-    values = None
-    fill = None
-
-    def __init__(self, fill):
-        self.values = []
-        self.fill = fill
-
-    def __getitem__(self, index):
-        if index >= len(self.values):
-            return self.fill
-        else:
-            return self.values[index]
-
-    def __setitem__(self, index, value):
-        while index >= len(self.values):
-            self.values.append(self.fill)
-        self.values[index] = value
 
 main()
