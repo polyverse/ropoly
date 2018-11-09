@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"github.com/polyverse/ropoly/lib"
@@ -29,6 +31,8 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		} // if
 	} // else if
 
+	outputFile := r.Form.Get("out")
+
 	var gadgets []*disasm.Gadget
 	var softerrors []error
 	if isFile {
@@ -49,5 +53,22 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(b)
+
+	if outputFile == "" {
+		w.Write(b)
+	} else {
+		if DataDirectory == "" {
+			err := errors.New("Requested to save file, but persistent data directory not set.")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logErrors(err, nil)
+			return
+		}
+
+		err := ioutil.WriteFile(DataDirectory + "/" + outputFile, b, 0666)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logErrors(err, nil)
+			return
+		}
+	}
 }

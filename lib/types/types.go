@@ -74,7 +74,7 @@ func (o *Offset) UnmarshalText(b []byte) error {
 }
 
 func (o Offset) MarshalText() ([]byte, error) {
-	return []byte("\"" + o.String() + "\""), nil
+	return []byte(o.String()), nil
 }
 
 type GadgetId string

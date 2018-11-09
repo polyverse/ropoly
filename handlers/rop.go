@@ -29,6 +29,8 @@ type DirectoryListingEntry struct {
 	PolyverseTained bool                      `json:"polyverseTainted"`
 }
 
+var DataDirectory string
+
 func logErrors(hardError error, softErrors []error) {
 	if hardError != nil {
 		//log.Fatal(hardError)
