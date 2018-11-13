@@ -74,7 +74,7 @@ func (o *Offset) UnmarshalText(b []byte) error {
 }
 
 func (o Offset) MarshalText() ([]byte, error) {
-	return []byte("\"" + o.String() + "\""), nil
+	return []byte(o.String()), nil
 }
 
 type GadgetId string
@@ -108,7 +108,8 @@ func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 
 	for gadget, oldAddresses := range f1 {
 		newAddresses := f2[gadget]
-		for _, oldAddress := range oldAddresses {
+		for i := 0; i < len(oldAddresses); i++ {
+			oldAddress := oldAddresses[i]
 			offsets := make([]Offset, len(newAddresses))
 			for j, newAddress := range newAddresses {
 				offset := Offset(newAddress) - Offset(oldAddress)
