@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/polyverse/ropoly/lib"
 	"github.com/polyverse/ropoly/lib/types"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -95,6 +97,35 @@ func StoredComparisonHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+}
+
+func PostComparisonHandler(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["comparison"]
+	path := ComparisonsDirectory() + name
+
+	if r.FormValue("overwrite") != "true" {
+		exists, err := lib.Exists(path)
+		if err != nil {
+			logErrors(err, nil)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if exists {
+			b := []byte("File already exists. Use \"overwrite=true\" to overwrite.")
+			w.Write(b)
+			return
+		}
+	}
+
+	file, _, err := r.FormFile("comparison")
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var b bytes.Buffer
+	io.Copy(&b, file)
+	ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func StoredComparisonEqiHandler(w http.ResponseWriter, r *http.Request) {

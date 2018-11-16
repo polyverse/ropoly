@@ -35,6 +35,7 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(v1, "/comparisons/{comparison}/eqi", handlers.StoredComparisonEqiHandler)
 
 	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
+	addPostHandleFunc(router, "/api/v1/comparisons/{comparison}", handlers.PostComparisonHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
