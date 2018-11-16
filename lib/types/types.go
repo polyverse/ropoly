@@ -143,7 +143,7 @@ func smallestOffset(offsets []Offset) Offset {
 	smallest := offsets[0]
 	for i := 1; i < len(offsets); i++ {
 		offset := offsets[i]
-		if abs(offset) < smallest {
+		if abs(offset) < abs(smallest) {
 			smallest = offset
 		}
 	}
