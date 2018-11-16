@@ -34,6 +34,8 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(v1, "/comparisons/{comparison}", handlers.StoredComparisonHandler)
 	addHandleFunc(v1, "/comparisons/{comparison}/eqi", handlers.StoredComparisonEqiHandler)
 
+	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
+
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
 	// Dump the actual routes that the router knows about
@@ -76,6 +78,11 @@ func subLister(router *mux.Router, path string) *mux.Router {
 func addHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
 	path = strings.TrimSuffix(path, "/")
 	handleFuncByMethod(router, path, handlerFunc, "GET")
+}
+
+func addPostHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
+	path = strings.TrimSuffix(path, "/")
+	handleFuncByMethod(router, path, handlerFunc, "POST")
 }
 
 func subHandler(router *mux.Router) http.HandlerFunc {

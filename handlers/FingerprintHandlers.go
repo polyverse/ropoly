@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -129,6 +131,35 @@ func StoredFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+}
+
+func PostFingerprintHandler(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["fingerprint"]
+	path := FingerprintsDirectory() + name
+
+	if r.FormValue("overwrite") != "true" {
+		exists, err := lib.Exists(path)
+		if err != nil {
+			logErrors(err, nil)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if exists {
+			b := []byte("File already exists. Use \"overwrite=true\" to overwrite.")
+			w.Write(b)
+			return
+		}
+	}
+
+	file, _, err := r.FormFile("fingerprint")
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var b bytes.Buffer
+	io.Copy(&b, file)
+	ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
 func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
