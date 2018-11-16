@@ -33,52 +33,61 @@ Return list of all visible process ids and information about each process.
 ### /api/v1/pid/\<_pid_\>/libraries[?signatures=\<[true]\>]
 Return list of loaded libraries for the given _pid_. If _pid_ is 0, _pid_ refers to the ROPoly process itself. If signature is _true_, list whether or not each library has a Polyverse signature.
 
-### /api/v1/pid/\<_pid_\>/memory[?mode=\<regions|search|disasm|gadget|fingerprint\>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_][?access=\<[_R_][_W_][_X_][_F_]|_None_\>][?\<string|regexp\>=_target_]
-Return information about the memory of the given _pid_ according to the option provided in _mode_.
+### /api/v1/pid/\<_pid_\>[?mode=\<taints|gadgets|fingerprint>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_][?access=\<[_R_][_W_][_X_][_F_]|_None_\>][?\<string|regexp\>=_target_]
+Return information about the memory of the given _pid_ according to the option provided in _mode_. _taints_ by default.
 
-#### regions
-Return list of memory regions of the given _pid_ subject to at least access permissions (default _R_). Any combination of _R_, _W_, _X_ and _F (Windows only)_ is permitted as well as the token _None_ which will return all regions. (Case is not significant.)
+### /api/v1/files/\<_path_\>[?query=\<taints|gadgets|fingerprint>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
+Return information about the files and directories in the given directory on the server according to the option provided in _query_. Default option is _taints_.
 
-#### search
-Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ instances. If string is used, _target_ is the literal string. If regexp is used, _target_ is the regular expression.
+### /api/v1/fingerprints
+Return the list of fingerprints stored on the server.
 
-#### disasm
-Disassemble executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ instructions. 
+### /api/v1/fingerprints/{fingerprint}[?overwrite=true]
+Return the contents of the fingerprint with the given name.
+Post fingerprint file to add fingerprint with the given name. Fails if fingerprint with given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
 
-#### gadget
-Search executable memory of the given _pid_ between _start_ and _end_ and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
+### /api/v1/fingerprints/{fingerprint}/compare?second=_fingerprint_[&out=_filepath_]
+Compares the first given fingerprint to the one provided in _second_. Outputs the generated fingerprint comparison if _out_ is not set. If _out_ is set, saves the fingerprint comparison under the name provided to _out_.
 
-#### fingerprint
-Search executable memory of the given _pid_ between _start_ and _end_ and return a fingerprint describing the locations of up to _limit_ gadgets size limited to _instructions_ and _octets_.
+### /api/v1/comparisons
+Return the list fingerprint comparisons stored on the server.
 
-### /api/v1/files/\<_path_\>?mode=\<directory|signature|disasm|gadget|fingerprint\>[&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
-View information about the files and directories in the given directory on the server according to the option provided in _mode_.
+### /api/v1/comparisons/{comparison}[?overwrite=true]
+Return the contents of the fingerprint comparison with the given name.
+Post comparison file to add fingerprint comparison with the given name. Fails if fingerprint with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old comparison.
 
-#### directory
-View the contents of the given directory. Fails if given a file.
-
-#### signature
-Looks for the Polyverse signature, "-PV-", in the given file, and returns based on whether or not it is found. Fails if given a directory.
-
-#### disasm
-Disassembles the .text section of the given ELF binary. Fails if given a directory, or if the given file is not an ELF binary.
-
-#### gadget
-Search .text section of the given ELF binary and return up to _limit_ gadgets size limited to _instructions_ and _octets_.
-
-#### fingerprint
-Search .text section of the given ELF binary and return a fingerprint describing the locations of up to _limit_ gadgets size limited to _instructions_ and _octets_.
+### /api/v1/comparisons/{comparison}/eqi?func=<|monte-carlo|envisen-original|count-poly|count-exp|>
+Calculate the EQI based on the given fingerprint comparison stored on the server, using the EQI function named in _func_. Additional arguments may be required depending on _func_.
 
 ### /api/v1/compare?old=_filepath_&new=_filepath_
+Recommended to use /api/v1/fingerprints/_old_/compare?second=_new_ instead.
 Get fingerprint comparison information about the changes from the _old_/original binary to the _new_/modified binary.
-_new_ and _old_ should be files containing fingerprints. To generate a fingerprint binary, use the _fingerprint_ mode and direct stdout to a file.
 
-### /api/v1/eqi?comparison=_filepath_&calc=<|monte-carlo|envisen-original>
-Calculate the EQI based on the given fingerprint comparison file, using the given calculation method. Additional arguments may be required depending on _func_.
-_comparison_ should be a fingerprint comparison file. To generate one, use the _compare_ endpoint and direct stdout to a file.
+### /api/v1/eqi?comparison=_filepath_&calc=<|monte-carlo|envisen-original|count-poly|count-exp|>
+Recommended to use /api/v1/comparisons/_comparison_/eqi instead.
+Calculate the EQI based on the given fingerprint comparison file, using the given calculation method. Additional arguments may be required depending on _calc_.
+
+## Query options for /api/v1/pid/<_pid_> and /api/v1/files/<_path_>
+
+### taints
+For libraries in memory if looking at a PID or contained files if looking at a directory, check if each is signed by Polyverse.
+
+### gadgets
+Find up to _limit_ gadgets between _start_ and _end_ of up to _instructions_ instructions and _octets_ bytes.
+
+### fingerprint
+Generate a fingerprint based on up to _limit_ gadgets between _start_ and _end_ of up to _instructions_ instructions and _octets_ bytes. If _out_ is set to a name, saves under that name. Otherwise, outputs to client. Will fail if fingerprint with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
+
+## EQI options
 
 #### monte-carlo
 Uses a Monte Carlo method to simulate _fingerprints_ ROP attacks of length between _min_ and _max_ gadgets. EQI is the percentage of attacks with no common offset.
 
 #### envisen-original
 Uses the original formula described at https://github.com/polyverse/EnVisen/blob/master/docs/entropy-index.md as of October 25, 2018.
+
+#### count-poly
+Uses a sum-of-squares method based on the number of gadgets weakly surviving at each offset. Uses all offsets for each original gadget by default; set _single_ to true to treat each gadget as having only a single offset. To use a polynomial order other than 2.0, set _order_ to another number.
+
+#### count-exp
+Uses the sum of exponents of numbers of gadgets weakly surviving at each offset. Uses all offsets for each original gadget by default; set _single_ to true to treat each gadget as having only a single offset. Default base is 2.0; set _base_ to another value to use a different base.
