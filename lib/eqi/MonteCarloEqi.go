@@ -2,10 +2,10 @@ package eqi
 
 import (
 	"errors"
+	"github.com/polyverse/ropoly/lib/types"
 	"math/rand"
 	"net/url"
 	"strconv"
-	"github.com/polyverse/ropoly/lib/types"
 )
 
 func MonteCarloEqi(comparison types.FingerprintComparison, form url.Values) (float64, error) {

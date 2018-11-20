@@ -1,9 +1,9 @@
 package eqi
 
 import (
+	"github.com/polyverse/ropoly/lib/types"
 	"math"
 	"net/url"
-	"github.com/polyverse/ropoly/lib/types"
 )
 
 func OriginalEnvisenEqi(comparison types.FingerprintComparison, _ url.Values) (float64, error) {

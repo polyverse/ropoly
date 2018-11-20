@@ -2,19 +2,18 @@ package types
 
 import (
 	"github.com/pkg/errors"
-	"github.com/polyverse/disasm"
 	"strconv"
 	"strings"
 )
 
 type FingerprintComparison struct {
-	GadgetDisplacements     map[disasm.Ptr][]Offset     `json:"gadgetDisplacements"`
-	NewGadgets              map[GadgetId][]disasm.Ptr   `json:"newGadgets"`
-	GadgetsByOffset         map[Offset]int              `json:"gadgetCountsByOffset"`
-	DeadGadgetCount         int                         `json:"deadGadgetCount"`
-	SurvivedGadgetCount     int                         `json:"survivedGadgetCount"`
-	SingleDisplacements     map[disasm.Ptr]Offset       `json:"bestGadgetDisplacements"`
-	GadgetsBySingleOffset   map[Offset]int              `json:"gadgetCountsByBestOffset"`
+	GadgetDisplacements   map[Addr][]Offset   `json:"gadgetDisplacements"`
+	NewGadgets            map[GadgetId][]Addr `json:"newGadgets"`
+	GadgetsByOffset       map[Offset]int      `json:"gadgetCountsByOffset"`
+	DeadGadgetCount       int                 `json:"deadGadgetCount"`
+	SurvivedGadgetCount   int                 `json:"survivedGadgetCount"`
+	SingleDisplacements   map[Addr]Offset     `json:"bestGadgetDisplacements"`
+	GadgetsBySingleOffset map[Offset]int      `json:"gadgetCountsByBestOffset"`
 }
 
 type Offset int64
@@ -44,7 +43,7 @@ func (o *Offset) UnmarshalJSON(b []byte) error {
 
 	negative := strings.HasPrefix(str, "-")
 	if negative {
-		str = strings.TrimPrefix(str,"-")
+		str = strings.TrimPrefix(str, "-")
 	}
 
 	if !strings.HasPrefix(str, "0x") {
@@ -79,14 +78,14 @@ func (o Offset) MarshalText() ([]byte, error) {
 
 type GadgetId string
 
-type Fingerprint map[GadgetId][]disasm.Ptr
+type Fingerprint map[GadgetId][]Addr
 
-func FingerprintFromGadgets(gadgets []*disasm.Gadget) Fingerprint {
+func FingerprintFromGadgetInstances(gadgetInstances []*GadgetInstance) Fingerprint {
 	fingerprint := Fingerprint{}
-	for _, gadget := range gadgets {
-		hash := GadgetId(gadget.InstructionString())
+	for _, gadget := range gadgetInstances {
+		hash := GadgetId(gadget.Gadget.InstructionString())
 		if _, ok := fingerprint[hash]; !ok {
-			fingerprint[hash] = []disasm.Ptr{gadget.Address}
+			fingerprint[hash] = []Addr{gadget.Address}
 		} else {
 			fingerprint[hash] = append(fingerprint[hash], gadget.Address)
 		}
@@ -97,13 +96,13 @@ func FingerprintFromGadgets(gadgets []*disasm.Gadget) Fingerprint {
 
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	ret := FingerprintComparison{
-		GadgetDisplacements:    map[disasm.Ptr][]Offset{},
-		NewGadgets:             map[GadgetId][]disasm.Ptr{},
-		GadgetsByOffset:        map[Offset]int{},
-		DeadGadgetCount:        0,
-		SurvivedGadgetCount:    0,
-		SingleDisplacements:    map[disasm.Ptr]Offset{},
-		GadgetsBySingleOffset:  map[Offset]int{},
+		GadgetDisplacements:   map[Addr][]Offset{},
+		NewGadgets:            map[GadgetId][]Addr{},
+		GadgetsByOffset:       map[Offset]int{},
+		DeadGadgetCount:       0,
+		SurvivedGadgetCount:   0,
+		SingleDisplacements:   map[Addr]Offset{},
+		GadgetsBySingleOffset: map[Offset]int{},
 	}
 
 	for gadget, oldAddresses := range f1 {

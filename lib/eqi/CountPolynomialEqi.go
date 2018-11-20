@@ -1,10 +1,10 @@
 package eqi
 
 import (
+	"github.com/polyverse/ropoly/lib/types"
 	"math"
 	"net/url"
 	"strconv"
-	"github.com/polyverse/ropoly/lib/types"
 )
 
 const defaultOrder = 2.0

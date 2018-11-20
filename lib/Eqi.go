@@ -2,9 +2,9 @@ package lib
 
 import (
 	"errors"
-	"net/url"
-	"github.com/polyverse/ropoly/lib/types"
 	"github.com/polyverse/ropoly/lib/eqi"
+	"github.com/polyverse/ropoly/lib/types"
+	"net/url"
 )
 
 func Eqi(comparison types.FingerprintComparison, eqiFunc string, form url.Values) (types.EntropyQualityIndex, error) {
