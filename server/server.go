@@ -26,6 +26,17 @@ func ServeOverHttp(address string) error {
 
 	directoryLister(v1, "/files", handlers.FileHandler)
 
+	addHandleFunc(v1, "/fingerprints", handlers.FingerprintListingHandler)
+	addHandleFunc(v1, "/fingerprints/{fingerprint}", handlers.StoredFingerprintHandler)
+	addHandleFunc(v1, "/fingerprints/{fingerprint}/compare", handlers.StoredFingerprintComparisonHandler)
+
+	addHandleFunc(v1, "/comparisons", handlers.ComparisonListingHandler)
+	addHandleFunc(v1, "/comparisons/{comparison}", handlers.StoredComparisonHandler)
+	addHandleFunc(v1, "/comparisons/{comparison}/eqi", handlers.StoredComparisonEqiHandler)
+
+	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
+	addPostHandleFunc(router, "/api/v1/comparisons/{comparison}", handlers.PostComparisonHandler)
+
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
 	// Dump the actual routes that the router knows about
@@ -49,6 +60,8 @@ func directoryLister(router *mux.Router, path string, handlerFunc http.HandlerFu
 	}
 	subrouter.HandleFunc("/{path:.*}", handlerFunc)
 	subrouter.HandleFunc("", handlerFunc)
+	handleFuncByMethod(subrouter, "/{path:.*}", handlerFunc, "GET")
+	handleFuncByMethod(subrouter, "", handlerFunc, "GET")
 	return subrouter
 }
 
@@ -59,15 +72,18 @@ func subLister(router *mux.Router, path string) *mux.Router {
 	}
 
 	handler := subHandler(subrouter)
-	subrouter.HandleFunc("", handler)
-	subrouter.HandleFunc("/", handler)
+	handleFuncByMethod(subrouter, "", handler, "GET")
 	return subrouter
 }
 
 func addHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
 	path = strings.TrimSuffix(path, "/")
-	router.HandleFunc(path, handlerFunc)
-	router.HandleFunc(path+"/", handlerFunc)
+	handleFuncByMethod(router, path, handlerFunc, "GET")
+}
+
+func addPostHandleFunc(router *mux.Router, path string, handlerFunc http.HandlerFunc) {
+	path = strings.TrimSuffix(path, "/")
+	handleFuncByMethod(router, path, handlerFunc, "POST")
 }
 
 func subHandler(router *mux.Router) http.HandlerFunc {
@@ -105,4 +121,9 @@ func subHandler(router *mux.Router) http.HandlerFunc {
 		writer.Write(liststr)
 
 	}
+}
+
+func handleFuncByMethod(r *mux.Router, uri string, handler http.HandlerFunc, method string) {
+	r.Path(uri).Methods(method).HandlerFunc(handler)
+	r.Path(uri+"/").Methods(method).HandlerFunc(handler)
 }

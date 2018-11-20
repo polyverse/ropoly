@@ -9,13 +9,17 @@ import (
 )
 
 func EqiHandler(w http.ResponseWriter, r *http.Request) {
+	comparisonPath := r.FormValue("comparison")
+	handleEqi(w, r, comparisonPath)
+}
+
+func handleEqi(w http.ResponseWriter, r *http.Request, comparisonPath string) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	comparisonPath := r.Form.Get("comparison")
 	contents, err := ioutil.ReadFile(comparisonPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
