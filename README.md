@@ -91,3 +91,21 @@ Uses a sum-of-squares method based on the number of gadgets weakly surviving at 
 
 #### count-exp
 Uses the sum of exponents of numbers of gadgets weakly surviving at each offset. Uses all offsets for each original gadget by default; set _single_ to true to treat each gadget as having only a single offset. Default base is 2.0; set _base_ to another value to use a different base.
+
+#### shared-offsets
+Calculates EQI by looking at each gadget individually and checking how many gadgets it shares an offset with. Handles the case of multiple offsets based on the argument passed to _multiple-handling_, with the default being _worst-only_.
+
+##### worst-only
+When calculating each gadget's contribution to EQI, considers only the offset with the most contribution to EQI (the offset shared with the most other gadgets). The gadget's other offsets are still considered when calculating other gadgets' contribution to EQI.
+
+##### closest-only
+When calculating each gadget's contribution to EQI, considers only the smallest offset. The gadget's other offsets are still considered when calculating other gadgets' contributions to EQI.
+
+##### multiplicative
+For each gadget, starts with a "quality" value of 1, and multiplies it by the complement of the penalty incurred by each offset (normalized to a number between 0 and 1). This causes EQI to decrease asymptotically as each gadget appears at a greater number of offsets.
+
+##### additive
+Adds the penalty for each gadget offset, so that for example a gadget with two offsets each shared with _n_ other gadgets would incur twice the EQI penalty a gadget with a single offset shared with _n_ other gadgets. The same as _count-poly_ with the default _order_ of 2.0 and _single_=false.
+
+##### additive-with-ceiling
+Adds the penalty for each gadget offset, but caps the contribution of each individual gadget to the EQI at 100 divided by the total number of gadgets. 

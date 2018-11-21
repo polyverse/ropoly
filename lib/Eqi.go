@@ -27,6 +27,7 @@ var regionEqiFuncs = map[string]regionEqiFunc{
 	"envisen-original": eqi.OriginalEnvisenEqi,
 	"count-poly":       eqi.CountPolynomialEqi,
 	"count-exp":        eqi.CountExponentialEqi,
+	"shared-offsets":   eqi.SharedOffsetsPerGadgetEqi,
 }
 
 func normalizeEqi(eqi float64) types.EntropyQualityIndex {
