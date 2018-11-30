@@ -17,14 +17,14 @@ func SharedOffsetsPerGadgetEqi(c types.FingerprintComparison, form url.Values) (
 	return averageEqi, nil
 }
 
-type perGadgetEqiFunction func([]types.Offset, map[types.Offset]int, int)float64
+type perGadgetEqiFunction func([]types.Offset, map[types.Offset]int, int) float64
 
-var perGadgetEqiMethods = map[string]perGadgetEqiFunction {
-	"worst-only":               perGadgetWorstOffset,
-	"multiplicative":           perGadgetInverseProductInverse,
-	"additive":                 perGadgetAdditive,
-	"additive-with-ceiling":    perGadgetAdditiveWithCeiling,
-	"closest-only":                  perGadgetClosest,
+var perGadgetEqiMethods = map[string]perGadgetEqiFunction{
+	"worst-only":            perGadgetWorstOffset,
+	"multiplicative":        perGadgetInverseProductInverse,
+	"additive":              perGadgetAdditive,
+	"additive-with-ceiling": perGadgetAdditiveWithCeiling,
+	"closest-only":          perGadgetClosest,
 }
 
 func getPerGadgetEqiMethod(form url.Values) perGadgetEqiFunction {

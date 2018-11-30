@@ -2,17 +2,19 @@ package lib
 
 import (
 	"github.com/pkg/errors"
-	"github.com/polyverse/disasm"
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/masche/process"
+	"github.com/polyverse/ropoly/lib/architectures/amd64"
+	"github.com/polyverse/ropoly/lib/gadgets"
+	"github.com/polyverse/ropoly/lib/types"
 	log "github.com/sirupsen/logrus"
 )
 
-func GadgetsFromProcess(pid int, maxLength int) ([]*disasm.Gadget, error, []error) {
+func GadgetInstancesFromProcess(pid int, maxLength int) ([]*types.GadgetInstance, error, []error) {
 	softerrors := []error{}
 	proc := process.LinuxProcess(pid)
 
-	allGadgets := []*disasm.Gadget{}
+	allGadgets := []*types.GadgetInstance{}
 
 	pc := uintptr(0)
 	for {
@@ -30,21 +32,19 @@ func GadgetsFromProcess(pid int, maxLength int) ([]*disasm.Gadget, error, []erro
 		//Make sure we move the Program Counter
 		pc = region.Address + uintptr(region.Size)
 
-		var info disasm.Info
-		if pid == 0 {
-			info = disasm.InfoInit(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1))
-		} else {
-			bytes := make([]byte, region.Size, region.Size)
-			harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, bytes)
-			if harderr3 != nil {
-				return nil, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid), softerrors
-			}
-			softerrors = append(softerrors, softerrors3...)
-			info = disasm.InfoInitBytes(disasm.Ptr(region.Address), disasm.Ptr(region.Address+uintptr(region.Size)-1), bytes)
+		opcodes := make([]byte, region.Size, region.Size)
+		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
+		softerrors = append(softerrors, softerrors3...)
+		if harderr3 != nil {
+			return nil, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid), softerrors
 		}
-		gadgets, errs := info.GetAllGadgets(2, maxLength, 0, 100)
-		allGadgets = append(allGadgets, gadgets...)
-		softerrors = append(softerrors, errs...)
+
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, 2)
+		softerrors = append(softerrors, softerrors4...)
+		if harderr4 != nil {
+			return nil, errors.Wrapf(harderr4, "Error when attempting to decode gadgets from the memory region %s for Pid %d.", region.String(), pid), softerrors
+		}
+		allGadgets = append(allGadgets, foundgadgets...)
 	}
 
 	return allGadgets, nil, softerrors

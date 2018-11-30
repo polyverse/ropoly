@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"strconv"
@@ -114,4 +115,16 @@ func (g Gadget) InstructionString() string {
 		fmt.Fprint(buffer, "\n")
 	}
 	return buffer.String()
+}
+
+func (g Gadget) Bytes() []byte {
+	buffer := bytes.NewBuffer(nil)
+	for _, instr := range g {
+		buffer.Write(instr.Octets)
+	}
+	return buffer.Bytes()
+}
+
+func (g Gadget) Len() int {
+	return len(g)
 }

@@ -28,5 +28,5 @@ func MustCompile(expr string) *BinaryRegexp {
 type GadgetSpec struct {
 	Opcode *BinaryRegexp
 	Size   int
-	Align  int
+	Align  Addr
 }

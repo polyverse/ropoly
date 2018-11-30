@@ -1,6 +1,8 @@
 package amd64
 
-import "testing"
+import (
+	"testing"
+)
 
 /* Chunk of disassembly from /bin/ls
 100003e7a:	8b 8d 48 ff ff ff 	movl	-184(%rbp), %ecx
@@ -28,6 +30,42 @@ func TestInstructionDecoder(t *testing.T) {
 		t.Fatalf("Error when decoding instruction: %v", err)
 	}
 	if instr == nil {
-		t.Fatalf("Error when decoding instruction: %v", err)
+		t.Fatalf("Instruction Nil when decoding")
+	}
+	expectedStr := "0x8b 0x8d 0x48 0xff 0xff 0xff (MOV ECX, [RBP+0xffffff48])"
+	if instr.String() != expectedStr {
+		t.Fatalf("Expected %s, but found: %s", expectedStr, instr.String())
+	}
+}
+
+func TestGadgetDecoder(t *testing.T) {
+	gadget, err := GadgetDecoder(opcodes)
+	if err != nil {
+		t.Fatalf("Error when decoding gadget: %v", err)
+	}
+	if gadget == nil {
+		t.Fatalf("Gadget Nil when decoding")
+	}
+	if len(gadget) == 0 {
+		t.Fatalf("Gadget empty when decoding")
+	}
+
+	expectedStr := `MOV ECX, [RBP+0xffffff48]
+MOV RAX, [RIP+0x1181]
+MOV RAX, [RAX]
+CMP RAX, [RBP-0x30]
+JNE .+20
+MOV EAX, ECX
+ADD RSP, 0x98
+POP RBX
+POP R12
+POP R13
+POP R14
+POP R15
+POP RBP
+RET
+`
+	if gadget.InstructionString() != expectedStr {
+		t.Fatalf("Expected %s, but found: %s", expectedStr, gadget.InstructionString())
 	}
 }

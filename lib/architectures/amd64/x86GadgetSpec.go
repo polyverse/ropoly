@@ -5,7 +5,7 @@ import "github.com/polyverse/ropoly/lib/types"
 // Adapted from:
 // 	https://github.com/JonathanSalwan/ROPgadget/blob/master/ropgadget/gadgets.py
 // https://github.com/polyverse/EnVisen/blob/master/internaljs/instruction_gadget_worker.js
-var GadgetSpecs = []types.GadgetSpec{
+var GadgetSpecs = []*types.GadgetSpec{
 	// SYS Gadgets
 	{types.MustCompile("\xcd\x80"), 2, 1},
 	{types.MustCompile("\xcd\x80"), 2, 1},
