@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/polyverse/disasm"
+	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"github.com/gorilla/mux"
-	"github.com/polyverse/ropoly/lib"
-	"github.com/polyverse/ropoly/lib/types"
-	"github.com/polyverse/disasm"
 )
 
 func FingerprintForFileHandler(w http.ResponseWriter, r *http.Request, path string) {
@@ -83,7 +83,7 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 			}
 		}
 
-		err := ioutil.WriteFile(FingerprintsDirectory() + outputFile, b, 0666)
+		err := ioutil.WriteFile(FingerprintsDirectory()+outputFile, b, 0666)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logErrors(err, nil)

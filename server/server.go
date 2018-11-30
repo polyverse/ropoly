@@ -125,5 +125,5 @@ func subHandler(router *mux.Router) http.HandlerFunc {
 
 func handleFuncByMethod(r *mux.Router, uri string, handler http.HandlerFunc, method string) {
 	r.Path(uri).Methods(method).HandlerFunc(handler)
-	r.Path(uri+"/").Methods(method).HandlerFunc(handler)
+	r.Path(uri + "/").Methods(method).HandlerFunc(handler)
 }
