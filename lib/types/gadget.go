@@ -100,19 +100,45 @@ type GadgetInstance struct {
 	Gadget  Gadget `json:"gadget"`
 }
 
+type GadgetInstances []*GadgetInstance
+
+func (gis GadgetInstances) String() string {
+	sbuf := bytes.NewBuffer(nil)
+	first := true
+	for _, gi := range gis {
+		if first {
+			first = false
+		} else {
+			sbuf.WriteString("\n")
+		}
+		sbuf.WriteString(gi.String())
+	}
+	return sbuf.String()
+}
+
+func (gi *GadgetInstance) String() string {
+	return fmt.Sprintf("%s: %s", gi.Address.String(), gi.Gadget.InstructionString())
+}
+
 func (i *Instruction) String() string {
 	return i.Octets.String() + " (" + i.DisAsm + ")"
 }
 
 func (g Gadget) InstructionString() string {
 	buffer := &strings.Builder{}
+	first := true
 	for _, instr := range g {
+		if first {
+			first = false
+		} else {
+			fmt.Fprint(buffer, "; ")
+		}
+
 		if instr == nil {
 			fmt.Fprint(buffer, "(nil)")
 		} else {
 			fmt.Fprint(buffer, instr.DisAsm)
 		}
-		fmt.Fprint(buffer, "\n")
 	}
 	return buffer.String()
 }

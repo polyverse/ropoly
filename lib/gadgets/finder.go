@@ -5,11 +5,7 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-const (
-	PREV_BYTES = 9 //# Number of bytes prior to the gadget to store.
-)
-
-func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) ([]*types.GadgetInstance, error, []error) {
+func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) (types.GadgetInstances, error, []error) {
 	gadInstances := []*types.GadgetInstance{}
 	if depth <= 2 {
 		depth = 2
@@ -24,11 +20,15 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 			}
 
 			for i := 0; i < depth; i++ {
-				//(section["vaddr"]+ref-(i*gad[C_ALIGN])) % gad[C_ALIGN] == 0
 				if (offset+types.Addr(match.Index)-(types.Addr(i)*gadSpec.Align))%gadSpec.Align == 0 {
 
 					// Get the probable gadget at alignment
-					opcode := opcodes[types.Addr(match.Index)-(types.Addr(i)*gadSpec.Align) : match.Index+gadSpec.Size]
+					start := types.Addr(match.Index) - (types.Addr(i) * gadSpec.Align)
+					end := types.Addr(match.Index) + types.Addr(gadSpec.Size)
+					if start >= end || end >= types.Addr(len(opcodes)) {
+						continue
+					}
+					opcode := opcodes[start:end]
 
 					// Disassemble it
 					gad, err := decodeGadget(opcode)
@@ -44,7 +44,7 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 					}
 
 					// Ensure the byte sequence matches the regex we're parsing
-					if match, err := gadSpec.Opcode.FindBytesMatchStartingAt(gad.Bytes(), 0); err == nil || match.Index != 0 {
+					if match, err := gadSpec.Opcode.FindBytesMatchStartingAt(gad.Bytes(), 0); err != nil || match == nil {
 						continue
 					}
 

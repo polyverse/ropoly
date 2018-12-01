@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	. "gopkg.in/check.v1"
 	"os/exec"
@@ -27,10 +28,10 @@ func (b *LibSuite) TearDownSuite(c *C) {
 /**********************************************************************************/
 
 func (s *LibSuite) TestGadgetsFromExecutable(c *C) {
-	gadgets, err := GadgetsFromExecutable("../TestFiles/loop", 2)
+	gadgets, err, _ := GadgetsFromExecutable("../TestFiles/loop", 10)
 	c.Assert(err, IsNil)
 	c.Assert(gadgets, NotNil)
-	log.Infof("Gadgets in executable: %v", gadgets)
+	fmt.Printf("Gadgets in executable: %v", gadgets)
 }
 
 func (s *LibSuite) TestGadgetsFromPid(c *C) {

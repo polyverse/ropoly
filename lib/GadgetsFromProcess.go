@@ -7,10 +7,9 @@ import (
 	"github.com/polyverse/ropoly/lib/architectures/amd64"
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
-	log "github.com/sirupsen/logrus"
 )
 
-func GadgetInstancesFromProcess(pid int, maxLength int) ([]*types.GadgetInstance, error, []error) {
+func GadgetsFromProcess(pid int, maxLength int) (types.GadgetInstances, error, []error) {
 	softerrors := []error{}
 	proc := process.LinuxProcess(pid)
 
@@ -23,7 +22,6 @@ func GadgetInstancesFromProcess(pid int, maxLength int) ([]*types.GadgetInstance
 		if harderror2 != nil {
 			return nil, errors.Wrapf(harderror2, "Error when attempting to access the next memory region for Pid %d.", pid), softerrors
 		}
-		log.Debugf("Under Pid %d, Found executable memory region %+v", pid, region)
 
 		if region == memaccess.NoRegionAvailable {
 			break
@@ -39,7 +37,7 @@ func GadgetInstancesFromProcess(pid int, maxLength int) ([]*types.GadgetInstance
 			return nil, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid), softerrors
 		}
 
-		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, 2)
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, maxLength)
 		softerrors = append(softerrors, softerrors4...)
 		if harderr4 != nil {
 			return nil, errors.Wrapf(harderr4, "Error when attempting to decode gadgets from the memory region %s for Pid %d.", region.String(), pid), softerrors

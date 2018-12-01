@@ -16,6 +16,10 @@ func (b *BinaryRegexp) FindNextMatch(m *binexp.Match) (*binexp.Match, error) {
 	return b.internalRegexp.FindNextMatch(m)
 }
 
+func (b *BinaryRegexp) String() string {
+	return b.internalRegexp.String()
+}
+
 func MustCompile(expr string) *BinaryRegexp {
 	return &BinaryRegexp{
 		internalRegexp: binexp.MustCompile(expr, binexp.ByteRunes),

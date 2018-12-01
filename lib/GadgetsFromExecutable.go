@@ -8,7 +8,7 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func GadgetsFromExecutable(path string, maxLength int) ([]*types.GadgetInstance, error, []error) {
+func GadgetsFromExecutable(path string, maxLength int) (types.GadgetInstances, error, []error) {
 	file, err := elf.Open(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error opening ELF file %s", path), nil
@@ -24,7 +24,7 @@ func GadgetsFromExecutable(path string, maxLength int) ([]*types.GadgetInstance,
 			if err != nil {
 				return nil, errors.Wrapf(err, "Unable to read data from section in ELF file %s", file), nil
 			}
-			gadgetinstances, harderr, segment_softerrs := gadgets2.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, 2)
+			gadgetinstances, harderr, segment_softerrs := gadgets2.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, maxLength)
 			softerrs = append(softerrs, segment_softerrs...)
 			if harderr != nil {
 				return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
