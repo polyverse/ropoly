@@ -80,7 +80,7 @@ type GadgetId string
 
 type Fingerprint map[GadgetId][]Addr
 
-func FingerprintFromGadgetInstances(gadgetInstances []*GadgetInstance) Fingerprint {
+func FingerprintFromGadgets(gadgetInstances []*GadgetInstance) (Fingerprint, error) {
 	fingerprint := Fingerprint{}
 	for _, gadget := range gadgetInstances {
 		hash := GadgetId(gadget.Gadget.InstructionString())
@@ -91,7 +91,7 @@ func FingerprintFromGadgetInstances(gadgetInstances []*GadgetInstance) Fingerpri
 		}
 	}
 
-	return fingerprint
+	return fingerprint, nil
 }
 
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {

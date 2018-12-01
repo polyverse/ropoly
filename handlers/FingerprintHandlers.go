@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/polyverse/ropoly/lib"
-	"github.com/polyverse/ropoly/lib/fingerprint"
 	"github.com/polyverse/ropoly/lib/types"
 	"io"
 	"io/ioutil"
@@ -49,7 +48,7 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		return
 	}
 
-	fingerprint, err := fingerprint.FingerprintFromGadgets(gadgets)
+	fingerprint, err := types.FingerprintFromGadgets(gadgets)
 	if err != nil {
 		logErrors(err, softerrors)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
