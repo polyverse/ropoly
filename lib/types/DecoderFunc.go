@@ -1,3 +1,4 @@
 package types
 
-type DecoderFunc func([]byte) (*Instruction, error)
+type InstructionDecoderFunc func([]byte) (*Instruction, error)
+type GadgetDecoderFunc func([]byte) (Gadget, error)

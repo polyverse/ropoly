@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/polyverse/ropoly/server"
-	"github.com/polyverse/ropoly/lib"
 	"github.com/polyverse/ropoly/handlers"
+	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/server"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +11,7 @@ import (
 var (
 	ServerAddress  string
 	VerboseLogging bool
-	dataDirectory string
+	dataDirectory  string
 )
 
 func init() {

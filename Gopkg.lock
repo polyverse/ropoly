@@ -10,17 +10,6 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
-  digest = "1:72dc2b6056e7097f829260e4a2ff08d32fec6017df1982a66e110ab4128486f8"
-  name = "github.com/dlclark/regexp2"
-  packages = [
-    ".",
-    "syntax",
-  ]
-  pruneopts = "UT"
-  revision = "487489b64fb796de2e55f4e8a4ad1e145f80e957"
-  version = "v1.1.6"
-
-[[projects]]
   digest = "1:7137ccf07b2c023865a12c0bbc758835be807cbf150777460eb1f9bd9d210f4d"
   name = "github.com/docker/docker"
   packages = [
@@ -96,6 +85,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d0c95a34e79df79eb96ca870d6b6fc43361d34c9c05495f93a5ad0077f7bbb24"
+  name = "github.com/mitchellh/go-ps"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4fdf99ab29366514c69ccccddab5dc58b8d84062"
+
+[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -104,12 +101,23 @@
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:570b11fe750ee9cdc2c1bef22153f7999e4af86aacef1b8d94593c028403cbbb"
+  name = "github.com/polyverse/binexp"
+  packages = [
+    ".",
+    "syntax",
+  ]
+  pruneopts = "UT"
+  revision = "cee5249d6adeebcb292bf88c5037a3847188e7c9"
+  version = "v1.1.7"
+
+[[projects]]
   branch = "master"
-  digest = "1:d12a58336db2e8ebbee005c16d4564e2a7459905103d33e705ec4b3cd854c07f"
+  digest = "1:35a53dae277caeda6ef2c5cef7cec6634900b1320ded76c38a2d25aa0b64f860"
   name = "github.com/polyverse/disasm"
   packages = ["."]
   pruneopts = "UT"
-  revision = "23a221f9771013d055837c3395a1cc27b1ca9960"
+  revision = "a6a9e6f22836e9baad78594ec34def6088352912"
 
 [[projects]]
   branch = "master"
@@ -155,7 +163,7 @@
     "model",
   ]
   pruneopts = "UT"
-  revision = "7e9e6cabbd393fc208072eedef99188d0ce788b6"
+  revision = "41aa239b4cce3c56ab88fc366ae8b0a6423fa239"
 
 [[projects]]
   branch = "master"
@@ -196,11 +204,19 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:ae8732513b32381d9fae6fc1e04544f92332878786726c9709d66f4871a182db"
+  name = "golang.org/x/arch"
+  packages = ["x86/x86asm"]
+  pruneopts = "UT"
+  revision = "b19384d3c130858bb31a343ea8fce26be71b5998"
+
+[[projects]]
+  branch = "master"
   digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [[projects]]
   branch = "master"
@@ -208,18 +224,18 @@
   name = "golang.org/x/net"
   packages = ["context"]
   pruneopts = "UT"
-  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
+  revision = "88d92db4c548972d942ac2a3531a8a9a34c82ca6"
 
 [[projects]]
   branch = "master"
-  digest = "1:417d27a82efb8473554234a282be33d23b0d6adc121e636b55950f913ac071d6"
+  digest = "1:6a875550c3b582f6c2d7e2ce44aba792511f00016d7c46b0a4fb26f730ef3058"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
+  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
 
 [[projects]]
   branch = "v1"
@@ -233,10 +249,11 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/dlclark/regexp2",
     "github.com/docker/docker/pkg/ioutils",
     "github.com/gorilla/mux",
+    "github.com/mitchellh/go-ps",
     "github.com/pkg/errors",
+    "github.com/polyverse/binexp",
     "github.com/polyverse/disasm",
     "github.com/polyverse/masche/listlibs",
     "github.com/polyverse/masche/memaccess",
@@ -244,6 +261,7 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
+    "golang.org/x/arch/x86/x86asm",
     "gopkg.in/check.v1",
   ]
   solver-name = "gps-cdcl"

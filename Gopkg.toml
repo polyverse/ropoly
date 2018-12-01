@@ -24,15 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/polyverse/disasm"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/polyverse/masche"
-
 [prune]
   go-tests = true
   unused-packages = true

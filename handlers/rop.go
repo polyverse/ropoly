@@ -173,7 +173,8 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 		} // if
 	} // else if
 
-	gadgets, err := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	gadgets, harderror, softerrors := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	logErrors(harderror, softerrors)
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -244,7 +245,8 @@ func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 		} // if
 	} // else if
 
-	gadgets, err, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
+	gadgets, harderror, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
+	logErrors(harderror, softerrors)
 	if err != nil {
 		logErrors(err, softerrors)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

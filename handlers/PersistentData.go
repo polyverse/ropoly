@@ -2,7 +2,7 @@ package handlers
 
 const (
 	fingerprintsDirectory string = "fingerprints"
-	comparisonsDirectory string = "comparisons"
+	comparisonsDirectory  string = "comparisons"
 )
 
 var DataDirectory string

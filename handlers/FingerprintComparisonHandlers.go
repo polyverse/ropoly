@@ -136,5 +136,5 @@ func StoredComparisonEqiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handleEqi(w, r, ComparisonsDirectory() + mux.Vars(r)["comparison"])
+	handleEqi(w, r, ComparisonsDirectory()+mux.Vars(r)["comparison"])
 }

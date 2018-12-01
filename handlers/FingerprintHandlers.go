@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
+	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"github.com/gorilla/mux"
-	"github.com/polyverse/ropoly/lib"
-	"github.com/polyverse/ropoly/lib/types"
-	"github.com/polyverse/disasm"
 )
 
 func FingerprintForFileHandler(w http.ResponseWriter, r *http.Request, path string) {
@@ -36,10 +35,10 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 
 	outputFile := r.Form.Get("out")
 
-	var gadgets []*disasm.Gadget
+	var gadgets types.GadgetInstances
 	var softerrors []error
 	if isFile {
-		gadgets, err = lib.GadgetsFromExecutable(path, int(gadgetLen))
+		gadgets, err, softerrors = lib.GadgetsFromExecutable(path, int(gadgetLen))
 	} else {
 		gadgets, err, softerrors = lib.GadgetsFromProcess(pid, int(gadgetLen))
 	}
@@ -49,7 +48,12 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		return
 	}
 
-	fingerprint := types.FingerprintFromGadgets(gadgets)
+	fingerprint, err := types.FingerprintFromGadgets(gadgets)
+	if err != nil {
+		logErrors(err, softerrors)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	b, err := json.MarshalIndent(fingerprint, "", indent)
 	if err != nil {
@@ -83,7 +87,7 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 			}
 		}
 
-		err := ioutil.WriteFile(FingerprintsDirectory() + outputFile, b, 0666)
+		err := ioutil.WriteFile(FingerprintsDirectory()+outputFile, b, 0666)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logErrors(err, nil)
