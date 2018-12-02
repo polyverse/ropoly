@@ -6,7 +6,7 @@ import (
 )
 
 func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) (types.GadgetInstances, error, []error) {
-	gadInstances := []*types.GadgetInstance{}
+	gadInstances := types.GadgetInstances{}
 	if depth <= 2 {
 		depth = 2
 	}
@@ -14,7 +14,7 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 	softerrs := []error{}
 
 	for _, gadSpec := range gadgetSpecs {
-		for match, err := gadSpec.Opcode.FindBytesMatchStartingAt(opcodes, 0); match != nil; match, err = gadSpec.Opcode.FindNextMatch(match) {
+		for match, err := gadSpec.Opcode.FindBytesMatchStartingAt(opcodes, 0); match != nil; match, err = gadSpec.Opcode.FindNextOverlappingMatch(match) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "Error attempting to find a match for gadget opcode: %v", gadSpec.Opcode), softerrs
 			}
@@ -58,5 +58,7 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 			}
 		}
 	}
+
+	gadInstances.SortByAddress()
 	return gadInstances, nil, softerrs
 }

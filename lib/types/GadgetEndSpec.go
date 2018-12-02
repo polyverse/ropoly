@@ -16,6 +16,10 @@ func (b *BinaryRegexp) FindNextMatch(m *binexp.Match) (*binexp.Match, error) {
 	return b.internalRegexp.FindNextMatch(m)
 }
 
+func (b *BinaryRegexp) FindNextOverlappingMatch(m *binexp.Match) (*binexp.Match, error) {
+	return b.internalRegexp.FindNextOverlappingMatch(m)
+}
+
 func (b *BinaryRegexp) String() string {
 	return b.internalRegexp.String()
 }

@@ -38,7 +38,8 @@ func TestFindDepth10(t *testing.T) {
 	if gadgets == nil {
 		t.Fatalf("Instruction Nil when decoding")
 	}
-	fmt.Printf("%v", gadgets)
+	log.Infof("For depth 10 found %d gadgets\n", len(gadgets))
+	log.Infof("%v", gadgets)
 }
 
 func TestFindDepth2(t *testing.T) {
@@ -52,5 +53,6 @@ func TestFindDepth2(t *testing.T) {
 	if gadgets == nil {
 		t.Fatalf("Instruction Nil when decoding")
 	}
-	fmt.Printf("%v", gadgets)
+	log.Infof("For depth 2 found %d gadgets\n", len(gadgets))
+	log.Infof("%v", gadgets)
 }

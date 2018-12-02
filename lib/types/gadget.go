@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -102,6 +103,10 @@ type GadgetInstance struct {
 
 type GadgetInstances []*GadgetInstance
 
+type sortableByAddressGadgetInstances GadgetInstances
+type sortableByLength GadgetInstances
+type sortableAlphabetically GadgetInstances
+
 func (gis GadgetInstances) String() string {
 	sbuf := bytes.NewBuffer(nil)
 	first := true
@@ -114,6 +119,72 @@ func (gis GadgetInstances) String() string {
 		sbuf.WriteString(gi.String())
 	}
 	return sbuf.String()
+}
+
+// Len is the number of elements in the collection.
+func (s sortableByAddressGadgetInstances) Len() int {
+	return len(s)
+}
+
+// Swap swaps the elements with indexes i and j.
+func (s sortableByAddressGadgetInstances) Swap(i, j int) {
+	tmp := s[i]
+	s[i] = s[j]
+	s[j] = tmp
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (s sortableByAddressGadgetInstances) Less(i, j int) bool {
+	return s[i].Address < s[j].Address
+}
+
+// Len is the number of elements in the collection.
+func (s sortableAlphabetically) Len() int {
+	return len(s)
+}
+
+// Swap swaps the elements with indexes i and j.
+func (s sortableAlphabetically) Swap(i, j int) {
+	tmp := s[i]
+	s[i] = s[j]
+	s[j] = tmp
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (s sortableAlphabetically) Less(i, j int) bool {
+	return s[i].String() < s[j].String()
+}
+
+// Len is the number of elements in the collection.
+func (s sortableByLength) Len() int {
+	return len(s)
+}
+
+// Swap swaps the elements with indexes i and j.
+func (s sortableByLength) Swap(i, j int) {
+	tmp := s[i]
+	s[i] = s[j]
+	s[j] = tmp
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (s sortableByLength) Less(i, j int) bool {
+	return len(s[i].Gadget) < len(s[j].Gadget)
+}
+
+func (gis GadgetInstances) SortByAddress() {
+	sort.Sort(sortableByAddressGadgetInstances(gis))
+}
+
+func (gis GadgetInstances) SortAlphabetically() {
+	sort.Sort(sortableAlphabetically(gis))
+}
+
+func (gis GadgetInstances) SortByLength() {
+	sort.Sort(sortableByLength(gis))
 }
 
 func (gi *GadgetInstance) String() string {
