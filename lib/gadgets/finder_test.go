@@ -1,6 +1,7 @@
 package gadgets
 
 import (
+	"fmt"
 	"github.com/polyverse/ropoly/lib/architectures/amd64"
 	log "github.com/sirupsen/logrus"
 	"testing"

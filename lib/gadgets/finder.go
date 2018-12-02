@@ -5,14 +5,8 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func Find(opcodes []byte,
-	gadgetSpecs []*types.GadgetSpec,
-	decodeGadget types.GadgetDecoderFunc,
-	offset types.Addr,
-	depth int) (types.GadgetInstances, error, []error) {
-
+func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) (types.GadgetInstances, error, []error) {
 	gadInstances := types.GadgetInstances{}
-
 	if depth <= 2 {
 		depth = 2
 	}

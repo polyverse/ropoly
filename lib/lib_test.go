@@ -31,7 +31,7 @@ func (s *LibSuite) TestGadgetsFromExecutable(c *C) {
 	gadgets, err, _ := GadgetsFromExecutable("../TestFiles/loop", 10)
 	c.Assert(err, IsNil)
 	c.Assert(gadgets, NotNil)
-	fmt.Printf("Nunber of Gadgets in executable: \n%v\n", gadgets)
+	fmt.Printf("Gadgets in executable: %v", gadgets)
 }
 
 func (s *LibSuite) TestGadgetsFromPid(c *C) {
