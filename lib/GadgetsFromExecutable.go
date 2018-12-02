@@ -24,7 +24,7 @@ func GadgetsFromExecutable(path string, maxLength int) (types.GadgetInstances, e
 			if err != nil {
 				return nil, errors.Wrapf(err, "Unable to read data from section in ELF file %s", file), nil
 			}
-			gadgetinstances, harderr, segment_softerrs := gadgets2.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, 0, maxLength)
+			gadgetinstances, harderr, segment_softerrs := gadgets2.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(section.Addr), maxLength)
 			softerrs = append(softerrs, segment_softerrs...)
 			if harderr != nil {
 				return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
