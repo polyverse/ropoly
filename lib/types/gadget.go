@@ -44,6 +44,14 @@ func (a Addr) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + a.String() + "\""), nil
 }
 
+func (a *Addr) UnmarshalText(b []byte) error {
+	return a.UnmarshalJSON(b)
+}
+
+func (a Addr) MarshalText() ([]byte, error) {
+	return []byte(a.String()), nil
+}
+
 type Octets []byte
 
 func (o Octets) String() string {
