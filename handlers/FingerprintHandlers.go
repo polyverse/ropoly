@@ -166,6 +166,55 @@ func PostFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 	ioutil.WriteFile(path, b.Bytes(), 0666)
 }
 
+func StoredFingerprintEqiHandler(w http.ResponseWriter, r *http.Request) {
+	f1Name := mux.Vars(r)["fingerprint"]
+	f2Name := r.FormValue("second")
+	eqiFunc := r.Form.Get("func")
+
+	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	var f1 types.Fingerprint
+	err = json.Unmarshal(f1Bytes, &f1)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var f2 types.Fingerprint
+	err = json.Unmarshal(f2Bytes, &f2)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	eqi, err := lib.DirectEqi(f1, f2, eqiFunc, r.Form)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	b, err := json.MarshalIndent(eqi, "", indent)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
+}
+
 func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
