@@ -38,11 +38,12 @@ func SharedOffsetsPerGadgetEqi(f1, f2 types.Fingerprint, form url.Values) (float
 type perGadgetEqiFunction func([]types.Offset, map[types.Offset]int, int) float64
 
 var perGadgetEqiMethods = map[string]perGadgetEqiFunction{
-	"worst-only":            perGadgetWorstOffset,
-	"multiplicative":        perGadgetInverseProductInverse,
-	"additive":              perGadgetAdditive,
-	"additive-with-ceiling": perGadgetAdditiveWithCeiling,
-	"closest-only":          perGadgetClosest,
+	"worst-only":               perGadgetWorstOffset,
+	"worst-only-envisen":       perGadgetWorstOffsetEnvisen,
+	"multiplicative":           perGadgetInverseProductInverse,
+	"additive":                 perGadgetAdditive,
+	"additive-with-ceiling":    perGadgetAdditiveWithCeiling,
+	"closest-only":             perGadgetClosest,
 }
 
 func getPerGadgetEqiMethod(form url.Values) perGadgetEqiFunction {
@@ -57,6 +58,21 @@ func perGadgetWorstOffset(displacements []types.Offset, gadgetsByDisplacement ma
 	maxOffsetCount := 0
 	for i := 0; i < len(displacements); i++ {
 		displacement := displacements[i]
+		offsetCount := gadgetsByDisplacement[displacement]
+		if maxOffsetCount < offsetCount {
+			maxOffsetCount = offsetCount
+		}
+	}
+	return float64(maxOffsetCount) / float64(totalGadgets)
+}
+
+func perGadgetWorstOffsetEnvisen(displacements []types.Offset, gadgetsByDisplacement map[types.Offset]int, totalGadgets int) float64 {
+	maxOffsetCount := 0
+	for i := 0; i < len(displacements); i++ {
+		displacement := displacements[i]
+		if displacement == 0 {
+			return 1.0
+		}
 		offsetCount := gadgetsByDisplacement[displacement]
 		if maxOffsetCount < offsetCount {
 			maxOffsetCount = offsetCount
