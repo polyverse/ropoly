@@ -96,6 +96,35 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 	}
 }
 
+func FingerprintFormatHandler(w http.ResponseWriter, r *http.Request) {
+	fingerprintName := mux.Vars(r)["fingerprint"]
+	b, err := ioutil.ReadFile(FingerprintsDirectory() + fingerprintName)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var fingerprint types.Fingerprint
+	err = json.Unmarshal(b, &fingerprint)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	b, err = json.MarshalIndent(fingerprint, "", indent)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = ioutil.WriteFile(FingerprintsDirectory()+fingerprintName, b, 0666)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func FingerprintListingHandler(w http.ResponseWriter, r *http.Request) {
 	if DataDirectory == "" {
 		err := errors.New("Persistent data directory not provided.")

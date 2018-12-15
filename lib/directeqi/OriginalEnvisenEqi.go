@@ -8,12 +8,15 @@ import (
 func OriginalEnvisenEqi(f1, f2 types.Fingerprint) types.EntropyQualityIndex {
 	dead := 0
 	survived := 0
-	gadgetOffsets := map[types.Addr]types.Offset{}
+	moved := 0
 	offsetCounts := map[types.Offset]int{}
+	total := 0
 
 	for gadget, oldAddresses := range f1 {
+		total += len(oldAddresses)
 		newAddresses := f2[gadget]
 		if newAddresses == nil {
+			/*DEBUG*/ println("Died:", gadget)
 			dead += len(oldAddresses)
 			continue
 		}
@@ -35,25 +38,34 @@ func OriginalEnvisenEqi(f1, f2 types.Fingerprint) types.EntropyQualityIndex {
 				}
 			}
 			if offset == 0 {
+				/*DEBUG*/ println("Survived at", oldAddress.String(), gadget)
 				survived++
 			} else {
-				gadgetOffsets[oldAddress] = offset
+				/*DEBUG*/ println("Moved from", oldAddress.String(), "to", (oldAddress + types.Addr(offset)).String())
+				moved++
 				offsetCounts[offset]++
 			}
 		}
 	}
-
-	total := dead + survived + len(gadgetOffsets)
+	
+	/*DEBUG*/ println("dead:", dead)
+	/*DEBUG*/ println("moved:", moved)
+	/*DEBUG*/ println("survived:", survived)
+	/*DEBUG*/ println("total:", total)
 	deadPercent := float64(dead * 100) / float64(total)
-	movementQuality := movementQuality(gadgetOffsets, offsetCounts)
+	/*DEBUG*/ println("deadPercent:", deadPercent)
+	/*DEBUG*/ println("survivedPercent:", float64(survived * 100) / float64(total))
+	/*DEBUG*/ println("movedPercent:", float64(moved * 100) / float64(total))
+	movementQuality := movementQuality(moved, offsetCounts)
+	/*DEBUG*/ println("movementQuality:", movementQuality)
 	return types.EntropyQualityIndex(deadPercent + movementQuality)
 }
 
-func movementQuality(gadgetOffsets map[types.Addr]types.Offset, offsetCounts map[types.Offset]int) float64 {
-	if len(gadgetOffsets) == 0 {
+func movementQuality(moved int, offsetCounts map[types.Offset]int) float64 {
+	if moved == 0 {
 		return 0.0
 	}
-	return (1.0 - (float64(offsetStdev(offsetCounts)) / float64(valueMax(offsetCounts)))) * float64(len(offsetCounts) * 100) / float64(len(gadgetOffsets))
+	return (1.0 - (float64(offsetStdev(offsetCounts)) / float64(valueMax(offsetCounts)))) * float64(len(offsetCounts) * 100) / float64(moved)
 }
 
 func valueMax(m map[types.Offset]int) int {
