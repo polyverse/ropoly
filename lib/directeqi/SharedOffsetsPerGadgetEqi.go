@@ -7,7 +7,7 @@ import (
 
 func SharedOffsetsPerGadgetEqi(f1, f2 types.Fingerprint, form url.Values) (float64, error) {
 	gadgetCount := 0
-	gadgetDisplacements := map[types.Addr][]types.Offset{}
+	gadgetDisplacements := map[types.Addr][][]types.Offset{}
 	gadgetsByOffset := map[types.Offset]int{}
 
 	for gadget, oldAddresses := range f1 {
@@ -21,15 +21,18 @@ func SharedOffsetsPerGadgetEqi(f1, f2 types.Fingerprint, form url.Values) (float
 				offsets[i] = offset
 				gadgetsByOffset[offset] += 1
 			}
-			gadgetDisplacements[oldAddress] = offsets
+			gadgetDisplacements[oldAddress] = append(gadgetDisplacements[oldAddress], offsets)
 		}
 	}
 
 	totalEqi := 0.0
 	perGadgetEqiMethod := getPerGadgetEqiMethod(form)
-	for _, displacements := range gadgetDisplacements {
-		gadgetEqi := perGadgetEqiMethod(displacements, gadgetsByOffset, gadgetCount)
-		totalEqi += gadgetEqi
+	for _, displacementsByStartingAddress := range gadgetDisplacements {
+		for i := 0; i < len(displacementsByStartingAddress); i++ {
+			displacements := displacementsByStartingAddress[i]
+			gadgetEqi := perGadgetEqiMethod(displacements, gadgetsByOffset, gadgetCount)
+			totalEqi += gadgetEqi
+		}
 	}
 	averageEqi := totalEqi / float64(gadgetCount)
 	return averageEqi, nil
