@@ -7,7 +7,7 @@ import (
 
 func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) (types.GadgetInstances, error, []error) {
 	gadInstances := types.GadgetInstances{}
-	if depth <= 2 {
+	if depth <= 0 {
 		depth = 2
 	}
 
