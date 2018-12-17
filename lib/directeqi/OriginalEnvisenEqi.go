@@ -10,13 +10,10 @@ func OriginalEnvisenEqi(f1, f2 types.Fingerprint) types.EntropyQualityIndex {
 	survived := 0
 	moved := 0
 	offsetCounts := map[types.Offset]int{}
-	total := 0
 
 	for gadget, oldAddresses := range f1 {
-		total += len(oldAddresses)
 		newAddresses := f2[gadget]
 		if newAddresses == nil {
-			/*DEBUG*/ println("Died:", gadget)
 			dead += len(oldAddresses)
 			continue
 		}
@@ -38,26 +35,37 @@ func OriginalEnvisenEqi(f1, f2 types.Fingerprint) types.EntropyQualityIndex {
 				}
 			}
 			if offset == 0 {
-				/*DEBUG*/ println("Survived at", oldAddress.String(), gadget)
 				survived++
-			} else {
-				/*DEBUG*/ println("Moved from", oldAddress.String(), "to", (oldAddress + types.Addr(offset)).String())
+			}
+		}
+	}
+
+	for gadget, newAddresses := range f2 {
+		oldAddresses := f1[gadget]
+		if oldAddresses == nil {
+			continue
+		}
+		for i := 0; i < len(newAddresses); i++ {
+			newAddress := newAddresses[i]
+			offset := types.Offset(newAddress - oldAddresses[len(oldAddresses) - 1])
+			for i := len(oldAddresses) - 2; i >= 0; i-- {
+				offsetCandidate := types.Offset(newAddress - oldAddresses[i])
+				if (offsetCandidate < 0) || (-offset > offsetCandidate) {
+					offset = offsetCandidate
+				} else {
+					break
+				}
+			}
+			if offset != 0 {
 				moved++
 				offsetCounts[offset]++
 			}
 		}
 	}
-	
-	/*DEBUG*/ println("dead:", dead)
-	/*DEBUG*/ println("moved:", moved)
-	/*DEBUG*/ println("survived:", survived)
-	/*DEBUG*/ println("total:", total)
+
+	total := dead + moved + survived
 	deadPercent := float64(dead * 100) / float64(total)
-	/*DEBUG*/ println("deadPercent:", deadPercent)
-	/*DEBUG*/ println("survivedPercent:", float64(survived * 100) / float64(total))
-	/*DEBUG*/ println("movedPercent:", float64(moved * 100) / float64(total))
 	movementQuality := movementQuality(moved, offsetCounts)
-	/*DEBUG*/ println("movementQuality:", movementQuality)
 	return types.EntropyQualityIndex(deadPercent + movementQuality)
 }
 
