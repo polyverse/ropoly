@@ -9,7 +9,7 @@ Run "./build.sh"
 
 ## Run Instructions for Docker
 The container must be run with --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged
-Port 8008 must be mapped to a port on the host with -p in order to view output.
+Port 8008 must be mapped to a port on the host with -p in order to interact with client.
 
 ## Command Line Options
 
@@ -30,13 +30,10 @@ Use only with "scan". Not yet implemented, and doesn't do anything useful.
 ### /api/v1/pids
 Return list of all visible process ids and information about each process.
 
-### /api/v1/pid/\<_pid_\>/libraries[?signatures=\<[true]\>]
-Return list of loaded libraries for the given _pid_. If _pid_ is 0, _pid_ refers to the ROPoly process itself. If signature is _true_, list whether or not each library has a Polyverse signature.
-
-### /api/v1/pid/\<_pid_\>[?mode=\<taints|gadgets|fingerprint>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_][?access=\<[_R_][_W_][_X_][_F_]|_None_\>][?\<string|regexp\>=_target_]
+### /api/v1/pid/\<_pid_\>[?query=\<taints|gadgets|fingerprint>][&len=_length_]
 Return information about the memory of the given _pid_ according to the option provided in _mode_. _taints_ by default.
 
-### /api/v1/files/\<_path_\>[?query=\<taints|gadgets|fingerprint>][&start=_start_][&end=_end_][&instructions=_instructions_][&octets=_octets_][&limit=_limit_]
+### /api/v1/files/\<_path_\>[?query=\<taints|gadgets|fingerprint>][&slen=_length_]
 Return information about the files and directories in the given directory on the server according to the option provided in _query_. Default option is _taints_.
 
 ### /api/v1/fingerprints
@@ -46,26 +43,11 @@ Return the list of fingerprints stored on the server.
 Return the contents of the fingerprint with the given name.
 Post fingerprint file to add fingerprint with the given name. Fails if fingerprint with given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
 
-### /api/v1/fingerprints/{fingerprint}/compare?second=_fingerprint_[&out=_filepath_]
-Compares the first given fingerprint to the one provided in _second_. Outputs the generated fingerprint comparison if _out_ is not set. If _out_ is set, saves the fingerprint comparison under the name provided to _out_.
+### /api/v1/fingerprints/{fingerprint}/compare?second=_fingerprint
+Compares the first given fingerprint to the one provided in _second_.
 
-### /api/v1/comparisons
-Return the list fingerprint comparisons stored on the server.
-
-### /api/v1/comparisons/{comparison}[?overwrite=true]
-Return the contents of the fingerprint comparison with the given name.
-Post comparison file to add fingerprint comparison with the given name. Fails if fingerprint with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old comparison.
-
-### /api/v1/comparisons/{comparison}/eqi?func=<|monte-carlo|envisen-original|count-poly|count-exp|>
-Calculate the EQI based on the given fingerprint comparison stored on the server, using the EQI function named in _func_. Additional arguments may be required depending on _func_.
-
-### /api/v1/compare?old=_filepath_&new=_filepath_
-Recommended to use /api/v1/fingerprints/_old_/compare?second=_new_ instead.
-Get fingerprint comparison information about the changes from the _old_/original binary to the _new_/modified binary.
-
-### /api/v1/eqi?comparison=_filepath_&calc=<|monte-carlo|envisen-original|count-poly|count-exp|>
-Recommended to use /api/v1/comparisons/_comparison_/eqi instead.
-Calculate the EQI based on the given fingerprint comparison file, using the given calculation method. Additional arguments may be required depending on _calc_.
+### /api/v1/fingerprints/{fingerprint}/eqi?second=fingerprint&func=<offsets-intersection|monte-carlo|envisen-original|shared-offsets>
+Compares the first given fingerprint to the one provided in _second_ and uses the EQI function specified in _func_ to calculate EQI. More arguments may be required depending on the EQI function.
 
 ## Query options for /api/v1/pid/<_pid_> and /api/v1/files/<_path_>
 
@@ -80,23 +62,23 @@ Generate a fingerprint based on up to _limit_ gadgets between _start_ and _end_ 
 
 ## EQI options
 
+#### offsets-intersection
+Simulates all attacks of _length_ gadgets. EQI is the percentage of attacks with no common offset.
+
 #### monte-carlo
-Uses a Monte Carlo method to simulate _fingerprints_ ROP attacks of length between _min_ and _max_ gadgets. EQI is the percentage of attacks with no common offset.
+Uses a Monte Carlo method to simulate _trials_ attacks of length between _min_ and _max_ gadgets. EQI is the percentage of attacks with no common offset.
 
 #### envisen-original
-Uses the original formula described at https://github.com/polyverse/EnVisen/blob/master/docs/entropy-index.md as of October 25, 2018.
-
-#### count-poly
-Uses a sum-of-squares method based on the number of gadgets weakly surviving at each offset. Uses all offsets for each original gadget by default; set _single_ to true to treat each gadget as having only a single offset. To use a polynomial order other than 2.0, set _order_ to another number.
-
-#### count-exp
-Uses the sum of exponents of numbers of gadgets weakly surviving at each offset. Uses all offsets for each original gadget by default; set _single_ to true to treat each gadget as having only a single offset. Default base is 2.0; set _base_ to another value to use a different base.
+Uses the original formula described at https://github.com/polyverse/EnVisen/blob/master/docs/entropy-index.md as of December 17, 2018.
 
 #### shared-offsets
 Calculates EQI by looking at each gadget individually and checking how many gadgets it shares an offset with. Handles the case of multiple offsets based on the argument passed to _multiple-handling_, with the default being _worst-only_.
 
 ##### worst-only
 When calculating each gadget's contribution to EQI, considers only the offset with the most contribution to EQI (the offset shared with the most other gadgets). The gadget's other offsets are still considered when calculating other gadgets' contribution to EQI.
+
+#### worst-only-envisen
+Same as _worst-only_, except in the case of that the gadget survives in place, in which case its contribution to EQI is 0. Equivalent to envisen-original if the quality of movement calculation were substituted with _shared-offsets&multiple-handling=worst-only_ applied to the moved gadgets and scaled by the proportion of moved gadgets compared to total gadgets in the original binary.
 
 ##### closest-only
 When calculating each gadget's contribution to EQI, considers only the smallest offset. The gadget's other offsets are still considered when calculating other gadgets' contributions to EQI.
