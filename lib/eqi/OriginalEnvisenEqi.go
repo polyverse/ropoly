@@ -1,4 +1,4 @@
-package directeqi
+package eqi
 
 import (
 	"github.com/polyverse/ropoly/lib/types"

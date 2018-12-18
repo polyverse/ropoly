@@ -1,4 +1,4 @@
-package directeqi
+package eqi
 
 import (
 	"errors"
