@@ -18,8 +18,6 @@ func ServeOverHttp(address string) error {
 	v1 := subLister(api, "/v1")
 
 	addHandleFunc(v1, "/health", handlers.HealthHandler)
-	addHandleFunc(v1, "/compare", handlers.FingerprintComparisonHandler)
-	addHandleFunc(v1, "/eqi", handlers.EqiHandler)
 
 	addHandleFunc(v1, "/pids", handlers.PidListingHandler)
 	addHandleFunc(v1, "/pids/{pid}", handlers.PidHandler)
@@ -32,12 +30,7 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(v1, "/fingerprints/{fingerprint}/eqi", handlers.StoredFingerprintEqiHandler)
 	addHandleFunc(v1, "/fingerprints/{fingerprint}/format", handlers.FingerprintFormatHandler)
 
-	addHandleFunc(v1, "/comparisons", handlers.ComparisonListingHandler)
-	addHandleFunc(v1, "/comparisons/{comparison}", handlers.StoredComparisonHandler)
-	addHandleFunc(v1, "/comparisons/{comparison}/eqi", handlers.StoredComparisonEqiHandler)
-
 	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
-	addPostHandleFunc(router, "/api/v1/comparisons/{comparison}", handlers.PostComparisonHandler)
 
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")

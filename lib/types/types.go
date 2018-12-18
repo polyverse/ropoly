@@ -7,13 +7,12 @@ import (
 )
 
 type FingerprintComparison struct {
-	GadgetDisplacements   map[Addr][]Offset   `json:"gadgetDisplacements"`
-	NewGadgets            map[GadgetId][]Addr `json:"newGadgets"`
-	GadgetsByOffset       map[Offset]int      `json:"gadgetCountsByOffset"`
-	DeadGadgetCount       int                 `json:"deadGadgetCount"`
-	SurvivedGadgetCount   int                 `json:"survivedGadgetCount"`
-	SingleDisplacements   map[Addr]Offset     `json:"bestGadgetDisplacements"`
-	GadgetsBySingleOffset map[Offset]int      `json:"gadgetCountsByBestOffset"`
+	Survived            int                             `json:"survived"`
+	Moved               int                             `json:"moved"`
+	Dead                int                             `json:"dead"`
+	GadgetsByOffset     map[Offset]int                  `json:"gadgetCountsByOffset"`
+	GadgetDisplacements map[Addr]map[GadgetId][]Offset  `json:"gadgetDisplacements"`
+	NewGadgets          map[GadgetId][]Addr             `json:"newGadgets"`
 }
 
 type Offset int64
@@ -96,13 +95,9 @@ func FingerprintFromGadgets(gadgetInstances []*GadgetInstance) (Fingerprint, err
 
 func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 	ret := FingerprintComparison{
-		GadgetDisplacements:   map[Addr][]Offset{},
+		GadgetDisplacements:   map[Addr]map[GadgetId][]Offset{},
 		NewGadgets:            map[GadgetId][]Addr{},
 		GadgetsByOffset:       map[Offset]int{},
-		DeadGadgetCount:       0,
-		SurvivedGadgetCount:   0,
-		SingleDisplacements:   map[Addr]Offset{},
-		GadgetsBySingleOffset: map[Offset]int{},
 	}
 
 	for gadget, oldAddresses := range f1 {
@@ -110,23 +105,26 @@ func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 		for i := 0; i < len(oldAddresses); i++ {
 			oldAddress := oldAddresses[i]
 			offsets := make([]Offset, len(newAddresses))
+			survived := false
 			for j, newAddress := range newAddresses {
 				offset := Offset(newAddress) - Offset(oldAddress)
+				if offset == 0 {
+					survived = true
+				}
 				offsets[j] = offset
 				ret.GadgetsByOffset[offset]++
 			}
-			if len(offsets) == 0 {
-				ret.DeadGadgetCount++
+			if survived {
+				ret.Survived++
+			} else if len(newAddresses) > 0 {
+				ret.Moved++
 			} else {
-				bestOffset := smallestOffset(offsets)
-				if bestOffset == 0 {
-					ret.SurvivedGadgetCount++
-				} else {
-					ret.SingleDisplacements[oldAddress] = bestOffset
-					ret.GadgetsBySingleOffset[bestOffset]++
-				}
+				ret.Dead++
 			}
-			ret.GadgetDisplacements[oldAddress] = offsets
+			if ret.GadgetDisplacements[oldAddress] == nil {
+				ret.GadgetDisplacements[oldAddress] = map[GadgetId][]Offset{}
+			}
+			ret.GadgetDisplacements[oldAddress][gadget] = offsets
 		}
 	}
 

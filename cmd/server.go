@@ -33,17 +33,11 @@ var serverCmd = &cobra.Command{
 		}
 
 		// TODO: Determine this with command-line argument.
-		dataDirectory = "/go/src/github.com/polyverse/ropoly/PersistentData"
+		dataDirectory = "PersistentData"
 
 		handlers.DataDirectory = dataDirectory
 		if dataDirectory != "" {
 			err := lib.EnsureDirectory(handlers.FingerprintsDirectory())
-			if err != nil {
-				log.Error(err)
-				log.Info("Setting persistent data directory to none.")
-				dataDirectory = ""
-			}
-			err = lib.EnsureDirectory(handlers.ComparisonsDirectory())
 			if err != nil {
 				log.Error(err)
 				log.Info("Setting persistent data directory to none.")
