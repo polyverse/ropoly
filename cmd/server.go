@@ -33,7 +33,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		// TODO: Determine this with command-line argument.
-		dataDirectory = "/go/src/github.com/polyverse/ropoly/PersistentData"
+		dataDirectory = "PersistentData"
 
 		handlers.DataDirectory = dataDirectory
 		if dataDirectory != "" {
