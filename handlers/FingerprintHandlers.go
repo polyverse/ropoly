@@ -283,40 +283,5 @@ func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	outputFile := r.Form.Get("out")
-
-	if outputFile == "" {
-		w.Write(b)
-	} else {
-		if DataDirectory == "" {
-			err := errors.New("Requested to save file, but persistent data directory not set.")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			logErrors(err, nil)
-			return
-		}
-
-		filepath := ComparisonsDirectory() + outputFile
-
-		if r.Form.Get("overwrite") != "true" {
-			exists, err := lib.Exists(filepath)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				logErrors(err, nil)
-				return
-			}
-			if exists {
-				b := []byte("File already exists. Use \"overwrite=true\" to overwrite.")
-				w.Write(b)
-				return
-			}
-		}
-
-		err := ioutil.WriteFile(filepath, b, 0666)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			logErrors(err, nil)
-			return
-		}
-	}
+	w.Write(b)
 }
