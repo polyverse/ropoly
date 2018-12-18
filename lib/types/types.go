@@ -80,14 +80,21 @@ type GadgetId string
 type Fingerprint map[GadgetId][]Addr
 
 func FingerprintFromGadgets(gadgetInstances []*GadgetInstance) (Fingerprint, error) {
+	gadgetLocations := map[GadgetId]map[Addr]bool{}
 	fingerprint := Fingerprint{}
 	for _, gadget := range gadgetInstances {
 		hash := GadgetId(gadget.Gadget.InstructionString())
-		if _, ok := fingerprint[hash]; !ok {
-			fingerprint[hash] = []Addr{gadget.Address}
-		} else {
-			fingerprint[hash] = append(fingerprint[hash], gadget.Address)
+		if gadgetLocations[hash] == nil {
+			gadgetLocations[hash] = map[Addr]bool{}
 		}
+		if !gadgetLocations[hash][gadget.Address] {
+			if _, ok := fingerprint[hash]; !ok {
+				fingerprint[hash] = []Addr{gadget.Address}
+			} else {
+				fingerprint[hash] = append(fingerprint[hash], gadget.Address)
+			}
+		}
+		gadgetLocations[hash][gadget.Address] = true
 	}
 
 	return fingerprint, nil

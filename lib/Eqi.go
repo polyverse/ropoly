@@ -30,6 +30,7 @@ var directEqiFuncs = map[string]directEqiFunc {
 	"monte-carlo":          eqi.MonteCarloEqi,
 	"shared-offsets":       eqi.SharedOffsetsPerGadgetEqi,
 	"offsets-intersection": eqi.OffsetsIntersectionEqi,
+	"highest-offset-count": eqi.HighestOffsetCountEqi,
 }
 
 func normalizeEqi(eqi float64) types.EntropyQualityIndex {

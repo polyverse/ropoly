@@ -12,16 +12,8 @@ func HighestOffsetCountEqi(f1, f2 types.Fingerprint, form url.Values) (float64, 
 		count += len(oldAddresses)
 		newAddresses := f2[gadget]
 		for _, oldAddress := range oldAddresses {
-			/*DEBUG*/ zeroOffset := false
 			for _, newAddress := range newAddresses {
 				offset := types.Offset(newAddress - oldAddress)
-				/*DEBUG*/ if offset == 0 {
-					if zeroOffset {
-						/*DEBUG*/ println(gadget, oldAddress, newAddress)
-					} else {
-						zeroOffset = true
-					}
-				}
 				offsetCounts[offset] += 1
 			}
 		}
