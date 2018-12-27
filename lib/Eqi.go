@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/polyverse/ropoly/lib/eqi"
 	"github.com/polyverse/ropoly/lib/types"
+	"math"
 	"net/url"
 )
 
@@ -11,6 +12,8 @@ func DirectEqi(f1 types.Fingerprint, f2 types.Fingerprint, eqiFunc string, form 
 	if eqiFunc == "envisen-original" {
 		return eqi.OriginalEnvisenEqi(f1, f2), nil
 	}
+
+	normalized := form.Get("normalized") == "true"
 
 	function := directEqiFuncs[eqiFunc]
 	if function == nil {
@@ -21,7 +24,7 @@ func DirectEqi(f1 types.Fingerprint, f2 types.Fingerprint, eqiFunc string, form 
 	if err != nil {
 		return types.EntropyQualityIndex(0), err
 	}
-	return normalizeEqi(eqi), nil
+	return normalizeEqi(eqi, eqiFunc, normalized), nil
 }
 
 type directEqiFunc func(types.Fingerprint, types.Fingerprint, url.Values) (float64, error)
@@ -33,6 +36,10 @@ var directEqiFuncs = map[string]directEqiFunc {
 	"highest-offset-count": eqi.HighestOffsetCountEqi,
 }
 
-func normalizeEqi(eqi float64) types.EntropyQualityIndex {
-	return types.EntropyQualityIndex(100.0 * (1.0 - eqi))
+func normalizeEqi(eqi float64, eqiFunc string, normalized bool) types.EntropyQualityIndex {
+	ret := 100.0 * (1.0 - eqi)
+	if normalized {
+		ret = 1.7626080809865 * (math.Pow(1.04139221012755, ret) - 1)
+	}
+	return types.EntropyQualityIndex(ret)
 }
