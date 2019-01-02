@@ -18,6 +18,9 @@ func EnsureDirectory(path string) error {
 
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
 func Exists(path string) (bool, error) {
+	if path == "" {
+		return true, nil
+	}
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -52,6 +55,9 @@ func windDirectoryStack(stack *[]string) error {
 		}
 		if !exists {
 			lastSlashIndex := strings.LastIndex(peek(stack), "/")
+			if lastSlashIndex == -1 {
+				lastSlashIndex = 0
+			}
 			push(stack, peek(stack)[:lastSlashIndex])
 		}
 	}
