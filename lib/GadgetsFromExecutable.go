@@ -2,6 +2,7 @@ package lib
 
 import (
 	"debug/elf"
+	"debug/pe"
 	"github.com/pkg/errors"
 	"github.com/polyverse/ropoly/lib/architectures/amd64"
 	"github.com/polyverse/ropoly/lib/gadgets"
@@ -41,14 +42,23 @@ type binary interface {
 }
 
 func openBinary(path string) (binary, error) {
-	file, err := elf.Open(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error opening ELF file %s", path)
+	elfFile, err := elf.Open(path)
+	if err == nil {
+		return elfBinary {
+			binary: elfFile,
+			sectionIndex: new(int),
+		}, nil
 	}
-	return elfBinary {
-		binary: file,
-		sectionIndex: new(int),
-	}, nil
+
+	peFile, err := pe.Open(path)
+	if err == nil {
+		return peBinary {
+			binary: peFile,
+			sectionIndex: new(int),
+		}, nil
+	}
+
+	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
 }
 
 type elfBinary struct {
@@ -71,6 +81,33 @@ func (b elfBinary) nextSectionData() (bool, types.Addr, []byte, error) {
 	if section.Type == elf.SHT_PROGBITS {
 		progData, err := section.Data()
 		return true, types.Addr(section.Addr), progData, err
+	} else {
+		return b.nextSectionData()
+	}
+}
+
+type peBinary struct {
+	binary *pe.File
+	sectionIndex *int
+}
+
+func (b peBinary) close() error {
+	return b.binary.Close()
+}
+
+const IMAGE_SCN_CNT_CODE uint32 = 0x00000020
+
+func (b peBinary) nextSectionData() (bool, types.Addr, []byte, error) {
+	if *b.sectionIndex == len(b.binary.Sections) {
+		return false, 0, nil, nil
+	}
+
+	section := b.binary.Sections[*b.sectionIndex]
+	*b.sectionIndex++
+
+	if section.Characteristics & IMAGE_SCN_CNT_CODE != 0 {
+		progData, err := section.Data()
+		return true, types.Addr(section.Offset), progData, err
 	} else {
 		return b.nextSectionData()
 	}
