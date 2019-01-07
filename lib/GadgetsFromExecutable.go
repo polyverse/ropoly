@@ -2,36 +2,113 @@ package lib
 
 import (
 	"debug/elf"
+	"debug/pe"
 	"github.com/pkg/errors"
 	"github.com/polyverse/ropoly/lib/architectures/amd64"
-	gadgets2 "github.com/polyverse/ropoly/lib/gadgets"
+	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 )
 
 func GadgetsFromExecutable(path string, maxLength int) (types.GadgetInstances, error, []error) {
-	file, err := elf.Open(path)
+	b, err := openBinary(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error opening ELF file %s", path), nil
 	}
-	defer file.Close()
+	defer b.close()
 
 	allGadgets := []*types.GadgetInstance{}
 
 	softerrs := []error{}
-	for _, section := range file.Sections {
-		if section.Type == elf.SHT_PROGBITS {
-			progData, err := section.Data()
-			if err != nil {
-				return nil, errors.Wrapf(err, "Unable to read data from section in ELF file %s", file), nil
-			}
-			gadgetinstances, harderr, segment_softerrs := gadgets2.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(section.Addr), maxLength)
-			softerrs = append(softerrs, segment_softerrs...)
-			if harderr != nil {
-				return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
-			}
-			allGadgets = append(allGadgets, gadgetinstances...)
+	sectionExists, addr, progData, err := b.nextSectionData()
+	for sectionExists {
+		if err != nil {
+			return nil, err, nil
 		}
+		gadgetinstances, harderr, segment_softerrs := gadgets.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, addr, maxLength)
+		softerrs = append(softerrs, segment_softerrs...)
+		if harderr != nil {
+			return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
+		}
+		allGadgets = append(allGadgets, gadgetinstances...)
+		sectionExists, addr, progData, err = b.nextSectionData()
 	}
 
 	return allGadgets, nil, softerrs
+}
+
+type binary interface {
+	close() error
+	nextSectionData() (bool, types.Addr, []byte, error)
+}
+
+func openBinary(path string) (binary, error) {
+	elfFile, err := elf.Open(path)
+	if err == nil {
+		return elfBinary {
+			binary: elfFile,
+			sectionIndex: new(int),
+		}, nil
+	}
+
+	peFile, err := pe.Open(path)
+	if err == nil {
+		return peBinary {
+			binary: peFile,
+			sectionIndex: new(int),
+		}, nil
+	}
+
+	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
+}
+
+type elfBinary struct {
+	binary *elf.File
+	sectionIndex *int
+}
+
+func (b elfBinary) close() error {
+	return b.binary.Close()
+}
+
+func (b elfBinary) nextSectionData() (bool, types.Addr, []byte, error) {
+	if *b.sectionIndex == len(b.binary.Sections) {
+		return false, 0, nil, nil
+	}
+
+	section := b.binary.Sections[*b.sectionIndex]
+	*b.sectionIndex++
+
+	if section.Type == elf.SHT_PROGBITS {
+		progData, err := section.Data()
+		return true, types.Addr(section.Addr), progData, err
+	} else {
+		return b.nextSectionData()
+	}
+}
+
+type peBinary struct {
+	binary *pe.File
+	sectionIndex *int
+}
+
+func (b peBinary) close() error {
+	return b.binary.Close()
+}
+
+const IMAGE_SCN_CNT_CODE uint32 = 0x00000020
+
+func (b peBinary) nextSectionData() (bool, types.Addr, []byte, error) {
+	if *b.sectionIndex == len(b.binary.Sections) {
+		return false, 0, nil, nil
+	}
+
+	section := b.binary.Sections[*b.sectionIndex]
+	*b.sectionIndex++
+
+	if section.Characteristics & IMAGE_SCN_CNT_CODE != 0 {
+		progData, err := section.Data()
+		return true, types.Addr(section.Offset), progData, err
+	} else {
+		return b.nextSectionData()
+	}
 }
