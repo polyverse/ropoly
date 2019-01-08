@@ -34,7 +34,7 @@ func GadgetsFromProcess(pid int, maxLength int) (types.GadgetInstances, error, [
 		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
 		softerrors = append(softerrors, softerrors3...)
 		if harderr3 != nil {
-			return nil, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid), softerrors
+			softerrors = append(softerrors, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid))
 		}
 
 		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(region.Address), maxLength)

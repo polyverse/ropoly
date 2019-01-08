@@ -60,7 +60,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithError(err).Warningf("Unable to stat path %s. Not handling it like a directory.", path)
 	} else if fi.IsDir() {
-		DirectoryListingHandler(w, r, path)
+		DirectoryListingHandler(w, r, FileSystemRoot + path)
 		return
 	}
 
