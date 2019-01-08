@@ -3,5 +3,4 @@ ropoly
 .gdb_history
 .DS_Store
 *.swp
-vendor
 bin
