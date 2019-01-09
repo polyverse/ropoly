@@ -154,7 +154,7 @@ func scanProcs(wg *sync.WaitGroup) {
 
 			for _, process := range processes {
 				processScanStartTime := time.Now()
-				libraries, harderror, softerrors := lib.GetLibrariesForPid(process.Id, true)
+				libraries, harderror, softerrors := lib.GetLibrariesForPid((*process).GetId(), true)
 				processScanEndTime := time.Now()
 				if harderror != nil {
 					log.WithError(harderror).Error("Unable to list libraries for Process: %v", process)

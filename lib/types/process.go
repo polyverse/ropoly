@@ -3,7 +3,7 @@ package types
 import "github.com/polyverse/masche/process"
 
 type Process struct {
-	Info      *process.LinuxProcessInfo `json:"info"`
+	Info      *process.ProcessInfo `json:"info"`
 	Libraries []Library                 `json:"libraries"`
 }
 
