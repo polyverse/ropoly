@@ -11,7 +11,7 @@ import (
 
 func GadgetsFromProcess(pid int, maxLength int) (types.GadgetInstances, error, []error) {
 	softerrors := []error{}
-	proc := process.LinuxProcess(pid)
+	proc := process.GetProcess(pid)
 
 	allGadgets := []*types.GadgetInstance{}
 

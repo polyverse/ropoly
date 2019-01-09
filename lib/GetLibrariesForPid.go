@@ -7,7 +7,7 @@ import (
 )
 
 func GetLibrariesForPid(pid int, checkSignatures bool) ([]*types.Library, error, []error) {
-	libraries, harderror2, softerrors2 := listlibs.ListLoadedLibraries(process.LinuxProcess(pid))
+	libraries, harderror2, softerrors2 := listlibs.ListLoadedLibraries(process.GetProcess(pid))
 	if harderror2 != nil {
 		return nil, harderror2, softerrors2
 	} // if
