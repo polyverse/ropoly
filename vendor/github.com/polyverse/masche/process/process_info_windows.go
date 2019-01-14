@@ -7,11 +7,38 @@ import (
 	"strconv"
 )
 
-func processInfo(pid int) (*LinuxProcessInfo, error) {
-	lpi := &LinuxProcessInfo{}
+type windowsProcessInfo struct {
+	Id              int     `json:"id" statusFileKey:"Pid"`
+	Handle          int     `json:"handle"`
+	Command         string  `json:"command" statusFileKey:"Name"`
+	UserName        string  `json:"userName" statusFileKey:""`
+	ParentProcessId int     `json:"parentProcessId" statusFileKey:"PPid"`
+	Executable      string  `json:"executable"`
+	SessionId       int     `json:"sessionId" statusFileKey:"Sid"`
+}
+
+func (wpi windowsProcessInfo) GetId() int {
+	return wpi.Id
+}
+
+func (wpi windowsProcessInfo) GetCommand() string {
+	return wpi.Command
+}
+
+func (wpi windowsProcessInfo) GetParentProcessId() int {
+	return wpi.ParentProcessId
+}
+
+func (wpi windowsProcessInfo) GetExecutable() string {
+	return wpi.Executable
+}
+
+func processInfo(pid int) (windowsProcessInfo, error) {
+	lpi := windowsProcessInfo{}
 	lpi.Id = pid
 	var err error
-	lpi.Command, lpi.Executable, lpi.ParentProcessId, err = commandExecutableAndPPId(pid)
+	lpi.Command, lpi.Executable, lpi.ParentProcessId, lpi.Handle, lpi.SessionId, err =
+		commandExecutablePPIdPPIdHandleAndSessionId(pid)
 	if err != nil {
 		return lpi, err
 	}
@@ -23,16 +50,17 @@ func processInfo(pid int) (*LinuxProcessInfo, error) {
 }
 
 func processExe(pid int) (string, error) {
-	_, executable, _, err := commandExecutableAndPPId(pid)
+	_, executable, _, _, _, err := commandExecutablePPIdPPIdHandleAndSessionId(pid)
 	return executable, err
 }
 
-func commandExecutableAndPPId(pid int) (string, string, int, error) {
+func commandExecutablePPIdPPIdHandleAndSessionId(pid int) (string, string, int, int, int, error) {
 	wmicCommand := exec.Command("wmic", "path", "win32_process", "where", "processid=" +
-		strconv.FormatUint(uint64(pid), 10), "get", "commandline,", "executablepath,", "parentprocessid")
+		strconv.FormatUint(uint64(pid), 10), "get", "commandline,", "executablepath,",
+		"parentprocessid", "handle", "sessionid")
 	wmicOutput, err := wmicCommand.Output()
 	if err != nil {
-		return "", "", 0, err
+		return "", "", 0, 0, 0, err
 	}
 
 	wmicLines := bytes.Split(wmicOutput, []byte("\n"))
@@ -40,36 +68,50 @@ func commandExecutableAndPPId(pid int) (string, string, int, error) {
 	processLine := wmicLines[1]
 
 	charIndex := 0
-	var executableIndex int
-	for ; charIndex < len(headingLine); charIndex++ {
-		if len(headingLine) < charIndex + 14 {
-			return "", "", 0, errors.New("ExecutablePath column missing in WMIC output")
-		}
-		if bytes.Equal(headingLine[charIndex:charIndex + 14], []byte("ExecutablePath")) {
-			executableIndex = charIndex
-			charIndex += 14
-			break
-		}
+	executableIndex, charIndex := findHeading(headingLine, []byte("ExecutablePath"), charIndex)
+	if executableIndex == -1 {
+		return "", "", 0, 0, 0, errors.New("\"ExecutablePath\" not found in heading line.")
 	}
-	var pPIdIndex int
-	for ; charIndex < len(headingLine); charIndex++ {
-		if len(headingLine) < charIndex + 15 {
-			return "", "", 0, errors.New("ParentProcessId column missing in WMIC output")
-		}
-		if bytes.Equal(headingLine[charIndex:charIndex + 15], []byte("ParentProcessId")) {
-			pPIdIndex = charIndex
-			break
-		}
+	pPIdIndex, charIndex := findHeading(headingLine, []byte("ParentProcessId"), charIndex)
+	if pPIdIndex == -1 {
+		return "", "", 0, 0, 0, errors.New("\"ParentProcessId\" not found in heading line.")
+	}
+	handleIndex, charIndex := findHeading(headingLine, []byte("Handle"), charIndex)
+	if handleIndex == -1 {
+		return "", "", 0, 0, 0, errors.New("\"Handle\" not found in heading line.")
+	}
+	sessionIdIndex, charIndex := findHeading(headingLine, []byte("SessionId"), charIndex)
+	if sessionIdIndex == -1 {
+		return "", "", 0, 0, 0, errors.New("\"SessionId\" not found in heading line.")
 	}
 
 	command := string(bytes.TrimSpace(processLine[:executableIndex]))
 	executable := string(bytes.TrimSpace(processLine[executableIndex:pPIdIndex]))
-	pPIdString := string(bytes.TrimSpace(processLine[pPIdIndex:]))
+	pPIdString := string(bytes.TrimSpace(processLine[pPIdIndex:handleIndex]))
 	pPId, err := strconv.ParseInt(pPIdString, 10, 64)
 	if err != nil {
 		pPId = -1
 	}
-	return command, executable, int(pPId), nil
+	handleString := string(bytes.TrimSpace(processLine[handleIndex:sessionIdIndex]))
+	handle, err := strconv.ParseInt(handleString, 10, 64)
+	if err != nil {
+		pPId = -1
+	}
+	sessionIdString := string(bytes.TrimSpace(processLine[sessionIdIndex:]))
+	sessionId, err := strconv.ParseInt(sessionIdString, 10, 64)
+	return command, executable, int(pPId), int(handle), int(sessionId), nil
+}
+
+func findHeading(headingLine []byte, targetHeading []byte, searchStart int) (start int, end int) {
+	for charIndex := searchStart; charIndex < len(headingLine); charIndex++ {
+		if len(headingLine) < charIndex + len(targetHeading) {
+			return -1, -1
+		}
+		if bytes.Equal(headingLine[charIndex:charIndex + len(targetHeading)], targetHeading) {
+			return charIndex, charIndex + len(targetHeading)
+		}
+	}
+	return -1, -1
 }
 
 func userName(pid int) (string, error) {

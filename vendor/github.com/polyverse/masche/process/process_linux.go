@@ -12,13 +12,17 @@ import (
 	"strings"
 )
 
-type LinuxProcess int
+type linuxProcess int
 
-func (p LinuxProcess) Pid() int {
+func getProcess(pid int) linuxProcess {
+	return linuxProcess(pid)
+}
+
+func (p linuxProcess) Pid() int {
 	return int(p)
 }
 
-func (p LinuxProcess) Name() (name string, harderror error, softerrors []error) {
+func (p linuxProcess) Name() (name string, harderror error, softerrors []error) {
 	name, err := ProcessExe(p.Pid())
 
 	if err != nil {
@@ -54,11 +58,11 @@ func (p LinuxProcess) Name() (name string, harderror error, softerrors []error) 
 	return name, err, nil
 }
 
-func (p LinuxProcess) Close() (harderror error, softerrors []error) {
+func (p linuxProcess) Close() (harderror error, softerrors []error) {
 	return nil, nil
 }
 
-func (p LinuxProcess) Handle() uintptr {
+func (p linuxProcess) Handle() uintptr {
 	return uintptr(p)
 }
 
@@ -82,7 +86,7 @@ func getAllPids() (pids []int, harderror error, softerrors []error) {
 }
 
 func openFromPid(pid int) (p Process, harderror error, softerrors []error) {
-	// Check if we have premissions to read the process memory
+	// Check if we have permissions to read the process memory
 	memPath := common.MemFilePathFromPid(uint(pid))
 	memFile, err := os.Open(memPath)
 	if err != nil {
@@ -91,5 +95,5 @@ func openFromPid(pid int) (p Process, harderror error, softerrors []error) {
 	}
 	defer memFile.Close()
 
-	return LinuxProcess(pid), nil, nil
+	return linuxProcess(pid), nil, nil
 }

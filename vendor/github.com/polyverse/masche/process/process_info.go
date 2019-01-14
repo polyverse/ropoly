@@ -1,18 +1,16 @@
 package process
 
-type LinuxProcessInfo struct {
-	Id              int    `json:"id" statusFileKey:"Pid"`
-	Command         string `json:"command" statusFileKey:"Name"`
-	UserId          int    `json:"userId" statusFileKey:"Uid"`
-	UserName        string `json:"userName" statusFileKey:""`
-	GroupId         int    `json:"groupId" statusFileKey:"Gid"`
-	GroupName       string `json:"groupName" statusFileKey:""`
-	ParentProcessId int    `json:"parentProcessId" statusFileKey:"PPid"`
-	Executable      string `json:"executable"`
+type ProcessInfo interface {
+	GetId() int
+	GetCommand() string
+	GetParentProcessId() int
+	GetExecutable() string
 }
 
-func ProcessInfo(pid int) (*LinuxProcessInfo, error) {
-	return processInfo(pid)
+func GetProcessInfo(pid int) (*ProcessInfo, error) {
+	var info ProcessInfo
+	info, err := processInfo(pid)
+	return &info, err
 }
 
 func ProcessExe(pid int) (string, error) {

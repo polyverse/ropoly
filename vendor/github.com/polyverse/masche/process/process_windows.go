@@ -55,22 +55,26 @@ func getAllPids() (pids []int, harderror error, softerrors []error) {
 	return pids, nil, nil
 }
 
-type LinuxProcess int
+type windowsProcess int
 
-func (p LinuxProcess) Pid() int {
+func getProcess(pid int) windowsProcess {
+	return windowsProcess(pid)
+}
+
+func (p windowsProcess) Pid() int {
 	return int(p)
 }
 
-func (p LinuxProcess) Name() (name string, harderror error, softerrors []error) {
+func (p windowsProcess) Name() (name string, harderror error, softerrors []error) {
 	name, err := ProcessExe(p.Pid())
 	return name, err, nil
 }
 
-func (p LinuxProcess) Close() (harderror error, softerrors []error) {
+func (p windowsProcess) Close() (harderror error, softerrors []error) {
 	return nil, nil
 }
 
-func (p LinuxProcess) Handle() uintptr {
+func (p windowsProcess) Handle() uintptr {
 	// https://gist.github.com/castaneai/ed8cc2aaedf9d1eafd68
 	kernel32 := syscall.MustLoadDLL("kernel32.dll")
 	proc := kernel32.MustFindProc("OpenProcess")

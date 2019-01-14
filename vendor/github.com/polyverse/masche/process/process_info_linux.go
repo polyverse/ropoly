@@ -14,29 +14,56 @@ import (
 	"sync"
 )
 
+type linuxProcessInfo struct {
+	Id              int    `json:"id" statusFileKey:"Pid"`
+	Command         string `json:"command" statusFileKey:"Name"`
+	UserId          int    `json:"userId" statusFileKey:"Uid"`
+	UserName        string `json:"userName" statusFileKey:""`
+	GroupId         int    `json:"groupId" statusFileKey:"Gid"`
+	GroupName       string `json:"groupName" statusFileKey:""`
+	ParentProcessId int    `json:"parentProcessId" statusFileKey:"PPid"`
+	Executable      string `json:"executable"`
+}
+
+func (lpi linuxProcessInfo) GetId() int {
+	return lpi.Id
+}
+
+func (lpi linuxProcessInfo) GetCommand() string {
+	return lpi.Command
+}
+
+func (lpi linuxProcessInfo) GetParentProcessId() int {
+	return lpi.ParentProcessId
+}
+
+func (lpi linuxProcessInfo) GetExecutable() string {
+	return lpi.Executable
+}
+
 var (
-	tmpLpi         = LinuxProcessInfo{}
+	tmpLpi         = linuxProcessInfo{}
 	keyToFieldName = map[string]string{}
 	mtx            = &sync.RWMutex{}
 )
 
-func processInfo(pid int) (*LinuxProcessInfo, error) {
+func processInfo(pid int) (linuxProcessInfo, error) {
 	statusPath := filepath.Join("/proc", fmt.Sprintf("%d", pid), "status")
 	statusFile, err := os.Open(statusPath)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to open proc %d's status file at %s (%v)", pid, statusPath, err)
+		return linuxProcessInfo{}, fmt.Errorf("Unable to open proc %d's status file at %s (%v)", pid, statusPath, err)
 	}
 	defer statusFile.Close()
 
 	data, err := ioutil.ReadAll(statusFile)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read data from proc %d's status file at %s (%v)", pid, statusPath, err)
+		return linuxProcessInfo{}, fmt.Errorf("Unable to read data from proc %d's status file at %s (%v)", pid, statusPath, err)
 	}
 
-	lpi := &LinuxProcessInfo{}
-	err = parseStatusToStruct(data, lpi)
+	lpi := linuxProcessInfo{}
+	err = parseStatusToStruct(data, &lpi)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to process data from %s into LinuxProcessInfo struct (%v)", statusPath, err)
+		return linuxProcessInfo{}, fmt.Errorf("Unable to process data from %s into linuxProcessInfo struct (%v)", statusPath, err)
 	}
 
 	//we ignore this error
@@ -57,9 +84,9 @@ func processExe(pid int) (string, error) {
 	return name, nil
 }
 
-func parseStatusToStruct(data []byte, lpi *LinuxProcessInfo) error {
+func parseStatusToStruct(data []byte, lpi *linuxProcessInfo) error {
 	if lpi == nil {
-		return fmt.Errorf("Cannot parse Process Status into a nil LinuxProcessInfo")
+		return fmt.Errorf("Cannot parse Process Status into a nil linuxProcessInfo")
 	}
 
 	r := bufio.NewReader(bytes.NewReader(data))

@@ -27,6 +27,10 @@ type Process interface {
 	Handle() uintptr
 }
 
+func GetProcess(pid int) Process {
+	return getProcess(pid)
+}
+
 // OpenFromPid opens a process by its pid.
 func OpenFromPid(pid int) (p Process, harderror error, softerrors []error) {
 	// This function is implemented by the OS-specific openFromPid function.
