@@ -57,7 +57,7 @@ func processExe(pid int) (string, error) {
 func commandExecutablePPIdPPIdHandleAndSessionId(pid int) (string, string, int, int, int, error) {
 	wmicCommand := exec.Command("wmic", "path", "win32_process", "where", "processid=" +
 		strconv.FormatUint(uint64(pid), 10), "get", "commandline,", "executablepath,",
-		"parentprocessid,", "handle,", "sessionid")
+		"handle,", "parentprocessid,", "sessionid")
 	wmicOutput, err := wmicCommand.Output()
 	if err != nil {
 		return "", "", 0, 0, 0, err
@@ -72,13 +72,13 @@ func commandExecutablePPIdPPIdHandleAndSessionId(pid int) (string, string, int, 
 	if executableIndex == -1 {
 		return "", "", 0, 0, 0, errors.New("\"ExecutablePath\" not found in heading line.")
 	}
-	pPIdIndex, charIndex := findHeading(headingLine, []byte("ParentProcessId"), charIndex)
-	if pPIdIndex == -1 {
-		return "", "", 0, 0, 0, errors.New("\"ParentProcessId\" not found in heading line.")
-	}
 	handleIndex, charIndex := findHeading(headingLine, []byte("Handle"), charIndex)
 	if handleIndex == -1 {
 		return "", "", 0, 0, 0, errors.New("\"Handle\" not found in heading line.")
+	}
+	pPIdIndex, charIndex := findHeading(headingLine, []byte("ParentProcessId"), charIndex)
+	if pPIdIndex == -1 {
+		return "", "", 0, 0, 0, errors.New("\"ParentProcessId\" not found in heading line.")
 	}
 	sessionIdIndex, charIndex := findHeading(headingLine, []byte("SessionId"), charIndex)
 	if sessionIdIndex == -1 {
@@ -86,14 +86,14 @@ func commandExecutablePPIdPPIdHandleAndSessionId(pid int) (string, string, int, 
 	}
 
 	command := string(bytes.TrimSpace(processLine[:executableIndex]))
-	executable := string(bytes.TrimSpace(processLine[executableIndex:pPIdIndex]))
-	pPIdString := string(bytes.TrimSpace(processLine[pPIdIndex:handleIndex]))
-	pPId, err := strconv.ParseInt(pPIdString, 10, 64)
-	if err != nil {
-		pPId = -1
-	}
-	handleString := string(bytes.TrimSpace(processLine[handleIndex:sessionIdIndex]))
+	executable := string(bytes.TrimSpace(processLine[executableIndex:handleIndex]))
+	handleString := string(bytes.TrimSpace(processLine[handleIndex:pPIdIndex]))
 	handle, err := strconv.ParseInt(handleString, 10, 64)
+	if err != nil {
+		handle = -1
+	}
+	pPIdString := string(bytes.TrimSpace(processLine[pPIdIndex:sessionIdIndex]))
+	pPId, err := strconv.ParseInt(pPIdString, 10, 64)
 	if err != nil {
 		pPId = -1
 	}
