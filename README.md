@@ -37,7 +37,7 @@ Return the list of fingerprints stored on the server.
 
 ### /api/v1/fingerprints/{fingerprint}[?overwrite=true]
 Return the contents of the fingerprint with the given name.
-Post fingerprint file to add fingerprint with the given name. Fails if fingerprint with given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
+Post fingerprint file as "fingerprint" to add fingerprint with the given name. Fails if fingerprint with given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
 
 ### /api/v1/fingerprints/{fingerprint}/compare?second=_fingerprint
 Compares the first given fingerprint to the one provided in _second_.
