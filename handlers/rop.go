@@ -93,6 +93,8 @@ func PidHandler(w http.ResponseWriter, r *http.Request) {
 	switch query {
 	case "taints":
 		PolyverseTaintedPidHandler(w, r, int(pid))
+	case "disasm":
+		ProcessDisasmHandler(w, r, int(pid))
 	case "gadgets":
 		GadgetsFromPidHandler(w, r, int(pid))
 	case "fingerprint":
@@ -200,6 +202,29 @@ func FileDisasmHandler(w http.ResponseWriter, r *http.Request, path string) {
 	} // if
 
 	instructions, harderror, softerrors := lib.DisassembleFile(path, types.Addr(start))
+	logErrors(harderror, softerrors)
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(instructions, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+	w.Write(b)
+}
+
+func ProcessDisasmHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	startStr := r.Form.Get("start")
+	start, err := strconv.ParseUint(startStr, 0, 32)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	instructions, harderror, softerrors := lib.DisassembleProcess(pid, types.Addr(start))
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusInternalServerError)
