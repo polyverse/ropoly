@@ -7,11 +7,11 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func DisassembleProcess(pid int, start types.Addr, end types.Addr) ([]*types.Instruction, error, []error) {
+func DisassembleProcess(pid int, start types.Addr, end types.Addr) ([]*types.InstructionInstance, error, []error) {
 	softerrors := []error{}
 	proc := process.GetProcess(pid)
 
-	var allInstructions []*types.Instruction
+	var allInstructions []*types.InstructionInstance
 	pc := uintptr(0)
 	for {
 		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(proc, uintptr(pc), memaccess.Readable+memaccess.Executable)
