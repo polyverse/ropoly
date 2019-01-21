@@ -17,6 +17,9 @@ import (
 
 const indent string = "    "
 
+const defaultStart uint64 = 0
+const defaultEnd uint64 = 0x7fffffff
+
 type DirectoryListingEntryType string
 
 const (
@@ -194,14 +197,29 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 }
 
 func FileDisasmHandler(w http.ResponseWriter, r *http.Request, path string) {
+	var start uint64 = defaultStart
 	startStr := r.Form.Get("start")
-	start, err := strconv.ParseUint(startStr, 0, 32)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if startStr != "" {
+		var err error
+		start, err = strconv.ParseUint(startStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
 	} // if
 
-	instructions, harderror, softerrors := lib.DisassembleFile(path, types.Addr(start))
+	var end uint64 = defaultEnd
+	endStr := r.Form.Get("end")
+	if endStr != "" {
+		var err error
+		end, err = strconv.ParseUint(endStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} // if
+
+	instructions, harderror, softerrors := lib.DisassembleFile(path, types.Addr(start), types.Addr(end))
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusInternalServerError)
@@ -217,14 +235,29 @@ func FileDisasmHandler(w http.ResponseWriter, r *http.Request, path string) {
 }
 
 func ProcessDisasmHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	var start uint64 = defaultStart
 	startStr := r.Form.Get("start")
-	start, err := strconv.ParseUint(startStr, 0, 32)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if startStr != "" {
+		var err error
+		start, err = strconv.ParseUint(startStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
 	} // if
 
-	instructions, harderror, softerrors := lib.DisassembleProcess(pid, types.Addr(start))
+	var end uint64 = defaultEnd
+	endStr := r.Form.Get("end")
+	if endStr != "" {
+		var err error
+		end, err = strconv.ParseUint(endStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} // if
+
+	instructions, harderror, softerrors := lib.DisassembleProcess(pid, types.Addr(start), types.Addr(end))
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusInternalServerError)
