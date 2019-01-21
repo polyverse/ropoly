@@ -9,10 +9,10 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func GadgetsFromExecutable(path string, maxLength int) (types.GadgetInstances, error, []error) {
+func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, []error) {
 	b, err := openBinary(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error opening ELF file %s", path), nil
+		return nil, err, nil
 	}
 	defer b.close()
 

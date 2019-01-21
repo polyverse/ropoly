@@ -38,7 +38,7 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 	var gadgets types.GadgetInstances
 	var softerrors []error
 	if isFile {
-		gadgets, err, softerrors = lib.GadgetsFromExecutable(path, int(gadgetLen))
+		gadgets, err, softerrors = lib.GadgetsFromFile(path, int(gadgetLen))
 	} else {
 		gadgets, err, softerrors = lib.GadgetsFromProcess(pid, int(gadgetLen))
 	}

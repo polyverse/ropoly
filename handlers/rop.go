@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -68,6 +69,8 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	switch query {
 	case "taints":
 		PolyverseTaintedFileHandler(w, r, path)
+	case "disasm":
+		FileDisasmHandler(w, r, path)
 	case "gadgets":
 		GadgetsFromFileHandler(w, r, path)
 	case "fingerprint":
@@ -171,13 +174,12 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} // if
-	} // else if
+	} // if
 
-	gadgets, harderror, softerrors := lib.GadgetsFromExecutable(path, int(gadgetLen))
+	gadgets, harderror, softerrors := lib.GadgetsFromFile(path, int(gadgetLen))
 	logErrors(harderror, softerrors)
-	if err != nil {
-		logErrors(err, nil)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusInternalServerError)
 		return
 	} // if
 
@@ -185,7 +187,30 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
+	} // if
+	w.Write(b)
+}
+
+func FileDisasmHandler(w http.ResponseWriter, r *http.Request, path string) {
+	startStr := r.Form.Get("start")
+	start, err := strconv.ParseUint(startStr, 0, 32)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	instructions, harderror, softerrors := lib.DisassembleFile(path, types.Addr(start))
+	logErrors(harderror, softerrors)
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusInternalServerError)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(instructions, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} // if
 	w.Write(b)
 }
 

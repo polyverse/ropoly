@@ -50,6 +50,9 @@ Compares the first given fingerprint to the one provided in _second_ and uses th
 ### taints
 For libraries in memory if looking at a PID or contained files if looking at a directory, check if each is signed by Polyverse.
 
+### disasm
+Disassemble all valid, adjacent instructions starting from address _start_.
+
 ### gadgets
 Find all gadgets up to _instructions_ instructions.
 
