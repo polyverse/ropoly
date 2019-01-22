@@ -7,12 +7,13 @@ import (
 	"github.com/polyverse/ropoly/lib/architectures/amd64"
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
+	"sort"
 )
 
-func GadgetsFromExecutable(path string, maxLength int) (types.GadgetInstances, error, []error) {
+func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, []error) {
 	b, err := openBinary(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error opening ELF file %s", path), nil
+		return nil, err, nil
 	}
 	defer b.close()
 
@@ -44,18 +45,22 @@ type binary interface {
 func openBinary(path string) (binary, error) {
 	elfFile, err := elf.Open(path)
 	if err == nil {
-		return elfBinary {
+		ret := elfBinary {
 			binary: elfFile,
 			sectionIndex: new(int),
-		}, nil
+		}
+		sort.Sort(elfSections(ret.binary.Sections))
+		return ret, nil
 	}
 
 	peFile, err := pe.Open(path)
 	if err == nil {
-		return peBinary {
+		ret := peBinary {
 			binary: peFile,
 			sectionIndex: new(int),
-		}, nil
+		}
+		sort.Sort(peSections(ret.binary.Sections))
+		return ret, nil
 	}
 
 	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
@@ -68,6 +73,20 @@ type elfBinary struct {
 
 func (b elfBinary) close() error {
 	return b.binary.Close()
+}
+
+type elfSections []*elf.Section
+
+func (s elfSections) Len() int {
+	return len(s)
+}
+
+func (s elfSections) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s elfSections) Less(i, j int) bool {
+	return s[i].Addr < s[j].Addr
 }
 
 func (b elfBinary) nextSectionData() (bool, types.Addr, []byte, error) {
@@ -93,6 +112,20 @@ type peBinary struct {
 
 func (b peBinary) close() error {
 	return b.binary.Close()
+}
+
+type peSections []*pe.Section
+
+func (s peSections) Len() int {
+	return len(s)
+}
+
+func (s peSections) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s peSections) Less(i, j int) bool {
+	return s[i].Offset < s[j].Offset
 }
 
 const IMAGE_SCN_CNT_CODE uint32 = 0x00000020

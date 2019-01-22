@@ -15,6 +15,21 @@ type FingerprintComparison struct {
 	NewGadgets          map[GadgetId][]Addr             `json:"newGadgets"`
 }
 
+type InstructionInstance struct {
+	Address Addr    `json:"address"`
+	Octets  Octets  `json:"octets"`
+	DisAsm  string  `json:"disasm"`
+}
+
+func MakeInstructionInstance(instruction *Instruction, address Addr) *InstructionInstance {
+	ret := InstructionInstance {
+		Address:    address,
+		Octets:     instruction.Octets,
+		DisAsm:     instruction.DisAsm,
+	}
+	return &ret
+}
+
 type Offset int64
 
 func (o Offset) String() string {
