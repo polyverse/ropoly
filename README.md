@@ -26,11 +26,15 @@ Runs as a daemon that repeatedly scans the server's file system and the librarie
 ### /api/v1/pids
 Return list of all visible process ids and information about each process.
 
-### /api/v1/pid/\<_pid_\>[?query=\<taints|gadgets|fingerprint>][&len=_length_]
+### /api/v1/pid/\<_pid_\>[?query=\<taints|disasm|gadgets|fingerprint>]
 Return information about the memory of the given _pid_ according to the option provided in _mode_. _taints_ by default.
 
-### /api/v1/files/\<_path_\>[?query=\<taints|gadgets|fingerprint>][&len=_length_]
+### /api/v1/files/\<_path_\>[?query=\<taints|disasm|gadgets|fingerprint>]
 Return information about the files and directories in the given directory on the server according to the option provided in _query_. Default option is _taints_.
+
+### /api/v1/uploadedfiles/|<_path_|>[?query=|<taints|disasm|gadgets|fingerprint>]
+Post files to this endpoint to add them to a directory for uploaded files. Fails if a file with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint. If you put slashes in _path_, the needed directories will be recursively created.
+Get returns information about the files in the directory for uploaded files or a specified subdirectory. Behavior is identical to /api/v1/files/_path/to/uploaded/file/directory_.
 
 ### /api/v1/fingerprints
 Return the list of fingerprints stored on the server.

@@ -32,6 +32,10 @@ func ServeOverHttp(address string) error {
 
 	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
 
+	directoryLister(v1, "/uploadedfiles", handlers.UploadedFileHandler)
+
+	addPostHandleFunc(router, "/api/v1/uploadedfiles/{path:.*}", handlers.PostFileHandler)
+
 	log.Infof("Running server on address: %s", address)
 	log.Infof("Listing supported API")
 	// Dump the actual routes that the router knows about
