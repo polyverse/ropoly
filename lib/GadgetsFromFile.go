@@ -60,6 +60,7 @@ func openBinary(path string) (binary, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(peSections(ret.binary.Sections))
+		return ret, nil
 	}
 
 	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
