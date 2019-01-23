@@ -2,7 +2,7 @@
 test_pair() {
 	local input="$1"
 	local expected="$2"
-	output=$(curl localhost:8008/api/v1/$1)
+	output=$(curl localhost:8008/api/v1/$input)
 	if [[ ! "$output" == "$expected" ]]
 	then
 		echo "Expected $expected"
