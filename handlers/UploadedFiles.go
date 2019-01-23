@@ -21,7 +21,7 @@ func PostFileHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	lib.EnsureDirectory(path[:len(path) - 1])
+	lib.EnsureDirectory(path[:len(path) - i])
 
 	if r.FormValue("overwrite") != "true" {
 		exists, err := lib.Exists(path)
