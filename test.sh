@@ -30,4 +30,15 @@ test_pair fingerprints/original/eqi?func=shared-offsets\&second=eqi50 50
 test_pair fingerprints/original/eqi?func=shared-offsets\&second=eqi90 90
 test_pair fingerprints/original/eqi?func=shared-offsets\&second=allDead 100
 
+# uploadedfiles POST and GET
+curl -F file=@TestFiles/loop localhost:8008/api/v1/uploadedfiles/loop?overwrite=true
+test_pair uploadedfiles/loop false
+
+# loop fingerprint should be identical to test fingerprint
+test_pair uploadedfiles/loop?query=fingerprint "$(cat TestFiles/fingerprint)"
+
+# Should still be identical if we save and then cat
+curl localhost:8008/api/v1/uploadedfiles/loop?query=fingerprint\&out=loop\&overwrite=true
+test_pair fingerprints/loop "$(cat TestFiles/fingerprint)"
+
 echo "All tests passed"
