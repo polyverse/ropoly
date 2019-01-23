@@ -32,7 +32,8 @@ func ServeOverHttp(address string) error {
 
 	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
 
-	directoryLister(v1, "/uploadedfiles", handlers.UploadedFileHandler)
+	addHandleFunc(v1, "/uploadedfiles", handlers.UploadedFileHandler)
+	addHandleFunc(v1, "/uploadedfiles/{path:.*}", handlers.UploadedFileHandler)
 
 	addPostHandleFunc(router, "/api/v1/uploadedfiles/{path:.*}", handlers.PostFileHandler)
 
