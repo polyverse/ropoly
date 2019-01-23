@@ -30,6 +30,9 @@ test_pair fingerprints/original/eqi?func=shared-offsets\&second=eqi50 50
 test_pair fingerprints/original/eqi?func=shared-offsets\&second=eqi90 90
 test_pair fingerprints/original/eqi?func=shared-offsets\&second=allDead 100
 
+# compare
+test_pair fingerprints/original/compare?second=allDead "$(cat TestFiles/allDeadComparison)"
+
 # uploadedfiles POST and GET
 curl -F file=@TestFiles/loop localhost:8008/api/v1/uploadedfiles/loop?overwrite=true
 test_pair uploadedfiles/loop false
