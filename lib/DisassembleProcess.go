@@ -29,7 +29,7 @@ func DisassembleProcess(pid int, start types.Addr, end types.Addr) ([]*types.Ins
 		//Make sure we move the Program Counter
 		pc = region.Address + uintptr(region.Size)
 
-		opcodes := make([]byte, region.Size, region.Size)
+		opcodes := make([]byte, region.Address, region.Size)
 		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
 		softerrors = append(softerrors, softerrors3...)
 		if harderr3 != nil {
