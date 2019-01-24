@@ -42,7 +42,7 @@ test_pair 5 "uploadedfiles/loop" false
 test_pair 6 "uploadedfiles/loop?query=fingerprint" "$(cat TestFiles/fingerprint)"
 
 # Should still be identical if we save and then cat
-curl "localhost:8008/api/v1/uploadedfiles/loop?query=fingerprint\&out=loop\&overwrite=true"
+curl "localhost:8008/api/v1/uploadedfiles/loop?query=fingerprint&out=loop&overwrite=true"
 test_pair 7 "fingerprints/loop" "$(cat TestFiles/fingerprint)"
 
 echo "All tests passed"
