@@ -29,6 +29,7 @@ func ServeOverHttp(address string) error {
 	addHandleFunc(v1, "/fingerprints/{fingerprint}/compare", handlers.StoredFingerprintComparisonHandler)
 	addHandleFunc(v1, "/fingerprints/{fingerprint}/eqi", handlers.StoredFingerprintEqiHandler)
 	addHandleFunc(v1, "/fingerprints/{fingerprint}/format", handlers.FingerprintFormatHandler)
+	addHandleFunc(v1, "/fingerprints/{fingerprint}/survival", handlers.StoredFingerprintSurvivalHandler)
 
 	addPostHandleFunc(router, "/api/v1/fingerprints/{fingerprint}", handlers.PostFingerprintHandler)
 
