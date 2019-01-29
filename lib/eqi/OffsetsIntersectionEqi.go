@@ -49,3 +49,19 @@ func successfulAttacks(chosenIndices []int, offsets []map[types.Offset]bool, len
 	}
 	return sum
 }
+
+func offsetSets(f1, f2 types.Fingerprint) []map[types.Offset]bool {
+	ret := make([]map[types.Offset]bool, 0)
+	for gadget, addresses := range f1 {
+		for i := 0; i < len(addresses); i++ {
+			oldAddress := addresses[i]
+			newAddresses := f2[gadget]
+			offsets := make([]types.Offset, len(newAddresses), len(newAddresses))
+			for i := 0; i < len(newAddresses); i++ {
+				offsets[i] = types.Offset(newAddresses[i] - oldAddress)
+			}
+			ret = append(ret, offsetSet(offsets))
+		}
+	}
+	return ret
+}
