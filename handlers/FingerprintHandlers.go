@@ -287,6 +287,7 @@ func StoredFingerprintSurvivalHandler(w http.ResponseWriter, r *http.Request) {
 func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
+	includeSurvived := r.FormValue("include-survived") != "false"
 
 	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
 	if err != nil {
@@ -316,7 +317,7 @@ func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	comparison := lib.CompareFingerprints(f1, f2)
+	comparison := lib.CompareFingerprints(f1, f2, includeSurvived)
 	b, err := json.MarshalIndent(comparison, "", indent)
 	if err != nil {
 		logErrors(err, nil)

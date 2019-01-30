@@ -115,7 +115,7 @@ func FingerprintFromGadgets(gadgetInstances []*GadgetInstance) (Fingerprint, err
 	return fingerprint, nil
 }
 
-func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
+func (f1 Fingerprint) CompareTo(f2 Fingerprint, includeSurvived bool) FingerprintComparison {
 	ret := FingerprintComparison{
 		GadgetDisplacements:   map[Addr]map[GadgetId][]Offset{},
 		NewGadgets:            map[GadgetId][]Addr{},
@@ -124,16 +124,28 @@ func (f1 Fingerprint) CompareTo(f2 Fingerprint) FingerprintComparison {
 
 	for gadget, oldAddresses := range f1 {
 		newAddresses := f2[gadget]
-		for i := 0; i < len(oldAddresses); i++ {
-			oldAddress := oldAddresses[i]
-			offsets := make([]Offset, len(newAddresses))
-			survived := false
-			for j, newAddress := range newAddresses {
-				offset := Offset(newAddress) - Offset(oldAddress)
-				if offset == 0 {
-					survived = true
+		newAddressIndex := 0
+		survivedAddresses := map[Addr]bool{}
+		for _, oldAddress := range oldAddresses {
+			for newAddressIndex < len(newAddresses) && oldAddress > newAddresses[newAddressIndex] {
+				newAddressIndex++
+			}
+			if newAddressIndex < len(newAddresses) && oldAddress == newAddresses[newAddressIndex] {
+				survivedAddresses[oldAddress] = true
+			}
+		}
+		for _, oldAddress := range oldAddresses {
+			survived := survivedAddresses[oldAddress]
+			if (!includeSurvived) && survived {
+				continue
+			}
+			var offsets []Offset
+			for _, newAddress := range newAddresses {
+				if (!includeSurvived) && survivedAddresses[newAddress] {
+					continue
 				}
-				offsets[j] = offset
+				offset := Offset(newAddress) - Offset(oldAddress)
+				offsets = append(offsets, offset)
 				ret.GadgetsByOffset[offset]++
 			}
 			if survived {
