@@ -18,7 +18,7 @@ import (
 const indent string = "    "
 
 const defaultStart uint64 = 0
-const defaultEnd uint64 = 0x7fffffff
+const defaultEnd uint64 = 0x7fffffffffffffff
 
 type DirectoryListingEntryType string
 

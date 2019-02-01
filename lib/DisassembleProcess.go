@@ -12,6 +12,7 @@ func DisassembleProcess(pid int, start types.Addr, end types.Addr) ([]*types.Ins
 	proc := process.GetProcess(pid)
 
 	var allInstructions []*types.InstructionInstance
+
 	pc := uintptr(0)
 	for {
 		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(proc, uintptr(pc), memaccess.Readable+memaccess.Executable)
@@ -29,7 +30,7 @@ func DisassembleProcess(pid int, start types.Addr, end types.Addr) ([]*types.Ins
 		//Make sure we move the Program Counter
 		pc = region.Address + uintptr(region.Size)
 
-		opcodes := make([]byte, region.Address, region.Size)
+		opcodes := make([]byte, region.Size, region.Size)
 		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
 		softerrors = append(softerrors, softerrors3...)
 		if harderr3 != nil {
