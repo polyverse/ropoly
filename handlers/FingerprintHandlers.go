@@ -284,6 +284,47 @@ func StoredFingerprintSurvivalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func StoredFingerprintKillRateHandler(w http.ResponseWriter, r *http.Request) {
+	f1Name := mux.Vars(r)["fingerprint"]
+	f2Name := r.FormValue("second")
+
+	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	var f1 types.Fingerprint
+	err = json.Unmarshal(f1Bytes, &f1)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var f2 types.Fingerprint
+	err = json.Unmarshal(f2Bytes, &f2)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	original := lib.GadgetCount(f1)
+	survived := lib.GadgetSurvival(f1, f2)
+	killRate := float64(original - survived) / float64(original)
+	killRateStr := strconv.FormatFloat(killRate, 'f', -1, 64)
+
+	b := []byte(killRateStr)
+	w.Write(b)
+}
+
 func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
