@@ -139,7 +139,9 @@ func (f1 Fingerprint) CompareTo(f2 Fingerprint, includeSurvived bool) Fingerprin
 			if (!includeSurvived) && survived {
 				continue
 			}
-			var offsets []Offset
+			offsets := []Offset{}   // Changing this to a nil slice declaration changes the way
+									// dead gadgets' (empty) offset lists are displayed, which
+									// breaks test.sh because test.sh requires an exact string match.
 			for _, newAddress := range newAddresses {
 				if (!includeSurvived) && survivedAddresses[newAddress] {
 					continue
