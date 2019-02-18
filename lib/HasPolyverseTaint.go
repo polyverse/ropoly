@@ -39,22 +39,17 @@ func HasPolyverseTaint(path string) (bool, error) {
 		return false, errors.Wrapf(err, "Unable to open ELF file at path %s", path)
 	}
 	defer elfFile.Close()
-
-	comment := elfFile.Section(".comment")
-	if comment == nil {
-		log.Debugf("File %s has no comment section. Thus it is not Polyverse tainted", path)
-		return false, nil
+	
+	for _, section := range elfFile.Sections {
+		sectionData, err := section.Data()
+		if err != nil {
+			continue
+		}
+		sectionStr := string(sectionData)
+		if strings.Contains(sectionStr, constants.PolyverseSignature) {
+			return true, nil
+		}
 	}
-
-	commentData, err := comment.Data()
-	if err != nil {
-		return false, errors.Wrapf(err, "Unable to read .comment section data from ELF file at path %s", path)
-	}
-
-	commentStr := string(commentData)
-	if strings.Contains(commentStr, constants.PolyverseSignature) {
-		return true, nil
-	}
-	log.Debugf("File %s is not Polyverse tainted in the .comment section", path)
+	log.Debugf("File %s is not Polyverse tainted", path)
 	return false, nil
 }
