@@ -4,9 +4,6 @@
 
 # polyverse/ropoly
 
-## Build Instructions
-Run "go build"
-
 ## Run Instructions for Docker
 The container must be run with --privileged
 Port 8008 must be mapped to a port on the host with -p in order to interact with client.
@@ -18,8 +15,12 @@ Example (run from Ropoly directory): docker run --rm -it -v $PWD:/go/src/github.
 ### server
 Runs as a server exposing the API described under "Ropoly API Endpoints."
 
+Usage: `ropoly server`
+
 ### daemon
-Runs as a daemon that repeatedly scans the server's file system and the libraries of its running processes to check for Polyverse signatures. Use this option, "server", or both.
+Runs as a daemon that repeatedly scans the server's file system and the libraries of its running processes to check for Polyverse signatures.
+
+Usage: `ropoly daemon`
 
 ## ROPoly API Endpoints
 
