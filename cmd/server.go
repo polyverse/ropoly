@@ -43,6 +43,7 @@ var serverCmd = &cobra.Command{
 				log.Info("Setting persistent data directory to none.")
 				dataDirectory = ""
 			}
+			lib.EnsureDirectory(handlers.UploadedFilesDirectory())
 		}
 
 		log.Infof("Starting a blocking webserver at address %s", ServerAddress)
