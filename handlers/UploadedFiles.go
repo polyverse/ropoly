@@ -14,7 +14,7 @@ import (
 
 func PostFileHandler(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["path"]
-	path := UploadedFilesDirectory() + name
+	path := NormalizePath(UploadedFilesDirectory() + name)
 	i := 0
 	for ;i < len(name); i++ {
 		if path[len(path) - 1 - i] == byte('/') {
@@ -49,7 +49,7 @@ func PostFileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadedFileHandler(w http.ResponseWriter, r *http.Request) {
-	path := UploadedFilesDirectory() + getFilepath(r, "api/v1/uploadedfiles")[1:]
+	path := NormalizePath(UploadedFilesDirectory() + getFilepath(r, "api/v1/uploadedfiles")[1:])
 
 	fi, err := os.Stat(path)
 	if err != nil {

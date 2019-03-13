@@ -98,7 +98,8 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 
 func FingerprintFormatHandler(w http.ResponseWriter, r *http.Request) {
 	fingerprintName := mux.Vars(r)["fingerprint"]
-	b, err := ioutil.ReadFile(FingerprintsDirectory() + fingerprintName)
+	path := NormalizePath(FingerprintsDirectory() + fingerprintName)
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -117,7 +118,7 @@ func FingerprintFormatHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = ioutil.WriteFile(FingerprintsDirectory()+fingerprintName, b, 0666)
+	err = ioutil.WriteFile(path, b, 0666)
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -157,7 +158,7 @@ func FingerprintListingHandler(w http.ResponseWriter, r *http.Request) {
 
 func StoredFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 	fingerprint := mux.Vars(r)["fingerprint"]
-	b, err := ioutil.ReadFile(FingerprintsDirectory() + fingerprint)
+	b, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + fingerprint))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -168,7 +169,7 @@ func StoredFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 
 func PostFingerprintHandler(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["fingerprint"]
-	path := FingerprintsDirectory() + name
+	path := NormalizePath(FingerprintsDirectory() + name)
 
 	if r.FormValue("overwrite") != "true" {
 		exists, err := lib.Exists(path)
@@ -200,13 +201,13 @@ func StoredFingerprintEqiHandler(w http.ResponseWriter, r *http.Request) {
 	f2Name := r.FormValue("second")
 	eqiFunc := r.Form.Get("func")
 
-	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	f1Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f1Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	f2Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f2Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -248,13 +249,13 @@ func StoredFingerprintSurvivalHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
 
-	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	f1Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f1Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	f2Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f2Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -288,13 +289,13 @@ func StoredFingerprintKillRateHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
 
-	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	f1Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f1Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	f2Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f2Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -330,13 +331,13 @@ func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) 
 	f2Name := r.FormValue("second")
 	includeSurvived := r.FormValue("include-survived") != "false"
 
-	f1Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f1Name)
+	f1Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f1Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	f2Bytes, err := ioutil.ReadFile(FingerprintsDirectory() + f2Name)
+	f2Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f2Name))
 	if err != nil {
 		logErrors(err, nil)
 		http.Error(w, err.Error(), http.StatusNotFound)
