@@ -54,7 +54,7 @@ func getFilepath(r *http.Request, uri string) string {
 	if path == "" {
 		path = "/"
 	}
-	return path
+	return NormalizePath(path)
 }
 
 func FileHandler(w http.ResponseWriter, r *http.Request) {
