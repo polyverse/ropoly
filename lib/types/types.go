@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/pkg/errors"
+	"github.com/polyverse/masche/memaccess"
 	"strconv"
 	"strings"
 )
@@ -190,4 +191,10 @@ func abs(o Offset) Offset {
 	} else {
 		return o
 	}
+}
+
+type RegionsResult struct {
+	Span    *memaccess.MemoryRegion  `json:"span"`
+	Size    uint                     `json:"size"`
+	Regions []memaccess.MemoryRegion `json:"regions"`
 }
