@@ -3,9 +3,13 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 	"github.com/gorilla/mux"
+	"github.com/polyverse/masche/memaccess"
+	"github.com/polyverse/masche/process"
 	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/architectures/amd64"
+	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 	"io"
 	"io/ioutil"
@@ -94,6 +98,116 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 			return
 		}
 	}
+}
+
+func RegionFingerprintsHandler(w http.ResponseWriter, r *http.Request, pid int) {
+	providedName := r.Form.Get("out")
+
+	var maxLength uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
+	lenStr := r.Form.Get("len")
+	var err error
+	if lenStr != "" {
+		maxLength, err = strconv.ParseUint(lenStr, 0, 32)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	softerrors := []error{}
+	proc := process.GetProcess(int(pid))
+
+	createdFingerprints := []string{}
+
+	pc := uintptr(0)
+	for {
+		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(proc, uintptr(pc), memaccess.Readable+memaccess.Executable)
+		softerrors = append(softerrors, softerrors2...)
+		if harderror2 != nil {
+			logErrors(harderror2, softerrors)
+			err := errors.Wrapf(harderror2, "Error when attempting to access the next memory region for Pid %d.", pid)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if region == memaccess.NoRegionAvailable {
+			break
+		}
+
+		//Make sure we move the Program Counter
+		pc = region.Address + uintptr(region.Size)
+
+		opcodes := make([]byte, region.Size, region.Size)
+		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
+		softerrors = append(softerrors, softerrors3...)
+		if harderr3 != nil {
+			softerrors = append(softerrors, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid))
+		}
+
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(region.Address), int(maxLength))
+		softerrors = append(softerrors, softerrors4...)
+		if harderr4 != nil {
+			logErrors(harderr4, softerrors)
+			err := errors.Wrapf(harderr4, "Error when attempting to decode gadgets from the memory region %s for Pid %d.", region.String(), pid)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fingerprintName := providedName +  "__0x" + strconv.FormatUint(uint64(region.Address), 16) +
+			"__to__0x" + strconv.FormatUint(uint64(region.Address) + uint64(region.Size), 16)
+		fingerprint, harderr5 := types.FingerprintFromGadgets(foundgadgets)
+		if harderr5 != nil {
+			logErrors(harderr5, softerrors)
+			err := errors.Wrapf(harderr5, "Error creating fingerprint gadget mapping")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		b, err := json.MarshalIndent(fingerprint, "", indent)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if DataDirectory == "" {
+			err := errors.New("Requested to save file, but persistent data directory not set.")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logErrors(err, nil)
+			return
+		}
+
+		filepath := FingerprintsDirectory() + fingerprintName
+
+		if r.Form.Get("overwrite") != "true" {
+			exists, err := lib.Exists(filepath)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				logErrors(err, nil)
+				return
+			}
+			if exists {
+				b := []byte("File already exists. Use \"overwrite=true\" to overwrite.")
+				w.Write(b)
+				return
+			}
+		}
+
+		err = ioutil.WriteFile(filepath, b, 0666)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logErrors(err, nil)
+			return
+		}
+
+		createdFingerprints = append(createdFingerprints, fingerprintName + " (" + region.Kind + ")")
+	}
+
+	b1 := []byte("Created fingerprints:\n")
+	b2, err := json.MarshalIndent(createdFingerprints, "", indent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(append(b1, b2...))
 }
 
 func FingerprintFormatHandler(w http.ResponseWriter, r *http.Request) {
