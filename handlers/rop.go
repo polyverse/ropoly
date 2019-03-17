@@ -107,6 +107,8 @@ func PidHandler(w http.ResponseWriter, r *http.Request) {
 		PidGadgetSearchHandler(w, r, int(pid))
 	case "regions":
 		ROPMemoryRegionsHandler(w, r)
+	case "region-fingerprints":
+		RegionFingerprintsHandler(w, r, int(pid))
 	default:
 		PolyverseTaintedPidHandler(w, r, int(pid))
 	}
