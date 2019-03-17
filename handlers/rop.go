@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/ropoly/lib"
 	"github.com/polyverse/ropoly/lib/types"
 	log "github.com/sirupsen/logrus"
@@ -104,6 +105,8 @@ func PidHandler(w http.ResponseWriter, r *http.Request) {
 		FingerprintForPidHandler(w, r, int(pid))
 	case "search":
 		PidGadgetSearchHandler(w, r, int(pid))
+	case "regions":
+		ROPMemoryRegionsHandler(w, r)
 	default:
 		PolyverseTaintedPidHandler(w, r, int(pid))
 	}
@@ -373,3 +376,62 @@ func PidGadgetSearchHandler(w http.ResponseWriter, r *http.Request, pid int) {
 
 	http.Error(w, "This functionality is not yet implemented.", http.StatusNotImplemented)
 }
+
+func ROPMemoryRegionsHandler(w http.ResponseWriter, r *http.Request) {
+	var pidSelf = uint64(os.Getpid())
+	var err error
+
+	pidN := pidSelf
+	pid := mux.Vars(r)["pid"]
+	if (pid != "") && (pid != "0") {
+		pidN, err = strconv.ParseUint(pid, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} // if
+	} // if
+
+	var access memaccess.Access = memaccess.None
+
+	accessS := strings.ToUpper(r.FormValue("access"))
+	if accessS == "NONE" {
+		access = memaccess.None
+	} else if accessS == "" {
+		access = memaccess.Readable
+	} else {
+		if i := strings.Index(accessS, "R"); i != -1 {
+			access |= memaccess.Readable
+			accessS = strings.Replace(accessS, "R", "", 1)
+		} // if
+		if i := strings.Index(accessS, "W"); i != -1 {
+			access |= memaccess.Writable
+			accessS = strings.Replace(accessS, "W", "", 1)
+		} // if
+		if i := strings.Index(accessS, "X"); i != -1 {
+			access |= memaccess.Executable
+			accessS = strings.Replace(accessS, "X", "", 1)
+		} // if
+		if i := strings.Index(accessS, "F"); i != -1 {
+			access |= memaccess.Free
+			accessS = strings.Replace(accessS, "F", "", 1)
+		} // if
+		if accessS != "" {
+			http.Error(w, "Improper Access specification.", http.StatusBadRequest)
+			return
+		} // if
+	} // else
+
+	regionsResult, harderror, softerrors := lib.ROPMemoryRegions(int(pidN), access)
+	logErrors(harderror, softerrors)
+	if harderror != nil {
+		http.Error(w, harderror.Error(), http.StatusBadRequest)
+		return
+	} // if
+
+	b, err := json.MarshalIndent(&regionsResult, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} // if
+	w.Write(b)
+} // ROPMemoryRegionsHandler()
