@@ -198,7 +198,7 @@ func RegionFingerprintsHandler(w http.ResponseWriter, r *http.Request, pid int) 
 			return
 		}
 
-		createdFingerprints = append(createdFingerprints, fingerprintName)
+		createdFingerprints = append(createdFingerprints, fingerprintName + " (" + region.Kind + ")")
 	}
 
 	b1 := []byte("Created fingerprints:\n")
