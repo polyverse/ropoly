@@ -1,9 +1,3 @@
-FROM scratch
+FROM golang:1.11
 
-WORKDIR /
-
-COPY ./ropoly /
-
-EXPOSE 8008
-
-ENTRYPOINT ["/ropoly"]
+RUN apt update -y && apt upgrade -y && apt install -y mingw-w64
