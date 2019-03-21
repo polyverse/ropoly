@@ -32,9 +32,8 @@ EnumProcessModulesResponse *getModules(process_handle_t process_handle) {
         size *= 2;
         aMods = realloc(aMods, size);
 
-        BOOL success = EnumProcessModulesEx(hProcess, aMods,
-                                            size, &cbNeeded,
-                                            LIST_MODULES_ALL);
+        BOOL success = EnumProcessModules(hProcess, aMods, size, &cbNeeded);
+
         if (!success) {
             res->error = GetLastError();
             free(aMods);
