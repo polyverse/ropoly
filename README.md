@@ -71,7 +71,7 @@ Disassemble adjacent instructions between addresses _start_ and _end_.
 Find all gadgets up to _instructions_ instructions.
 
 ### fingerprint
-Generate a fingerprint based on all gadgets up to _instructions_ instructions. If _out_ is set to a name, saves under that name. Otherwise, outputs to client. Will fail if fingerprint with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
+Generate a fingerprint based on all gadgets up to _instructions_ instructions between addresses _start_ and _end_. The fingerprint's base address is set to _base_. If _out_ is set to a name, saves under that name. Otherwise, outputs to client. Will fail if fingerprint with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint.
 
 ## EQI options
 

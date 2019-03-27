@@ -37,6 +37,36 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		} // if
 	} // else if
 
+	var start uint64 = defaultStart
+	startStr := r.Form.Get("start")
+	if startStr != "" {
+		start, err = strconv.ParseUint(startStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	var end uint64 = defaultEnd
+	endStr := r.Form.Get("end")
+	if endStr != "" {
+		end, err = strconv.ParseUint(endStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	var base uint64 = defaultStart
+	baseStr := r.Form.Get("base")
+	if baseStr != "" {
+		base, err = strconv.ParseUint(baseStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
 	outputFile := r.Form.Get("out")
 
 	var gadgets types.GadgetInstances
@@ -44,7 +74,8 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 	if isFile {
 		gadgets, err, softerrors = lib.GadgetsFromFile(path, int(gadgetLen))
 	} else {
-		gadgets, err, softerrors = lib.GadgetsFromProcess(pid, int(gadgetLen))
+		gadgets, err, softerrors = lib.GadgetsFromProcess(pid, int(gadgetLen),
+			types.Addr(start), types.Addr(end), types.Addr(base))
 	}
 	if err != nil {
 		logErrors(err, softerrors)

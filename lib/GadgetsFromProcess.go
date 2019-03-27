@@ -9,14 +9,18 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func GadgetsFromProcess(pid int, maxLength int) (types.GadgetInstances, error, []error) {
+func GadgetsFromProcess(pid int, maxLength int, start, end, base types.Addr) (types.GadgetInstances, error, []error) {
 	softerrors := []error{}
 	proc := process.GetProcess(pid)
 
 	allGadgets := []*types.GadgetInstance{}
 
-	pc := uintptr(0)
+	pc := uintptr(start)
 	for {
+		if pc >= (uintptr(end)) {
+			break
+		}
+
 		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(proc, uintptr(pc), memaccess.Readable+memaccess.Executable)
 		softerrors = append(softerrors, softerrors2...)
 		if harderror2 != nil {
@@ -27,22 +31,29 @@ func GadgetsFromProcess(pid int, maxLength int) (types.GadgetInstances, error, [
 			break
 		}
 
-		//Make sure we move the Program Counter
-		pc = region.Address + uintptr(region.Size)
-
-		opcodes := make([]byte, region.Size, region.Size)
-		harderr3, softerrors3 := memaccess.CopyMemory(proc, region.Address, opcodes)
+		size := region.Size
+		if uintptr(end) - pc < uintptr(size) {
+			size = uint(uintptr(end) - pc)
+		}
+		opcodes := make([]byte, size, size)
+		harderr3, softerrors3 := memaccess.CopyMemory(proc, pc, opcodes)
 		softerrors = append(softerrors, softerrors3...)
 		if harderr3 != nil {
 			softerrors = append(softerrors, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid))
 		}
 
-		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(region.Address), maxLength)
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(pc), maxLength)
+		for _, gadget := range foundgadgets {
+			gadget.Address -= base
+		}
 		softerrors = append(softerrors, softerrors4...)
 		if harderr4 != nil {
 			return nil, errors.Wrapf(harderr4, "Error when attempting to decode gadgets from the memory region %s for Pid %d.", region.String(), pid), softerrors
 		}
 		allGadgets = append(allGadgets, foundgadgets...)
+
+		//Make sure we move the Program Counter
+		pc = region.Address + uintptr(region.Size)
 	}
 
 	return allGadgets, nil, softerrors

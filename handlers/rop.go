@@ -322,8 +322,9 @@ func getPid(r *http.Request) (uint64, error) {
 }
 
 func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
-	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
 	var err error
+
+	var gadgetLen uint64 = 2 // Gadgets longer than 2 instructions must be requested explicitly
 	lenStr := r.Form.Get("len")
 	if lenStr != "" {
 		gadgetLen, err = strconv.ParseUint(lenStr, 0, 32)
@@ -333,7 +334,38 @@ func GadgetsFromPidHandler(w http.ResponseWriter, r *http.Request, pid int) {
 		} // if
 	} // else if
 
-	gadgets, harderror, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen))
+	var start uint64 = defaultStart
+	startStr := r.Form.Get("start")
+	if startStr != "" {
+		start, err = strconv.ParseUint(startStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	var end uint64 = defaultEnd
+	endStr := r.Form.Get("end")
+	if endStr != "" {
+		end, err = strconv.ParseUint(endStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	var base uint64 = defaultStart
+	baseStr := r.Form.Get("base")
+	if baseStr != "" {
+		base, err = strconv.ParseUint(baseStr, 0, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} // if
+	} // else if
+
+	gadgets, harderror, softerrors := lib.GadgetsFromProcess(pid, int(gadgetLen),
+		types.Addr(start), types.Addr(end), types.Addr(base))
 	logErrors(harderror, softerrors)
 	if err != nil {
 		logErrors(err, softerrors)
