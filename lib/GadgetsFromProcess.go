@@ -15,12 +15,8 @@ func GadgetsFromProcess(pid int, maxLength int, start, end, base types.Addr) (ty
 
 	allGadgets := []*types.GadgetInstance{}
 
-	pc := uintptr(start)
+	pc := uintptr(0)
 	for {
-		if pc >= (uintptr(end)) {
-			break
-		}
-
 		region, harderror2, softerrors2 := memaccess.NextMemoryRegionAccess(proc, uintptr(pc), memaccess.Readable+memaccess.Executable)
 		softerrors = append(softerrors, softerrors2...)
 		if harderror2 != nil {
@@ -31,29 +27,43 @@ func GadgetsFromProcess(pid int, maxLength int, start, end, base types.Addr) (ty
 			break
 		}
 
-		size := region.Size
-		if uintptr(end) - pc < uintptr(size) {
-			size = uint(uintptr(end) - pc)
+		//Make sure we move the Program Counter
+		pc = region.Address + uintptr(region.Size)
+
+		var disasmStart types.Addr
+		var disasmEnd types.Addr
+		if end <= types.Addr(region.Address) {
+			break
+		} else if end < types.Addr(pc) {
+			disasmEnd = end
+		} else {
+			disasmEnd = types.Addr(pc)
 		}
-		opcodes := make([]byte, size, size)
-		harderr3, softerrors3 := memaccess.CopyMemory(proc, pc, opcodes)
+		if start <= types.Addr(region.Address) {
+			disasmStart = types.Addr(region.Address)
+		} else if start < types.Addr(pc) {
+			disasmStart = start
+		} else {
+			continue
+		}
+
+		opcodes := make([]byte, disasmEnd - disasmStart, disasmEnd - disasmStart)
+		harderr3, softerrors3 := memaccess.CopyMemory(proc, uintptr(disasmStart), opcodes)
 		softerrors = append(softerrors, softerrors3...)
 		if harderr3 != nil {
 			softerrors = append(softerrors, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid))
 		}
 
-		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(pc), maxLength)
-		for _, gadget := range foundgadgets {
-			gadget.Address -= base
-		}
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, disasmStart, maxLength)
+
 		softerrors = append(softerrors, softerrors4...)
 		if harderr4 != nil {
 			return nil, errors.Wrapf(harderr4, "Error when attempting to decode gadgets from the memory region %s for Pid %d.", region.String(), pid), softerrors
 		}
+		for _, gadget := range foundgadgets {
+			gadget.Address -= base
+		}
 		allGadgets = append(allGadgets, foundgadgets...)
-
-		//Make sure we move the Program Counter
-		pc = region.Address + uintptr(region.Size)
 	}
 
 	return allGadgets, nil, softerrors
