@@ -1,10 +1,9 @@
 #!/bin/bash
 
 set -e
-set -x
 
 # exit without doing anything if this is a travis pull request
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ ! -z "$TRAVIS_PULL_REQUEST" ]; then
 	exit 0
 fi
 
@@ -20,14 +19,17 @@ if [ -z "$GIT_COMMIT" ]; then
 	exit 1
 fi
 
-tar -cvf ropoly-$GIT_COMMIT.tar ropoly ropoly32.exe
+GIT_SHORTSHA="${GIT_COMMIT:0:7}"
+
+tar -cvf ropoly-$GIT_SHORTSHA.tar ropoly ropoly32.exe
 
 # Publish the tarball on S3:
-aws s3 cp ropoly-$GIT_COMMIT.tar s3://$PV_S3_BUCKET/public/ropoly-${GIT_COMMIT}.tar
+aws s3 cp ropoly-$GIT_SHORTSHA.tar s3://$PV_S3_BUCKET/public/ropoly-${GIT_SHORTSHA}.tar
 if [ $? -ne 0 ]; then
 	echo "Error: aws s3 cp command returned non-zero."
 	exit 1
 fi
+
 
 echo
 echo "Install command:"
