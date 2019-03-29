@@ -20,13 +20,19 @@ if [ -z "$GIT_COMMIT" ]; then
 	exit 1
 fi
 
-tar -zcvf ropoly-$GIT_COMMIT.tar.gz ropoly ropoly32.exe
+tar -cvf ropoly-$GIT_COMMIT.tar ropoly ropoly32.exe
 
 # Publish the tarball on S3:
-aws s3 cp ropoly-$GIT_COMMIT.tar.gz s3://$PV_S3_BUCKET/public/ropoly-${GIT_COMMIT}.tar.gz
+aws s3 cp ropoly-$GIT_COMMIT.tar s3://$PV_S3_BUCKET/public/ropoly-${GIT_COMMIT}.tar
 if [ $? -ne 0 ]; then
 	echo "Error: aws s3 cp command returned non-zero."
 	exit 1
 fi
+
+echo
+echo "Install command:"
+echo
+echo "  curl https://dl.polyverse.io/ropoly-$GIT_SHORTSHA.tar | tar -xvf - -C /c/"
+echo
 
 exit 0
