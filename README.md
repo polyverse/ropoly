@@ -1,6 +1,6 @@
 # Current Status
 
-[![CircleCI](https://circleci.com/gh/polyverse/ropoly.svg?style=svg)](https://circleci.com/gh/polyverse/ropoly)
+[![Build Status](https://travis-ci.com/polyverse/ropoly.svg?branch=master)](https://travis-ci.com/polyverse/ropoly)
 
 # polyverse/ropoly
 
