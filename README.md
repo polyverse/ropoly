@@ -27,7 +27,7 @@ Usage: `ropoly daemon`
 ### /api/v1/pids
 Return list of all visible process ids and information about each process.
 
-### /api/v1/pid/\<_pid_\>[?query=\<taints|disasm|gadgets|fingerprint>]
+### /api/v1/pids/\<_pid_\>[?query=\<taints|disasm|gadgets|fingerprint>]
 Return information about the memory of the given _pid_ according to the option provided in _mode_. _taints_ by default.
 
 ### /api/v1/files/\<_path_\>[?query=\<taints|disasm|gadgets|fingerprint>]
