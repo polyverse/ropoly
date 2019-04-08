@@ -6,9 +6,18 @@
 
 ## Run Instructions for Docker
 The container must be run with --privileged
+
 Port 8008 must be mapped to a port on the host with -p in order to interact with client.
+
 The Ropoly directory must be mounted so that it can be accessed from within the container.
-Example (run from Ropoly directory): docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly -p 8008:8008 golang bash
+
+Example (run from Ropoly directory; this will allow you to build and run Ropoly for Linux): docker run --rm -it -v $PWD:/go/src/github.com/polyverse/ropoly -p 8008:8008 golang bash
+
+Once in the container, navigate to the Ropoly directory and use "go build" to build Ropoly.
+
+After building Ropoly, use "./ropoly server" to start Ropoly as a server.
+
+Please see docs/Process.md for help getting started.
 
 ## Command Line Options
 
