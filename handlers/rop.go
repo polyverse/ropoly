@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/ropoly/lib"
+	"github.com/polyverse/ropoly/lib/architectures"
 	"github.com/polyverse/ropoly/lib/types"
 	log "github.com/sirupsen/logrus"
 )
@@ -186,7 +187,13 @@ func GadgetsFromFileHandler(w http.ResponseWriter, r *http.Request, path string)
 		} // if
 	} // if
 
-	gadgets, harderror, softerrors := lib.GadgetsFromFile(path, int(gadgetLen))
+	var architecture architectures.Architecture = architectures.X86
+	architectureStr := r.Form.Get("architecture")
+	if architectureStr != "" {
+		architecture = architectures.ArchitecturesByName[architectureStr]
+	} // if
+
+	gadgets, harderror, softerrors := lib.GadgetsFromFile(path, int(gadgetLen), architecture)
 	logErrors(harderror, softerrors)
 	if harderror != nil {
 		http.Error(w, harderror.Error(), http.StatusInternalServerError)
