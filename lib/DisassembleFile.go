@@ -5,7 +5,7 @@ import (
 )
 
 func DisassembleFile(path string, start types.Addr, end types.Addr) ([]*types.InstructionInstance, error, []error) {
-	b, err := openBinary(path)
+	b, _, err := openBinary(path)
 	if err != nil {
 		return nil, err, nil
 	}

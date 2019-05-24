@@ -8,7 +8,7 @@ import (
 	"github.com/polyverse/masche/memaccess"
 	"github.com/polyverse/masche/process"
 	"github.com/polyverse/ropoly/lib"
-	"github.com/polyverse/ropoly/lib/architectures/amd64"
+	"github.com/polyverse/ropoly/lib/architectures"
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 	"io"
@@ -145,6 +145,12 @@ func RegionFingerprintsHandler(w http.ResponseWriter, r *http.Request, pid int) 
 		} // if
 	} // else if
 
+	var architecture architectures.Architecture = architectures.X86
+	architectureStr := r.Form.Get("architecture")
+	if architectureStr != "" {
+		architecture = architectures.ArchitecturesByName[architectureStr]
+	} // if
+
 	softerrors := []error{}
 	proc := process.GetProcess(int(pid))
 
@@ -175,7 +181,7 @@ func RegionFingerprintsHandler(w http.ResponseWriter, r *http.Request, pid int) 
 			softerrors = append(softerrors, errors.Wrapf(harderr3, "Error when attempting to access the memory contents for Pid %d.", pid))
 		}
 
-		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, amd64.GadgetSpecs, amd64.GadgetDecoder, types.Addr(region.Address), int(maxLength))
+		foundgadgets, harderr4, softerrors4 := gadgets.Find(opcodes, architectures.GadgetSpecLists[architecture], architectures.GadgetDecoderFuncs[architecture], types.Addr(region.Address), int(maxLength))
 		softerrors = append(softerrors, softerrors4...)
 		if harderr4 != nil {
 			logErrors(harderr4, softerrors)

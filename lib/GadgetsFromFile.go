@@ -4,14 +4,14 @@ import (
 	"debug/elf"
 	"debug/pe"
 	"github.com/pkg/errors"
-	"github.com/polyverse/ropoly/lib/architectures/amd64"
+	"github.com/polyverse/ropoly/lib/architectures"
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 	"sort"
 )
 
 func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, []error) {
-	b, err := openBinary(path)
+	b, architecture, err := openBinary(path)
 	if err != nil {
 		return nil, err, nil
 	}
@@ -25,7 +25,7 @@ func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, 
 		if err != nil {
 			return nil, err, nil
 		}
-		gadgetinstances, harderr, segment_softerrs := gadgets.Find(progData, amd64.GadgetSpecs, amd64.GadgetDecoder, addr, maxLength)
+		gadgetinstances, harderr, segment_softerrs := gadgets.Find(progData, architectures.GadgetSpecLists[architecture], architectures.GadgetDecoderFuncs[architecture], addr, maxLength)
 		softerrs = append(softerrs, segment_softerrs...)
 		if harderr != nil {
 			return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
@@ -42,7 +42,7 @@ type binary interface {
 	nextSectionData() (bool, types.Addr, []byte, error)
 }
 
-func openBinary(path string) (binary, error) {
+func openBinary(path string) (binary, architectures.Architecture, error) {
 	elfFile, err := elf.Open(path)
 	if err == nil {
 		ret := elfBinary {
@@ -50,7 +50,7 @@ func openBinary(path string) (binary, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(elfSections(ret.binary.Sections))
-		return ret, nil
+		return ret, architectures.ArchitecturesByElfMachine[ret.binary.FileHeader.Machine], nil
 	}
 
 	peFile, err := pe.Open(path)
@@ -60,10 +60,10 @@ func openBinary(path string) (binary, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(peSections(ret.binary.Sections))
-		return ret, nil
+		return ret, architectures.ArchitecturesByPeMachine[ret.binary.FileHeader.Machine], nil
 	}
 
-	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
+	return nil, 0, errors.Wrapf(err, "Out of binary types for %s", path)
 }
 
 type elfBinary struct {
