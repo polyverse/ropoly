@@ -10,8 +10,8 @@ import (
 	"sort"
 )
 
-func GadgetsFromFile(path string, maxLength int, architecture architectures.Architecture) (types.GadgetInstances, error, []error) {
-	b, err := openBinary(path)
+func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, []error) {
+	b, architecture, err := openBinary(path)
 	if err != nil {
 		return nil, err, nil
 	}
@@ -42,7 +42,7 @@ type binary interface {
 	nextSectionData() (bool, types.Addr, []byte, error)
 }
 
-func openBinary(path string) (binary, error) {
+func openBinary(path string) (binary, architectures.Architecture, error) {
 	elfFile, err := elf.Open(path)
 	if err == nil {
 		ret := elfBinary {
@@ -50,7 +50,7 @@ func openBinary(path string) (binary, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(elfSections(ret.binary.Sections))
-		return ret, nil
+		return ret, architectures.ArchitecturesByElfMachine[ret.binary.FileHeader.Machine], nil
 	}
 
 	peFile, err := pe.Open(path)
@@ -60,10 +60,10 @@ func openBinary(path string) (binary, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(peSections(ret.binary.Sections))
-		return ret, nil
+		return ret, architectures.ArchitecturesByPeMachine[ret.binary.FileHeader.Machine], nil
 	}
 
-	return nil, errors.Wrapf(err, "Out of binary types for %s", path)
+	return nil, 0, errors.Wrapf(err, "Out of binary types for %s", path)
 }
 
 type elfBinary struct {

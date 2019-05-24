@@ -67,18 +67,12 @@ func fingerprintHandler(w http.ResponseWriter, r *http.Request, isFile bool, pid
 		} // if
 	} // else if
 
-	var architecture architectures.Architecture = architectures.X86
-	architectureStr := r.Form.Get("architecture")
-	if architectureStr != "" {
-		architecture = architectures.ArchitecturesByName[architectureStr]
-	} // if
-
 	outputFile := r.Form.Get("out")
 
 	var gadgets types.GadgetInstances
 	var softerrors []error
 	if isFile {
-		gadgets, err, softerrors = lib.GadgetsFromFile(path, int(gadgetLen), architecture)
+		gadgets, err, softerrors = lib.GadgetsFromFile(path, int(gadgetLen))
 	} else {
 		gadgets, err, softerrors = lib.GadgetsFromProcess(pid, int(gadgetLen),
 			types.Addr(start), types.Addr(end), types.Addr(base))
