@@ -25,7 +25,7 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 					// Get the probable gadget at alignment
 					start := types.Addr(match.Index) - (types.Addr(i) * gadSpec.Align)
 					end := types.Addr(match.Index) + types.Addr(gadSpec.Size)
-					if start >= end || end >= types.Addr(len(opcodes)) {
+					if start >= end || end >= offset + types.Addr(len(opcodes)) {
 						continue
 					}
 					opcode := opcodes[start:end]
