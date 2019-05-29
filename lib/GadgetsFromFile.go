@@ -8,6 +8,7 @@ import (
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 	"sort"
+	"strconv"
 )
 
 func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, []error) {
@@ -15,7 +16,6 @@ func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, 
 	if err != nil {
 		return nil, err, nil
 	}
-	/*DEBUG*/ println("architecture", architecture)
 	defer b.close()
 
 	allGadgets := []*types.GadgetInstance{}
@@ -50,9 +50,13 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 			binary: elfFile,
 			sectionIndex: new(int),
 		}
+		machine := ret.binary.FileHeader.Machine
+		architecture, ok := architectures.ArchitecturesByElfMachine[machine]
+		if !ok {
+			return nil, 0, errors.New("Cannot recognize ELF machine " + strconv.FormatUint(uint64(machine), 16))
+		}
 		sort.Sort(elfSections(ret.binary.Sections))
-		/*DEBUG*/ println("machine:", ret.binary.FileHeader.Machine)
-		return ret, architectures.ArchitecturesByElfMachine[ret.binary.FileHeader.Machine], nil
+		return ret, architecture, nil
 	}
 
 	peFile, err := pe.Open(path)
@@ -61,9 +65,13 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 			binary: peFile,
 			sectionIndex: new(int),
 		}
+		machine := ret.binary.FileHeader.Machine
+		architecture, ok := architectures.ArchitecturesByPeMachine[machine]
+		if !ok {
+			return nil, 0, errors.New("Cannot recognize PE machine " + strconv.FormatUint(uint64(machine), 16))
+		}
 		sort.Sort(peSections(ret.binary.Sections))
-		/*DEBUG*/ println("machine:", ret.binary.FileHeader.Machine)
-		return ret, architectures.ArchitecturesByPeMachine[ret.binary.FileHeader.Machine], nil
+		return ret, architecture, nil
 	}
 
 	return nil, 0, errors.Wrapf(err, "Out of binary types for %s", path)
