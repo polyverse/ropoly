@@ -477,6 +477,70 @@ func StoredFingerprintKillRateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func StoredFingerprintHighestOffsetCountHandler(w http.ResponseWriter, r *http.Request) {
+	f1Name := mux.Vars(r)["fingerprint"]
+	f2Name := r.FormValue("second")
+
+	f1Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f1Name))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	f2Bytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + f2Name))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	var f1 types.Fingerprint
+	err = json.Unmarshal(f1Bytes, &f1)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var f2 types.Fingerprint
+	err = json.Unmarshal(f2Bytes, &f2)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	original := lib.GadgetCount(f1)
+	highestOffsetCount := lib.HighestOffsetCount(f1, f2)
+
+	outStr := strconv.FormatUint(uint64(highestOffsetCount), 10) + " out of " + strconv.FormatUint(uint64(original), 10)
+	b := []byte(outStr)
+	w.Write(b)
+}
+
+func StoredFingerprintGadgetCountHandler(w http.ResponseWriter, r *http.Request) {
+	fName := mux.Vars(r)["fingerprint"]
+
+	fBytes, err := ioutil.ReadFile(NormalizePath(FingerprintsDirectory() + fName))
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	var f types.Fingerprint
+	err = json.Unmarshal(fBytes, &f)
+	if err != nil {
+		logErrors(err, nil)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	count := lib.GadgetCount(f)
+	outStr := strconv.FormatUint(uint64(count), 10)
+	b := []byte(outStr)
+	w.Write(b)
+}
+
 func StoredFingerprintComparisonHandler(w http.ResponseWriter, r *http.Request) {
 	f1Name := mux.Vars(r)["fingerprint"]
 	f2Name := r.FormValue("second")
