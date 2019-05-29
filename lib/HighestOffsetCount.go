@@ -4,7 +4,7 @@ import (
 	"github.com/polyverse/ropoly/lib/types"
 )
 
-func HighestOffsetCount(f1, f2 types.Fingerprint) int {
+func HighestOffsetCount(f1, f2 types.Fingerprint) (int, types.Offset) {
 	offsetCounts := map[types.Offset]int{}
 	count := 0
 	for gadget, oldAddresses := range f1 {
@@ -18,11 +18,13 @@ func HighestOffsetCount(f1, f2 types.Fingerprint) int {
 		}
 	}
 
+	var maxOffset types.Offset
 	maxOffsetCount := 0
-	for _, offsetCount := range offsetCounts {
+	for offset, offsetCount := range offsetCounts {
 		if offsetCount > maxOffsetCount {
+			maxOffset = offset
 			maxOffsetCount = offsetCount
 		}
 	}
-	return maxOffsetCount
+	return maxOffsetCount, maxOffset
 }
