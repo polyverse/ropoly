@@ -23,6 +23,7 @@ var ArchitecturesByName = map[string]Architecture {
 var ArchitecturesByPeMachine = map[uint16]Architecture {
 	pe.IMAGE_FILE_MACHINE_AMD64: X86,
 	pe.IMAGE_FILE_MACHINE_ARM: ARM,
+	pe.IMAGE_FILE_MACHINE_I386: X86,
 }
 
 var ArchitecturesByElfMachine = map[elf.Machine]Architecture {

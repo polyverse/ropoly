@@ -15,6 +15,7 @@ func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, 
 	if err != nil {
 		return nil, err, nil
 	}
+	/*DEBUG*/ println("architecture", architecture)
 	defer b.close()
 
 	allGadgets := []*types.GadgetInstance{}
@@ -50,6 +51,7 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(elfSections(ret.binary.Sections))
+		/*DEBUG*/ println("machine:", ret.binary.FileHeader.Machine)
 		return ret, architectures.ArchitecturesByElfMachine[ret.binary.FileHeader.Machine], nil
 	}
 
@@ -60,6 +62,7 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 			sectionIndex: new(int),
 		}
 		sort.Sort(peSections(ret.binary.Sections))
+		/*DEBUG*/ println("machine:", ret.binary.FileHeader.Machine)
 		return ret, architectures.ArchitecturesByPeMachine[ret.binary.FileHeader.Machine], nil
 	}
 
