@@ -511,8 +511,11 @@ func StoredFingerprintHighestOffsetCountHandler(w http.ResponseWriter, r *http.R
 
 	original := lib.GadgetCount(f1)
 	highestOffsetCount, highestOffset := lib.HighestOffsetCount(f1, f2)
+	pseudoKillrate := float64(1) - (float64(highestOffsetCount) / float64(original))
 
-	outStr := strconv.FormatUint(uint64(highestOffsetCount), 10) + " out of " + strconv.FormatUint(uint64(original), 10) + " at offset 0x" + strconv.FormatInt(int64(highestOffset), 16)
+	outStr := strconv.FormatUint(uint64(highestOffsetCount), 10) + " out of " +
+		strconv.FormatUint(uint64(original), 10) + " at offset 0x" + strconv.FormatInt(int64(highestOffset), 16) +
+		" (\"killrate\": " + strconv.FormatFloat(pseudoKillrate, 'G', 6, 64) + ")"
 	b := []byte(outStr)
 	w.Write(b)
 }
