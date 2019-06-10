@@ -5,6 +5,7 @@ import (
 	"debug/pe"
 	"github.com/pkg/errors"
 	"github.com/polyverse/ropoly/lib/architectures"
+	"github.com/polyverse/ropoly/lib/architectures/thumb"
 	"github.com/polyverse/ropoly/lib/gadgets"
 	"github.com/polyverse/ropoly/lib/types"
 	"sort"
@@ -26,12 +27,20 @@ func GadgetsFromFile(path string, maxLength int) (types.GadgetInstances, error, 
 		if err != nil {
 			return nil, err, nil
 		}
-		gadgetinstances, harderr, segment_softerrs := gadgets.Find(progData, architectures.GadgetSpecLists[architecture], architectures.GadgetDecoderFuncs[architecture], addr, maxLength)
-		softerrs = append(softerrs, segment_softerrs...)
+		gadgetinstances, harderr, segmentSofterrs := gadgets.Find(progData, architectures.GadgetSpecLists[architecture], architectures.GadgetDecoderFuncs[architecture], addr, maxLength)
+		softerrs = append(softerrs, segmentSofterrs...)
 		if harderr != nil {
 			return nil, errors.Wrapf(err, "Unable to find gadgets from Program segment in the ELF file."), softerrs
 		}
 		allGadgets = append(allGadgets, gadgetinstances...)
+		if architecture == architectures.ARM {
+			gadgetinstances, harderr, segmentSofterrs := gadgets.Find(progData, thumb.GadgetSpecs, thumb.GadgetDecoder, addr, maxLength)
+			softerrs = append(softerrs, segmentSofterrs...)
+			if harderr != nil {
+				return nil, errors.Wrapf(err, "Unable to find thumb gadgets"), softerrs
+			}
+			allGadgets = append(allGadgets, gadgetinstances...)
+		}
 		sectionExists, addr, progData, err = b.nextSectionData()
 	}
 
