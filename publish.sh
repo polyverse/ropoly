@@ -15,16 +15,16 @@ main() {
 }
 
 publishTarball() {
-	aws s3 cp shadow.tar s3://polyverse-artifacts/ropoly/ropoly0
+	aws s3 cp ropoly0 s3://polyverse-artifacts/ropoly/ropoly0
         [ $? -ne 0 ] && return 1
 
-	aws s3 cp shadow.tar s3://polyverse-artifacts/ropoly/ropoly0-${GIT_COMMIT}
+	aws s3 cp ropoly0 s3://polyverse-artifacts/ropoly/ropoly0-${GIT_COMMIT}
         [ $? -ne 0 ] && return 1
 
-	aws s3 cp shadow.tar s3://polyverse-artifacts/ropoly/ropoly0.exe
+	aws s3 cp ropoly0.exe s3://polyverse-artifacts/ropoly/ropoly0.exe
         [ $? -ne 0 ] && return 1
 
-	aws s3 cp shadow.tar s3://polyverse-artifacts/ropoly/ropoly0.exe-${GIT_COMMIT}
+	aws s3 cp ropoly0.exe  s3://polyverse-artifacts/ropoly/ropoly0.exe-${GIT_COMMIT}
         [ $? -ne 0 ] && return 1
 
 	return 0
