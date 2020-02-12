@@ -3,7 +3,12 @@ dist: xenial
 before_install:
 - sudo apt update -y
 - sudo apt install -y awscli
+install:
+- mkdir -p ~/.local/lib && mkdir -p ~/.local/bin
+- git clone https://$PV_OAUTH_TOKEN@github.com/polyverse-security/pv ~/.local/lib/pv
+- ln -s ~/.local/lib/pv/pv ~/.local/bin/pv
 script:
+- pv aws ecr-login
 - "./build.sh || travis_terminate 1;"
 - "./test.sh || travis_terminate 1;"
 - "./publish.sh || travis_terminate 1;"
