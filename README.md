@@ -46,6 +46,8 @@ Return information about the files and directories in the given directory on the
 Post files to this endpoint to add them to a directory for uploaded files. Fails if a file with the given name already exists, unless _overwrite_ is set to true, in which case it will overwrite the old fingerprint. If you put slashes in _path_, the needed directories will be recursively created.
 Get returns information about the files in the directory for uploaded files or a specified subdirectory. Behavior is identical to /api/v1/files/_path/to/uploaded/file/directory_.
 
+To post a file, use `curl -X POST -F "file=@<path/to/myfilename>" localhost:8008/api/v1/uploadedfiles/myfilename`.
+
 ### /api/v1/fingerprints
 Return the list of fingerprints stored on the server.
 
