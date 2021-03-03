@@ -6,6 +6,7 @@ import (
 )
 
 func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.GadgetDecoderFunc, offset types.Addr, depth int) (types.GadgetInstances, error, []error) {
+	vaddrsToGadgetIDs := make(map[types.Addr]map[int]types.GadgetId)
 	gadInstances := types.GadgetInstances{}
 	if depth <= 0 {
 		depth = 2
@@ -49,11 +50,22 @@ func Find(opcodes []byte, gadgetSpecs []*types.GadgetSpec, decodeGadget types.Ga
 					}
 
 					vaddr := offset + types.Addr(match.Index) - (types.Addr(i) * gadSpec.Align)
-					gadInstance := &types.GadgetInstance{
-						Address: vaddr,
-						Gadget:  gad,
+					if vaddrsToGadgetIDs[vaddr] == nil {
+						vaddrsToGadgetIDs[vaddr] = make(map[int]types.GadgetId)
 					}
-					gadInstances = append(gadInstances, gadInstance)
+					if vaddrsToGadgetIDs[vaddr][len(gad.Bytes())] == "" {
+						vaddrsToGadgetIDs[vaddr][len(gad.Bytes())] = types.GadgetId(gad.InstructionString())
+						gadInstance := &types.GadgetInstance{
+							Address: vaddr,
+							Gadget:  gad,
+						}
+						gadInstances = append(gadInstances, gadInstance)
+					} else {
+						if vaddrsToGadgetIDs[vaddr][len(gad.Bytes())] != types.GadgetId(gad.InstructionString()) {
+							return nil, errors.New("Different gadgets found at same address"), softerrs
+						}
+					}
+
 				}
 			}
 		}

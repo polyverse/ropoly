@@ -57,7 +57,7 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 	if err == nil {
 		ret := elfBinary {
 			binary: elfFile,
-			sectionIndex: new(int),
+			segmentIndex: new(int),
 		}
 		machine := ret.binary.FileHeader.Machine
 		architecture, ok := architectures.ArchitecturesByElfMachine[machine]
@@ -88,7 +88,7 @@ func openBinary(path string) (binary, architectures.Architecture, error) {
 
 type elfBinary struct {
 	binary *elf.File
-	sectionIndex *int
+	segmentIndex *int
 }
 
 func (b elfBinary) close() error {
@@ -110,16 +110,19 @@ func (s elfSections) Less(i, j int) bool {
 }
 
 func (b elfBinary) nextSectionData() (bool, types.Addr, []byte, error) {
-	if *b.sectionIndex == len(b.binary.Sections) {
+	if *b.segmentIndex == len(b.binary.Progs) {
 		return false, 0, nil, nil
 	}
 
-	section := b.binary.Sections[*b.sectionIndex]
-	*b.sectionIndex++
+	segment := b.binary.Progs[*b.segmentIndex]
+	*b.segmentIndex++
 
-	if section.Type == elf.SHT_PROGBITS {
-		progData, err := section.Data()
-		return true, types.Addr(section.Addr), progData, err
+	if segment.Flags & elf.PF_X != 0 {
+		size := segment.Filesz
+		progData := make([]byte, size, size)
+		_, err := segment.Open().Read(progData)
+		//progData, err := section.Data()
+		return true, types.Addr(segment.Vaddr), progData, err
 	} else {
 		return b.nextSectionData()
 	}
